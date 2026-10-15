@@ -1,0 +1,5 @@
+{
+  "name": "worldsmith",
+  "private": true,
+  "workspaces": ["frontend", "engine"]
+}

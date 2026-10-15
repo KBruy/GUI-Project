@@ -1,0 +1,22 @@
+# AI context (kept local)
+CLAUDE.md
+
+# Node
+node_modules/
+dist/
+build/
+coverage/
+
+# Python
+.venv/
+__pycache__/
+*.pyc
+.pytest_cache/
+
+# Env (.env.example stays tracked)
+.env
+!.env.example
+
+# OS / IDE
+.DS_Store
+.idea/
