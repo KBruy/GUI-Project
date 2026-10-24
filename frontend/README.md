@@ -2,6 +2,8 @@
 
 React (bulletproof-react). Właściciel: Krystian.
 
+CI sprawdza: `lint` + `typecheck` + `test` przy każdym PR dotykającym `frontend/` lub `engine/`.
+
 - `docs/` – dokumentacja techniczna frontendu (kontekst dla AI)
 - `docs/plan/TASKS.md` – plan tasków frontendu
 - `src/` – kod (CSS Modules + zmienne CSS, ikony pxlkit)
