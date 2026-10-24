@@ -1,5 +1,16 @@
 {
   "name": "worldsmith",
   "private": true,
-  "workspaces": ["frontend", "engine"]
+  "workspaces": ["frontend", "engine"],
+  "engines": {
+    "node": ">=22.22.2"
+  },
+  "scripts": {
+    "dev": "npm run dev --workspace=frontend",
+    "build": "npm run build --workspace=frontend",
+    "test": "npm run test --workspaces --if-present",
+    "lint": "npm run lint --workspace=frontend",
+    "typecheck": "npm run typecheck --workspace=frontend",
+    "format": "npm run format --workspace=frontend"
+  }
 }
