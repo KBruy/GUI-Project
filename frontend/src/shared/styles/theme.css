@@ -1,0 +1,47 @@
+:root {
+  /* === Spacing === */
+  --space-1: 4px;   /* xs */
+  --space-2: 8px;   /* sm */
+  --space-3: 12px;  /* md */
+  --space-4: 16px;  /* lg */
+  --space-5: 24px;  /* xl */
+  --space-6: 32px;  /* 2xl */
+
+  /* === Font families === */
+  --font-heading: 'Press Start 2P', monospace; /* pixel headings */
+  --font-body: 'VT323', monospace;             /* pixel body text */
+
+  /* === Font sizes === */
+  --font-size-sm: 0.75rem;  /* 12px */
+  --font-size-md: 1rem;     /* 16px */
+  --font-size-lg: 1.25rem;  /* 20px — VT323 base */
+  --font-size-xl: 1.5rem;   /* 24px */
+
+  /* === Animation timing === */
+  --duration-fast: 80ms;    /* micro-interaction */
+  --duration-normal: 160ms; /* standard transition */
+
+  /* === Border widths === */
+  --border-width: 3px; /* default pixel border thickness */
+  --focus-width: 2px;  /* focus ring thickness */
+
+  /* === Colors: dark theme (default) === */
+  --color-bg: #1c1c1f;             /* page background */
+  --color-surface: #26262a;        /* card / panel */
+  --color-surface-raised: #323237; /* elevated element */
+  --color-border: #4a4a52;         /* border */
+  --color-shadow: #0a0a0b;         /* hard drop-shadow */
+  --color-text: #e8e8ea;           /* primary text */
+  --color-text-muted: #a1a1a8;     /* secondary / disabled text */
+  --color-primary: #ff1f4b;        /* primary action */
+  --color-on-primary: #0a0a0b;     /* text on primary */
+  --color-accent: #ff1f4b;         /* accent highlight */
+  --color-on-accent: #0a0a0b;      /* text on accent */
+  --color-danger: #ffc21f;         /* warning / destructive */
+  --color-on-danger: #0a0a0b;      /* text on danger */
+  --color-focus: #ffffff;          /* focus ring */
+
+  /* === Pixel-art primitives (derived from color tokens) === */
+  --pixel-border: var(--border-width) solid var(--color-border); /* solid pixel border */
+  --pixel-shadow: var(--border-width) var(--border-width) 0 var(--color-shadow); /* hard offset shadow */
+}
