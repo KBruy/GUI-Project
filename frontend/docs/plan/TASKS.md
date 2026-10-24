@@ -14,12 +14,14 @@ Plan tygodni:
 | Tydzień | Daty | Taski | Cel |
 |---|---|---|---|
 | 1 | 19–25.10 | F-01 … F-14 | konfiguracja, tokeny, motywy, tłumaczenia |
-| 2 | 26.10–1.11 | F-15 … F-25 | komponenty `shared/`, routing, apiClient, zaślepka silnika |
+| 2 | 26.10–1.11 | F-15 … F-25, F-48 … F-50 | komponenty `shared/`, routing, apiClient, zaślepka silnika |
 | 3 | 2–8.11 | F-26 … F-33 | canvas i serce edytora: zaznaczanie, przeciąganie z kolizją |
 | 4 | 9–15.11 | F-34 … F-41 | transformacje, panele, skróty, zapis, projekty, eksport |
 | 5 | 16–22.11 | F-42 … F-47 | kreator postaci, dokumentacja, testy scenariusza |
 
 Tydzień 5 jest ciasny. Jeśli coś się obsunie, w pierwszej kolejności przesuwamy na `final` F-46 (dostępność) i eksport PNG postaci z F-44.
+
+Taski F-48 … F-50 zostały dopisane 24.10 po makietach lo-fi. Mają numery po F-47, żeby nie przenumerowywać istniejących issues, ale robimy je w tygodniu 2 razem z resztą komponentów `shared/`.
 
 ---
 
@@ -274,6 +276,48 @@ Tydzień 5 jest ciasny. Jeśli coś się obsunie, w pierwszej kolejności przesu
 
 **Zależy od:** F-15 … F-19
 
+### F-48 [F][mvp] SegmentedControl
+**Co trzeba zrobić**
+- Napisać `shared/components/ui/SegmentedControl`: grupę przycisków, z której zawsze wybrana jest dokładnie jedna opcja.
+- Propsy: `options` (lista `{ value, labelKey, icon? }`), `value`, `onChange`, `label` (dla czytnika ekranu) i `size`.
+- Użyć go w przełączniku motywu i języka (F-22), w zakładkach kategorii palety (F-31), w zakładkach slotów kreatora (F-43) i w filtrze listy projektów (F-39).
+- Dodać go do strony /dev/ui (F-20).
+
+**Kiedy jest gotowe**
+- [ ] Wybrana opcja jest wyróżniona w 3 motywach i ma `aria-pressed="true"`.
+- [ ] Działa z klawiatury: Tab przechodzi po opcjach, a Enter i spacja wybierają.
+- [ ] Jest test: kliknięcie opcji wywołuje `onChange` z jej `value`.
+
+**Zależy od:** F-15
+
+### F-49 [F][mvp] OptionTile
+**Co trzeba zrobić**
+- Napisać `shared/components/ui/OptionTile`: kafelek wyboru z miniaturą, podpisem i stanem zaznaczenia.
+- Propsy: `imageUrl` (albo `children` jako podgląd), `labelKey`, `selected`, `onSelect`, `size` (`sm` dla palety, `md` dla rozmiaru mapy) i `disabled`. Opcjonalny `tooltipKey` korzysta z `Tooltip` (F-17).
+- Dodać wariant bez obrazka dla opcji „Brak” w kreatorze postaci.
+- Użyć go w palecie assetów (F-31), w wyborze rozmiaru w oknie „Nowa mapa” (F-30) oraz w wyborze bazy i ubrań w kreatorze (F-42, F-43).
+- Dodać go do strony /dev/ui (F-20).
+
+**Kiedy jest gotowe**
+- [ ] Zaznaczony kafelek ma wyraźną ramkę w 3 motywach i `aria-pressed="true"`.
+- [ ] Miniatura zachowuje proporcje i ma ostre piksele.
+- [ ] Kafelek działa z klawiatury i ma etykietę dla czytnika ekranu.
+
+**Zależy od:** F-13, F-15, F-17
+
+### F-50 [F][mvp] Button: stan wciśnięty (prop pressed)
+**Co trzeba zrobić**
+- Dodać do `Button` i `IconButton` opcjonalny prop `pressed` dla przycisków typu włącz/wyłącz. Prop ustawia `aria-pressed` i wygląd „wciśnięty” z tokenów.
+- Użyć go w pasku narzędzi edytora dla „Siatka” i „Przyciąganie” (F-27).
+- To zmiana w `shared/`, więc sprawdzić, czy nie psuje istniejących użyć `Button`.
+
+**Kiedy jest gotowe**
+- [ ] `pressed` zmienia wygląd i `aria-pressed`, a bez tego propsa przycisk działa jak dotąd.
+- [ ] Jest test: `pressed` ustawia `aria-pressed="true"`.
+- [ ] Stan wciśnięty jest widoczny na stronie /dev/ui.
+
+**Zależy od:** F-15
+
 ---
 
 ## Etap 3: Szkielet aplikacji
@@ -300,7 +344,7 @@ Tydzień 5 jest ciasny. Jeśli coś się obsunie, w pierwszej kolejności przesu
 - [ ] Zmiana działa na każdej podstronie i zostaje po odświeżeniu.
 - [ ] Oba przełączniki działają z klawiatury i mają etykiety dla czytnika ekranu.
 
-**Zależy od:** F-11, F-12, F-21
+**Zależy od:** F-11, F-12, F-21, F-48
 
 ### F-23 [F][mvp] apiClient i obsługa błędów API
 **Co trzeba zrobić**
@@ -369,7 +413,7 @@ Tydzień 5 jest ciasny. Jeśli coś się obsunie, w pierwszej kolejności przesu
 - [ ] Przy włączonym przyciąganiu obiekty lądują na punktach siatki (`snapToGrid`).
 - [ ] Na dużej mapie (64×48) siatka nie spowalnia przeciągania.
 
-**Zależy od:** F-26
+**Zależy od:** F-26, F-50
 
 ### F-28 [F][mvp] Zoom i przesuwanie widoku
 **Co trzeba zrobić**
@@ -409,7 +453,7 @@ Tydzień 5 jest ciasny. Jeśli coś się obsunie, w pierwszej kolejności przesu
 - [ ] Powstaje pusta scena o wybranym rozmiarze z jedną warstwą.
 - [ ] Pusta nazwa blokuje przycisk „Utwórz” i pokazuje komunikat.
 
-**Zależy od:** F-17, F-29
+**Zależy od:** F-17, F-29, F-49
 
 ### F-31 [F][mvp] Paleta assetów i dodawanie obiektów
 **Co trzeba zrobić**
@@ -423,7 +467,7 @@ Tydzień 5 jest ciasny. Jeśli coś się obsunie, w pierwszej kolejności przesu
 - [ ] Dodanie w miejscu kolizji jest blokowane i pokazuje toast.
 - [ ] Ctrl+Z cofa dodanie obiektu.
 
-**Zależy od:** F-23, F-25, F-29. Uzgodnione z: Franek, Monika.
+**Zależy od:** F-23, F-25, F-29, F-48, F-49. Uzgodnione z: Franek, Monika.
 
 ### F-32 [F][mvp] Zaznaczanie obiektów
 **Co trzeba zrobić**
@@ -539,7 +583,7 @@ Tydzień 5 jest ciasny. Jeśli coś się obsunie, w pierwszej kolejności przesu
 - [ ] Otwarcie projektu przenosi do właściwego edytora.
 - [ ] Usunięty projekt znika z listy bez przeładowania strony.
 
-**Zależy od:** F-21, F-38
+**Zależy od:** F-21, F-38, F-48
 
 ### F-40 [F][mvp] Import i eksport pliku .worldsmith.json
 **Co trzeba zrobić**
@@ -579,7 +623,7 @@ Tydzień 5 jest ciasny. Jeśli coś się obsunie, w pierwszej kolejności przesu
 - [ ] Wybrana baza wyświetla się na środku canvasu w pełnej rozdzielczości.
 - [ ] Zmiana bazy podmienia ją bez przeładowania strony.
 
-**Zależy od:** F-26, F-31. Uzgodnione z: Monika.
+**Zależy od:** F-26, F-31, F-49. Uzgodnione z: Monika.
 
 ### F-43 [F][mvp] Sloty ubrań w kreatorze
 **Co trzeba zrobić**
@@ -592,7 +636,7 @@ Tydzień 5 jest ciasny. Jeśli coś się obsunie, w pierwszej kolejności przesu
 - [ ] Ubrania zawsze leżą w dobrej kolejności (włosy nad koszulką itd.).
 - [ ] Ctrl+Z cofa zmianę ubrania.
 
-**Zależy od:** F-42
+**Zależy od:** F-42, F-48, F-49
 
 ### F-44 [F][mvp] Zapis postaci jako projekt
 **Co trzeba zrobić**
