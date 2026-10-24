@@ -15,7 +15,7 @@ Kreator postaci i map w stylu pixel art.
 
 ## Wymagania
 
-- **Node.js** ≥ 22 ([nodejs.org](https://nodejs.org))
+- **Node.js** 22.22.2+ albo 24 LTS ([nodejs.org](https://nodejs.org))
 - **Docker Desktop** (do bazy danych)
 
 ---
