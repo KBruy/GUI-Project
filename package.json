@@ -1,5 +1,10 @@
 {
   "name": "worldsmith",
   "private": true,
-  "workspaces": ["frontend", "engine"]
+  "workspaces": ["frontend", "engine"],
+  "scripts": {
+    "dev": "npm run dev --workspace=frontend",
+    "build": "npm run build --workspace=frontend",
+    "test": "npm run test --workspaces --if-present"
+  }
 }
