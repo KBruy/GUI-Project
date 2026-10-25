@@ -90,9 +90,12 @@
   text-decoration: underline;
 }
 
-/* Wyłączony: wyciszony tekst, brak cienia, zakaz kursora */
+/* Wyłączony: neutralne tło niezależnie od wariantu, przerywana ramka sygnalizuje
+   stan kształtem (nie tylko kolorem) — czytelne też w motywie kontrastowym. */
 .button:disabled {
+  background: var(--color-surface);
   color: var(--color-text-muted);
+  border-style: dashed;
   box-shadow: none;
   cursor: not-allowed;
 }
