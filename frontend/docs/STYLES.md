@@ -121,10 +121,10 @@ Wszystkie używają `steps()` dla pikselowego charakteru i czasów z tokenów (`
 
 ---
 
-## Ikony (`shared/components/ui/Icon.tsx`)
+## Ikony (`shared/components/ui/Icon/Icon.tsx`)
 
 ```tsx
-import { Icon } from '@/shared/components/ui/Icon'
+import { Icon } from '@/shared/components/ui/Icon/Icon'
 
 // Ikona dekoracyjna (obok etykiety tekstowej)
 <Icon name="Pencil" size={16} />

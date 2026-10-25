@@ -1,0 +1,98 @@
+.button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-1);
+  border: var(--pixel-border);
+  box-shadow: var(--pixel-shadow);
+  background: var(--color-surface);
+  color: var(--color-text);
+  cursor: pointer;
+  font-family: var(--font-body);
+  user-select: none;
+  white-space: nowrap;
+}
+
+/* --- Rozmiary ---
+   VT323 wymaga min. 20 px dla czytelności (STYLES.md), więc font-size idzie
+   o jeden krok wyżej niż token sugeruje nazwą: sm→md, md→lg, lg→xl. */
+
+.sm {
+  font-size: var(--font-size-md);
+  padding: var(--space-1) var(--space-2);
+}
+
+.md {
+  font-size: var(--font-size-lg);
+  padding: var(--space-2) var(--space-3);
+}
+
+.lg {
+  font-size: var(--font-size-xl);
+  padding: var(--space-2) var(--space-4);
+}
+
+/* Icon-only (IconButton): symetryczne paddingi zamiast asymetrycznych z .sm/.md/.lg */
+.iconOnly.sm {
+  padding: var(--space-1);
+}
+
+.iconOnly.md {
+  padding: var(--space-2);
+}
+
+.iconOnly.lg {
+  padding: var(--space-3);
+}
+
+/* --- Warianty --- */
+
+.primary {
+  background: var(--color-primary);
+  color: var(--color-on-primary);
+}
+
+.secondary {
+  background: var(--color-surface);
+  color: var(--color-text);
+}
+
+.danger {
+  background: var(--color-danger);
+  color: var(--color-on-danger);
+}
+
+/* Ghost: brak tła i cienia, przezroczysta ramka zachowuje przestrzeń dla shiftu :active */
+.ghost {
+  background: transparent;
+  color: var(--color-text);
+  border-color: transparent;
+  box-shadow: none;
+}
+
+/* --- Stany interakcji --- */
+
+/* Wciśnięty (toggle) i aktywny: brak cienia, przesunięcie o border-width */
+.button:active:not(:disabled),
+.button[aria-pressed='true'] {
+  box-shadow: none;
+  transform: translate(var(--border-width), var(--border-width));
+}
+
+/* Stan wciśnięty: tło accent i tekst on-accent */
+.button[aria-pressed='true'] {
+  background: var(--color-accent);
+  color: var(--color-on-accent);
+}
+
+/* Motyw kontrastowy: dodatkowe podkreślenie dla czytelności */
+[data-theme='contrast'] .button[aria-pressed='true'] {
+  text-decoration: underline;
+}
+
+/* Wyłączony: wyciszony tekst, brak cienia, zakaz kursora */
+.button:disabled {
+  color: var(--color-text-muted);
+  box-shadow: none;
+  cursor: not-allowed;
+}
