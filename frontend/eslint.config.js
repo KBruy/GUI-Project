@@ -16,6 +16,15 @@ export default tseslint.config(
     rules: {
       ...reactHooks.configs.recommended.rules,
       'react-refresh/only-export-components': ['warn', { allowConstantExport: true }],
+      // @pxlkit importuj tylko przez Icon.tsx — bezpośrednie użycie rozjeżdża spójność ikon
+      'no-restricted-imports': ['error', {
+        patterns: [{ group: ['@pxlkit/*'], message: 'Import @pxlkit only through @/shared/components/ui/Icon' }],
+      }],
     },
+  },
+  // Icon.tsx to jedyne miejsce, gdzie @pxlkit jest dozwolone
+  {
+    files: ['src/shared/components/ui/Icon.tsx'],
+    rules: { 'no-restricted-imports': 'off' },
   },
 )

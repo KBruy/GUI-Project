@@ -1,0 +1,7 @@
+.icon {
+  display: inline-block;
+  /* Pixel-art ikony muszą być ostre przy każdym rozmiarze */
+  image-rendering: pixelated;
+  image-rendering: crisp-edges; /* fallback dla Firefox */
+  shape-rendering: crispEdges;  /* SVG inline (jeśli kiedyś zmieni się renderer) */
+}
