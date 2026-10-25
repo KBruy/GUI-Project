@@ -9,6 +9,7 @@ const dictionary = {
   'nav.settings': { pl: 'Ustawienia', en: 'Settings' },
   'theme.label': { pl: 'Motyw', en: 'Theme' },
   'lang.label': { pl: 'Język', en: 'Language' },
+  'dev.ui.title': { pl: 'Katalog komponentów', en: 'Component Catalog' },
 } satisfies Record<string, Record<Language, string>>
 
 export type TranslationKey = keyof typeof dictionary
