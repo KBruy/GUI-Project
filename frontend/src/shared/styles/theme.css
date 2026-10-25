@@ -1,0 +1,86 @@
+:root {
+  /* === Spacing === */
+  --space-1: 4px;   /* xs */
+  --space-2: 8px;   /* sm */
+  --space-3: 12px;  /* md */
+  --space-4: 16px;  /* lg */
+  --space-5: 24px;  /* xl */
+  --space-6: 32px;  /* 2xl */
+
+  /* === Font families === */
+  --font-heading: 'Press Start 2P', monospace; /* pixel headings */
+  --font-body: 'VT323', monospace;             /* pixel body text */
+
+  /* === Font sizes === */
+  --font-size-sm: 0.75rem;  /* 12px */
+  --font-size-md: 1rem;     /* 16px */
+  --font-size-lg: 1.25rem;  /* 20px — VT323 base */
+  --font-size-xl: 1.5rem;   /* 24px */
+
+  /* === Animation timing === */
+  --duration-fast: 80ms;    /* micro-interaction */
+  --duration-normal: 160ms; /* standard transition */
+
+  /* === Border widths === */
+  --border-width: 3px; /* default pixel border thickness */
+  --focus-width: 2px;  /* focus ring thickness */
+
+  /* === Colors: dark theme (default) === */
+  --color-bg: #1c1c1f;             /* page background */
+  --color-surface: #26262a;        /* card / panel */
+  --color-surface-raised: #323237; /* elevated element */
+  --color-border: #4a4a52;         /* border */
+  --color-shadow: #0a0a0b;         /* hard drop-shadow */
+  --color-text: #e8e8ea;           /* primary text */
+  --color-text-muted: #a1a1a8;     /* secondary / disabled text */
+  --color-primary: #ff1f4b;        /* primary action */
+  --color-on-primary: #0a0a0b;     /* text on primary */
+  --color-accent: #ff1f4b;         /* accent highlight */
+  --color-on-accent: #0a0a0b;      /* text on accent */
+  --color-danger: #ffc21f;         /* warning / destructive */
+  --color-on-danger: #0a0a0b;      /* text on danger */
+  --color-focus: #ffffff;          /* focus ring */
+
+  /* === Pixel-art primitives (derived from color tokens) === */
+  --pixel-border: var(--border-width) solid var(--color-border); /* solid pixel border */
+  --pixel-shadow: var(--border-width) var(--border-width) 0 var(--color-shadow); /* hard offset shadow */
+}
+
+/* Motyw ciemny = wartości domyślne z :root — żaden nadpisujący blok nie jest potrzebny */
+
+[data-theme='light'] {
+  --color-bg: #f2f2f2;
+  --color-surface: #ffffff;
+  --color-surface-raised: #e4e4e4;
+  --color-border: #111111;
+  --color-shadow: #111111;
+  --color-text: #111111;
+  --color-text-muted: #555555;
+  --color-primary: #e61c44;
+  --color-on-primary: #ffffff;
+  --color-accent: #e61c44;
+  --color-on-accent: #ffffff;
+  --color-danger: #a35400;
+  --color-on-danger: #ffffff;
+  --color-focus: #0068b8;
+}
+
+/* WCAG AAA >= 7:1; --border-width i --focus-width zwiększone do 4px */
+[data-theme='contrast'] {
+  --border-width: 4px;
+  --focus-width: 4px;
+  --color-bg: #000000;
+  --color-surface: #000000;
+  --color-surface-raised: #000000;
+  --color-border: #ffffff;
+  --color-shadow: #ffffff;
+  --color-text: #ffffff;
+  --color-text-muted: #f2f2f2;
+  --color-primary: #ff5e7d;
+  --color-on-primary: #000000;
+  --color-accent: #ff5e7d;
+  --color-on-accent: #000000;
+  --color-danger: #ffd400;
+  --color-on-danger: #000000;
+  --color-focus: #ffd400;
+}

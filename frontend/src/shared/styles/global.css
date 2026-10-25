@@ -1,0 +1,59 @@
+/* latin-ext covers Polish characters: ą ć ę ł ń ó ś ź ż */
+@import '@fontsource/press-start-2p/latin-ext.css';
+@import '@fontsource/vt323/latin-ext.css';
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+html {
+  font-size: 16px;
+}
+
+body {
+  background-color: var(--color-bg);
+  color: var(--color-text);
+  font-family: var(--font-body);
+  font-size: var(--font-size-lg); /* ~20px baseline for VT323 readability */
+  line-height: 1.5;
+  min-height: 100dvh;
+}
+
+h1,
+h2,
+h3,
+h4,
+h5,
+h6 {
+  font-family: var(--font-heading);
+  line-height: 1.4;
+}
+
+/* Pixel-art crisp rendering for icons and images */
+img,
+canvas,
+svg[data-icon] {
+  image-rendering: pixelated;
+  image-rendering: crisp-edges; /* Firefox fallback */
+}
+
+:focus-visible {
+  outline: var(--focus-width) solid var(--color-focus);
+  outline-offset: 2px;
+}
+
+ul,
+ol {
+  list-style: none;
+}
+
+button,
+input,
+select,
+textarea {
+  font: inherit;
+}

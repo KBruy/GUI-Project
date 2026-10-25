@@ -1,0 +1,43 @@
+/* hoverLift — unosi element o 2 px na hover; steps(1) daje skokowy, pikselowy ruch */
+.hoverLift {
+  transition: transform var(--duration-fast) steps(1);
+}
+.hoverLift:hover {
+  transform: translateY(-2px);
+}
+
+/* fadeIn — pojawienie się w dwóch dyskretnych krokach */
+.fadeIn {
+  animation: fadeIn var(--duration-normal) steps(2, end) both;
+}
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
+
+/* shake — feedback kolizji: drżenie w lewo-prawo w 4 krokach */
+.shake {
+  animation: shake var(--duration-normal) steps(4, end);
+}
+@keyframes shake {
+  0%   { transform: translateX(0);   }
+  25%  { transform: translateX(-4px); }
+  50%  { transform: translateX(4px);  }
+  75%  { transform: translateX(-2px); }
+  100% { transform: translateX(0);   }
+}
+
+/* Wyłącz wszystkie animacje gdy użytkownik włączył ograniczenie ruchu w systemie */
+@media (prefers-reduced-motion: reduce) {
+  .hoverLift,
+  .hoverLift:hover {
+    transition: none;
+    transform: none;
+  }
+  .fadeIn {
+    animation: none;
+  }
+  .shake {
+    animation: none;
+  }
+}

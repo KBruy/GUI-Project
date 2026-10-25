@@ -73,3 +73,9 @@ Szczegóły: [`backend/src/db/README.md`](backend/src/db/README.md)
 | `npm run typecheck` | Sprawdza typy TypeScript |
 
 Wszystkie skrypty działają z katalogu głównego repo.
+
+---
+
+## Licencje i atrybucja
+
+Ikony pixel-art (`@pxlkit/ui`, `@pxlkit/feedback`) stworzone przez [Joangel De La Rosa](https://github.com/joangeldelarosa) — używane zgodnie z [Pxlkit Asset License](https://github.com/Joangeldelarosa/pxlkit/blob/main/LICENSE-ASSETS) (free with attribution).
