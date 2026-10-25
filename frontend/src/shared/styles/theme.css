@@ -45,3 +45,42 @@
   --pixel-border: var(--border-width) solid var(--color-border); /* solid pixel border */
   --pixel-shadow: var(--border-width) var(--border-width) 0 var(--color-shadow); /* hard offset shadow */
 }
+
+/* Motyw ciemny = wartości domyślne z :root — żaden nadpisujący blok nie jest potrzebny */
+
+[data-theme='light'] {
+  --color-bg: #f2f2f2;
+  --color-surface: #ffffff;
+  --color-surface-raised: #e4e4e4;
+  --color-border: #111111;
+  --color-shadow: #111111;
+  --color-text: #111111;
+  --color-text-muted: #555555;
+  --color-primary: #e61c44;
+  --color-on-primary: #ffffff;
+  --color-accent: #e61c44;
+  --color-on-accent: #ffffff;
+  --color-danger: #a35400;
+  --color-on-danger: #ffffff;
+  --color-focus: #0068b8;
+}
+
+/* WCAG AAA >= 7:1; --border-width i --focus-width zwiększone do 4px */
+[data-theme='contrast'] {
+  --border-width: 4px;
+  --focus-width: 4px;
+  --color-bg: #000000;
+  --color-surface: #000000;
+  --color-surface-raised: #000000;
+  --color-border: #ffffff;
+  --color-shadow: #ffffff;
+  --color-text: #ffffff;
+  --color-text-muted: #f2f2f2;
+  --color-primary: #ff5e7d;
+  --color-on-primary: #000000;
+  --color-accent: #ff5e7d;
+  --color-on-accent: #000000;
+  --color-danger: #ffd400;
+  --color-on-danger: #000000;
+  --color-focus: #ffd400;
+}
