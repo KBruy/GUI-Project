@@ -64,7 +64,7 @@ W motywie kontrastowym `--border-width` i `--focus-width` rosną do 4 px automat
 
 ## Motywy
 
-Trzy motywy: `dark` (domyślny), `light`, `contrast`.
+Trzy motywy: `light` (domyślny), `dark`, `contrast`.
 
 ### Jak działa zmiana motywu
 
@@ -101,14 +101,40 @@ function MyComponent() {
 
 ## Animacje (`shared/animations/animations.module.css`)
 
-> **TODO F-14** — ten plik zostanie utworzony w tasku F-14.
+Trzy klasy wielokrotnego użytku — dodaj jedną klasą CSS do komponentu:
 
-Planowane klasy: `hoverLift`, `fadeIn`, `shake`. Używają `steps()` dla klatkowego efektu pixel-art. Przy `prefers-reduced-motion: reduce` animacje są wyłączone.
+```tsx
+import styles from '@/shared/animations/animations.module.css'
+
+<div className={styles.fadeIn}>...</div>
+<button className={styles.hoverLift}>...</button>
+<div className={styles.shake}>...</div>   // np. przy kolizji
+```
+
+| Klasa | Efekt |
+|---|---|
+| `hoverLift` | Unosi element o 2 px na hover |
+| `fadeIn` | Pojawienie się (2 kroki opacity) |
+| `shake` | Drżenie lewo-prawo (feedback kolizji) |
+
+Wszystkie używają `steps()` dla pikselowego charakteru i czasów z tokenów (`--duration-fast`, `--duration-normal`). Przy `prefers-reduced-motion: reduce` animacje są wyłączone.
 
 ---
 
 ## Ikony (`shared/components/ui/Icon.tsx`)
 
-> **TODO F-13** — komponent zostanie utworzony w tasku F-13.
+```tsx
+import { Icon } from '@/shared/components/ui/Icon'
 
-Planowane: komponent `Icon` oparty na `@pxlkit/core`. Poza `Icon.tsx` nie importuj niczego z `@pxlkit` bezpośrednio — pilnuje tego reguła ESLint.
+// Ikona dekoracyjna (obok etykiety tekstowej)
+<Icon name="Pencil" size={16} />
+
+// Ikona znacząca (jedyna treść przycisku)
+<Icon name="Trash" size={32} label="Usuń" />
+```
+
+Prop `label` decyduje o dostępności: z `label` → `role="img"` + `aria-label`; bez → `aria-hidden="true"`.
+
+Rozmiary: `16 | 32 | 48 | 64` (wielokrotność siatki ikony 16 px).
+
+Poza `Icon.tsx` nie importuj niczego z `@pxlkit` bezpośrednio — pilnuje tego reguła ESLint. Żeby dodać ikonę: zaimportuj z `@pxlkit/ui` lub `@pxlkit/feedback` w `Icon.tsx` i dopisz do mapy `icons`.
