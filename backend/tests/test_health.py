@@ -1,4 +1,4 @@
-"""Testy szkieletu: /api/health, CORS i odczyt konfiguracji."""
+"""[B-01 - szkielet] Testy szkieletu: /api/health, CORS i odczyt konfiguracji."""
 
 import pytest
 from fastapi.testclient import TestClient

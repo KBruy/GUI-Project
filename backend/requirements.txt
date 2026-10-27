@@ -1,3 +1,4 @@
+# [B-01 - szkielet]
 # Zależności potrzebne do uruchomienia serwera.
 fastapi==0.115.6
 uvicorn[standard]==0.32.1

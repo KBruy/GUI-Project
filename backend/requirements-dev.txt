@@ -1,3 +1,4 @@
+# [B-01 - szkielet]
 # Zależności do pracy lokalnej i testów; "-r" dołącza requirements.txt, więc wystarcza jedna instalacja.
 -r requirements.txt
 pytest==8.3.4

@@ -1,4 +1,4 @@
-"""Endpoint /api/health: sprawdzenie, czy serwer działa (wskaźnik w stopce frontendu)."""
+"""[B-01 - szkielet] Endpoint /api/health: sprawdzenie, czy serwer działa (wskaźnik w stopce frontendu)."""
 
 from fastapi import APIRouter
 

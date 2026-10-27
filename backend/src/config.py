@@ -1,4 +1,4 @@
-"""Ustawienia backendu w jednym miejscu.
+"""[B-01 - szkielet] Ustawienia backendu w jednym miejscu.
 
 Wartości pochodzą ze zmiennych środowiskowych, a przy ich braku z ustawień domyślnych do pracy lokalnej.
 Plik .env nie jest wczytywany automatycznie: tylko gdy Uvicorn działa z flagą --env-file .env.
