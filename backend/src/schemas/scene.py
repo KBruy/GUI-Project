@@ -7,16 +7,30 @@ sprawdza services/validation.py.
 from datetime import datetime
 from typing import Annotated, Literal
 
-from pydantic import Field
+from pydantic import BeforeValidator, Field
 
 from src.schemas.base import ContractModel
 
 # Literal dopuszcza tylko wymienione wartości; inna wartość to błąd walidacji.
 SceneType = Literal["map", "character"]
 
-# Data jako napis ISO 8601, np. "2026-10-26T12:00:00Z".
-# strict=False jest potrzebne, bo w trybie ścisłym Pydantic nie zamieniłby napisu na datę.
-IsoDateTime = Annotated[datetime, Field(strict=False)]
+
+def parse_iso_datetime(value: object) -> datetime:
+    """Przyjmuje tylko napis ISO 8601 z datą, godziną i strefą czasową, np. "2026-10-26T12:00:00Z".
+
+    Odrzuca timestamp (1700000000) i datę bez strefy ("2026-10-26"), które Pydantic sam by przyjął.
+    """
+    if not isinstance(value, str):
+        raise ValueError("data musi być napisem ISO 8601")
+    # fromisoformat rzuca ValueError przy złym formacie; Pydantic zamienia go na błąd pola.
+    parsed = datetime.fromisoformat(value)
+    if parsed.tzinfo is None:
+        raise ValueError("data musi mieć strefę czasową")
+    return parsed
+
+
+# BeforeValidator uruchamia funkcję przed sprawdzeniem typu; dalej trafia już gotowy obiekt datetime.
+IsoDateTime = Annotated[datetime, BeforeValidator(parse_iso_datetime)]
 
 
 class SceneObject(ContractModel):

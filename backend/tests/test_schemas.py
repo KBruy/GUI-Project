@@ -139,3 +139,29 @@ def test_nan_and_infinity_are_rejected(scene_data, value):
         Scene.model_validate(scene_data)
 
     assert error_locations(exc_info) == [("layers", 0, "objects", 0, "scaleX")]
+
+
+@pytest.mark.parametrize("value", ["2026-10-26T12:00:00Z", "2026-10-26T14:00:00+02:00"])
+def test_iso_date_with_timezone_is_accepted(scene_data, value):
+    scene_data["createdAt"] = value
+
+    assert Scene.model_validate(scene_data).createdAt.tzinfo is not None
+
+
+@pytest.mark.parametrize(
+    "value",
+    [
+        1700000000,  # timestamp jako liczba
+        "1700000000",  # timestamp jako napis
+        "2026-10-26",  # sama data
+        "2026-10-26T12:00:00",  # bez strefy czasowej
+        "26.10.2026 12:00",  # inny format
+    ],
+)
+def test_date_other_than_iso_with_timezone_is_rejected(scene_data, value):
+    scene_data["createdAt"] = value
+
+    with pytest.raises(ValidationError) as exc_info:
+        Scene.model_validate(scene_data)
+
+    assert error_locations(exc_info) == [("createdAt",)]
