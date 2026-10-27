@@ -1,4 +1,4 @@
-"""[B-02 - modele i błędy] Handlery błędów: zamieniają każdy błąd na odpowiedź {"error": {"code", "messageKey", "details"}}.
+"""Handlery błędów: zamieniają każdy błąd na odpowiedź {"error": {"code", "messageKey", "details"}}.
 
 Dzięki nim domyślne {"detail": ...} z FastAPI nie trafia do frontendu.
 """

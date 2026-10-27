@@ -1,4 +1,4 @@
-"""[B-02 - modele i błędy] Testy formatu błędów: każdy błąd API ma kształt {"error": ...} i nigdy {"detail": ...}."""
+"""Testy formatu błędów: każdy błąd API ma kształt {"error": ...} i nigdy {"detail": ...}."""
 
 import json
 

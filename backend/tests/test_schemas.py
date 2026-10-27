@@ -1,4 +1,4 @@
-"""[B-02 - modele i błędy] Testy modeli kontraktu: poprawne dane przechodzą, zły kształt lub typ jest odrzucany."""
+"""Testy modeli kontraktu: poprawne dane przechodzą, zły kształt lub typ jest odrzucany."""
 
 import pytest
 from pydantic import ValidationError

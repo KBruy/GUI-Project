@@ -1,4 +1,4 @@
-"""[B-02 - modele i błędy] Kody i klucze błędów API oraz wyjątek AppError.
+"""Kody i klucze błędów API oraz wyjątek AppError.
 
 Każdy błąd API ma kształt {"error": {"code", "messageKey", "details"}} (rozdz. 5.6 dokumentu technicznego).
 messageKey to klucz tłumaczenia; tekst komunikatu wyświetla frontend ze swojego słownika.

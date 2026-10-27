@@ -1,4 +1,4 @@
-"""[B-02 - modele i błędy] Wspólna klasa bazowa modeli kontraktu danych (rozdz. 5 dokumentu technicznego)."""
+"""Wspólna klasa bazowa modeli kontraktu danych (rozdz. 5 dokumentu technicznego)."""
 
 from pydantic import BaseModel, ConfigDict
 

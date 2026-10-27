@@ -1,4 +1,4 @@
-"""[B-02 - modele i błędy] Wspólne dane testowe; pytest automatycznie udostępnia fixture z tego pliku wszystkim testom."""
+"""Wspólne dane testowe; pytest automatycznie udostępnia fixture z tego pliku wszystkim testom."""
 
 import pytest
 
