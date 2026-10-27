@@ -57,6 +57,7 @@ def code_for_status(status_code: int) -> str:
     if status_code in (404, 405):
         return "NOT_FOUND"
     # Inne 4xx: nie da się odczytać przesłanych danych (np. ciało, którego FastAPI nie umie przetworzyć).
+    # Po dodaniu kont (B-11) 401 i 403 potrzebują osobnych kodów, inaczej trafią tutaj.
     if status_code < 500:
         return "INVALID_FILE"
     return "SERVER_ERROR"
