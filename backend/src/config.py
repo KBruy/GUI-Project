@@ -19,6 +19,11 @@ ALLOWED_SCENE_SIZES: dict[str, set[tuple[int, int]]] = {
     "map": {(640, 480), (1280, 960), (2048, 1536)},
     "character": {(256, 512)},
 }
+# Zakresy skali i obrotu obiektu (rozdz. 5.1 i 5.5); wartości na granicach są dozwolone.
+MIN_SCALE = 0.1
+MAX_SCALE = 10
+MIN_ROTATION = 0
+MAX_ROTATION = 360
 
 
 # @dataclass generuje konstruktor z pól klasy; frozen=True blokuje zmianę ustawień po utworzeniu.

@@ -94,6 +94,8 @@ def test_allowed_map_sizes_are_accepted(scene_data, width, height):
 @pytest.mark.parametrize(("width", "height"), [(1280, 961), (960, 1280), (256, 512), (0, 0)])
 def test_other_map_sizes_are_rejected(scene_data, width, height):
     scene_data["width"], scene_data["height"] = width, height
+    # Bez obiektów, żeby na małej scenie nie pojawił się też OBJECT_OUT_OF_BOUNDS.
+    scene_data["layers"][0]["objects"] = []
 
     assert issue_codes(scene_data) == ["INVALID_SCENE_SIZE"]
 
@@ -213,3 +215,57 @@ def test_wrong_module_and_wrong_size_are_both_reported(scene_data):
     scene_data["layers"][0]["objects"][0]["assetId"] = "character_shirt_red_01"
 
     assert issue_codes(scene_data) == ["ASSET_WRONG_MODULE", "ASSET_SIZE_MISMATCH"]
+
+
+@pytest.mark.parametrize("field", ["scaleX", "scaleY"])
+@pytest.mark.parametrize("value", [0.1, 1, 10])
+def test_scale_within_range_is_accepted(scene_data, field, value):
+    scene_data["layers"][0]["objects"][0][field] = value
+
+    assert issue_codes(scene_data) == []
+
+
+@pytest.mark.parametrize("field", ["scaleX", "scaleY"])
+@pytest.mark.parametrize("value", [0.09, 10.01, 0, -1])
+def test_scale_out_of_range_is_rejected(scene_data, field, value):
+    scene_data["layers"][0]["objects"][0][field] = value
+
+    assert issue_codes(scene_data) == ["SCALE_OUT_OF_RANGE"]
+
+
+def test_both_scales_out_of_range_give_one_issue(scene_data):
+    scene_object = scene_data["layers"][0]["objects"][0]
+    scene_object["scaleX"], scene_object["scaleY"] = 0, 11
+
+    assert issue_codes(scene_data) == ["SCALE_OUT_OF_RANGE"]
+
+
+@pytest.mark.parametrize("rotation", [0, 180.5, 360])
+def test_rotation_within_range_is_accepted(scene_data, rotation):
+    scene_data["layers"][0]["objects"][0]["rotation"] = rotation
+
+    assert issue_codes(scene_data) == []
+
+
+@pytest.mark.parametrize("rotation", [-1, -0.01, 360.01, 720])
+def test_rotation_out_of_range_is_rejected(scene_data, rotation):
+    scene_data["layers"][0]["objects"][0]["rotation"] = rotation
+
+    assert issue_codes(scene_data) == ["ROTATION_OUT_OF_RANGE"]
+
+
+# Scena z conftest.py ma 1280×960 px; środek na krawędzi lub w rogu jest dozwolony.
+@pytest.mark.parametrize(("x", "y"), [(0, 0), (1280, 960), (0, 960), (1280, 0), (640, 480)])
+def test_object_center_inside_scene_is_accepted(scene_data, x, y):
+    scene_object = scene_data["layers"][0]["objects"][0]
+    scene_object["x"], scene_object["y"] = x, y
+
+    assert issue_codes(scene_data) == []
+
+
+@pytest.mark.parametrize(("x", "y"), [(-1, 100), (100, -0.5), (1280.5, 100), (100, 961)])
+def test_object_center_outside_scene_is_rejected(scene_data, x, y):
+    scene_object = scene_data["layers"][0]["objects"][0]
+    scene_object["x"], scene_object["y"] = x, y
+
+    assert issue_codes(scene_data) == ["OBJECT_OUT_OF_BOUNDS"]
