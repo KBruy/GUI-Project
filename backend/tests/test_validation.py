@@ -11,6 +11,21 @@ def issue_codes(scene_data: dict) -> list[str]:
     return [issue.code for issue in check_scene(Scene.model_validate(scene_data))]
 
 
+def issue_dicts(scene_data: dict) -> list[dict]:
+    """Zwraca problemy znalezione przez check_scene jako słowniki, tak jak trafiają do odpowiedzi API."""
+    return [issue.to_dict() for issue in check_scene(Scene.model_validate(scene_data))]
+
+
+def duplicate_id(**where: str) -> dict:
+    """Zwraca oczekiwany problem DUPLICATE_ID; where to layerId i opcjonalnie objectId."""
+    return {"code": "DUPLICATE_ID", "messageKey": "errors.duplicateId", **where}
+
+
+def copy_object(scene_data: dict, object_id: str) -> dict:
+    """Zwraca kopię pierwszego obiektu sceny z podanym id."""
+    return {**scene_data["layers"][0]["objects"][0], "id": object_id}
+
+
 def empty_layers(count: int) -> list[dict]:
     """Zwraca podaną liczbę pustych warstw o różnych id."""
     return [
@@ -79,3 +94,44 @@ def test_eleven_layers_are_rejected(scene_data):
     scene_data["layers"] = empty_layers(11)
 
     assert issue_codes(scene_data) == ["LAYER_LIMIT"]
+
+
+def test_layers_with_same_id_are_rejected(scene_data):
+    scene_data["layers"] = empty_layers(2)
+    scene_data["layers"][1]["id"] = "l0"
+
+    assert issue_dicts(scene_data) == [duplicate_id(layerId="l0")]
+
+
+def test_objects_with_same_id_on_one_layer_are_rejected(scene_data):
+    scene_data["layers"][0]["objects"].append(copy_object(scene_data, "o1"))
+
+    assert issue_dicts(scene_data) == [duplicate_id(layerId="l1", objectId="o1")]
+
+
+def test_objects_with_same_id_on_different_layers_are_rejected(scene_data):
+    second_layer = empty_layers(1)[0]
+    second_layer["objects"].append(copy_object(scene_data, "o1"))
+    scene_data["layers"].append(second_layer)
+
+    assert issue_dicts(scene_data) == [duplicate_id(layerId="l0", objectId="o1")]
+
+
+def test_object_with_layer_id_is_rejected(scene_data):
+    scene_data["layers"][0]["objects"].append(copy_object(scene_data, "l1"))
+
+    assert issue_dicts(scene_data) == [duplicate_id(layerId="l1", objectId="l1")]
+
+
+def test_layer_with_object_id_is_rejected(scene_data):
+    second_layer = empty_layers(1)[0]
+    second_layer["id"] = "o1"
+    scene_data["layers"].append(second_layer)
+
+    assert issue_dicts(scene_data) == [duplicate_id(layerId="o1")]
+
+
+def test_each_repeated_id_is_reported(scene_data):
+    scene_data["layers"][0]["objects"] += [copy_object(scene_data, "o1"), copy_object(scene_data, "o1")]
+
+    assert issue_codes(scene_data) == ["DUPLICATE_ID", "DUPLICATE_ID"]
