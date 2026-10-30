@@ -269,3 +269,34 @@ def test_object_center_outside_scene_is_rejected(scene_data, x, y):
     scene_object["x"], scene_object["y"] = x, y
 
     assert issue_codes(scene_data) == ["OBJECT_OUT_OF_BOUNDS"]
+
+
+def test_all_issues_are_reported_at_once(scene_data):
+    missing_asset = {**copy_object(scene_data, "o1"), "assetId": "map_tree_missing"}
+    wrong_asset = {**copy_object(scene_data, "o2"), "assetId": "character_shirt_red_01"}
+    wrong_placement = {**copy_object(scene_data, "o3"), "scaleX": 0, "rotation": 400, "x": 2000}
+    repeated_id = copy_object(scene_data, "o1")
+
+    scene_data["schemaVersion"] = 2
+    scene_data["name"] = "   "
+    scene_data["width"] = 1000
+    scene_data["layers"] = empty_layers(11)
+    scene_data["layers"][0]["objects"] = [missing_asset, wrong_asset, wrong_placement]
+    scene_data["layers"][1]["id"] = "l0"
+    scene_data["layers"][2]["objects"] = [repeated_id]
+
+    # Kolejność: najpierw cała scena, potem powtórzone id, na końcu obiekty po kolei.
+    assert issue_dicts(scene_data) == [
+        {"code": "UNSUPPORTED_SCHEMA_VERSION", "messageKey": "errors.unsupportedSchemaVersion"},
+        {"code": "NAME_REQUIRED", "messageKey": "errors.nameRequired"},
+        {"code": "INVALID_SCENE_SIZE", "messageKey": "errors.invalidSceneSize"},
+        {"code": "LAYER_LIMIT", "messageKey": "errors.layerLimit"},
+        {"code": "DUPLICATE_ID", "messageKey": "errors.duplicateId", "layerId": "l0"},
+        {"code": "DUPLICATE_ID", "messageKey": "errors.duplicateId", "layerId": "l2", "objectId": "o1"},
+        {"code": "ASSET_NOT_FOUND", "messageKey": "errors.assetNotFound", "layerId": "l0", "objectId": "o1"},
+        {"code": "ASSET_WRONG_MODULE", "messageKey": "errors.assetWrongModule", "layerId": "l0", "objectId": "o2"},
+        {"code": "ASSET_SIZE_MISMATCH", "messageKey": "errors.assetSizeMismatch", "layerId": "l0", "objectId": "o2"},
+        {"code": "SCALE_OUT_OF_RANGE", "messageKey": "errors.scaleOutOfRange", "layerId": "l0", "objectId": "o3"},
+        {"code": "ROTATION_OUT_OF_RANGE", "messageKey": "errors.rotationOutOfRange", "layerId": "l0", "objectId": "o3"},
+        {"code": "OBJECT_OUT_OF_BOUNDS", "messageKey": "errors.objectOutOfBounds", "layerId": "l0", "objectId": "o3"},
+    ]
