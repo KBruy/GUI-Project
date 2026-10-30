@@ -11,6 +11,15 @@ from dataclasses import dataclass
 # Domyślny adres serwera deweloperskiego Vite.
 DEFAULT_CLIENT_ORIGIN = "http://localhost:5173"
 
+# Stałe reguł poprawności sceny (rozdz. 5.5); używa ich services/validation.py.
+SUPPORTED_SCHEMA_VERSION = 1
+MAX_LAYERS = 10
+# Dozwolone rozmiary płótna (szerokość, wysokość) dla każdego typu sceny.
+ALLOWED_SCENE_SIZES: dict[str, set[tuple[int, int]]] = {
+    "map": {(640, 480), (1280, 960), (2048, 1536)},
+    "character": {(256, 512)},
+}
+
 
 # @dataclass generuje konstruktor z pól klasy; frozen=True blokuje zmianę ustawień po utworzeniu.
 @dataclass(frozen=True)
