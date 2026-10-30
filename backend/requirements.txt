@@ -1,3 +1,5 @@
 # Zależności potrzebne do uruchomienia serwera.
 fastapi==0.115.6
+# Modele i walidacja danych. Przypięta, bo FastAPI dopuszcza wiele wersji i każdy mógłby mieć inną.
+pydantic==2.14.1
 uvicorn[standard]==0.32.1

@@ -1,4 +1,4 @@
-"""Punkt startowy backendu: tworzy aplikację FastAPI i dołącza do niej routery.
+"""Punkt startowy backendu: tworzy aplikację FastAPI, dołącza routery i handlery błędów.
 
 Uruchomienie (z folderu backend/):
     uvicorn src.main:app --reload --port 8000 --env-file .env
@@ -10,6 +10,7 @@ from fastapi.middleware.cors import CORSMiddleware
 
 from src.api import health
 from src.config import Settings, load_settings
+from src.error_handlers import register_error_handlers
 
 
 def create_app(settings: Settings | None = None) -> FastAPI:
@@ -18,6 +19,10 @@ def create_app(settings: Settings | None = None) -> FastAPI:
         settings = load_settings()
 
     app = FastAPI(title="WorldSmith API")
+
+    # Handlery błędów przed CORS: middleware dodane później obejmuje wcześniejsze,
+    # więc CORS dopisuje swoje nagłówki także do odpowiedzi 500.
+    register_error_handlers(app)
 
     # CORS: przeglądarka blokuje zapytania z innego adresu (frontend :5173, backend :8000).
     # Middleware działa przy każdym zapytaniu i dopisuje nagłówki zezwalające adresom z listy.
