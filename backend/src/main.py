@@ -7,6 +7,7 @@ Uruchomienie (z folderu backend/):
 
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.staticfiles import StaticFiles
 
 from src.api import assets, health
 from src.config import Settings, load_settings
@@ -40,6 +41,13 @@ def create_app(settings: Settings | None = None) -> FastAPI:
     # include_router dołącza endpointy zdefiniowane w osobnym pliku (jeden plik na temat).
     app.include_router(health.router)
     app.include_router(assets.router)
+
+    # Pliki PNG assetów są serwowane bez osobnego endpointu: /static/assets/<file> → storage/assets/<file>.
+    assets_dir = settings.storage_dir / "assets"
+    # StaticFiles wymaga istniejącego folderu; przy pierwszym uruchomieniu jest tworzony pusty.
+    assets_dir.mkdir(parents=True, exist_ok=True)
+    # mount podpina pod ścieżką osobną aplikację, tu gotowy serwer plików z folderu.
+    app.mount("/static/assets", StaticFiles(directory=assets_dir), name="assets")
     return app
 
 
