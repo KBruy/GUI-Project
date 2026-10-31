@@ -8,8 +8,9 @@ Uruchomienie (z folderu backend/):
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
-from src.api import health
+from src.api import assets, health
 from src.config import Settings, load_settings
+from src.deps import build_asset_repository
 from src.error_handlers import register_error_handlers
 
 
@@ -33,8 +34,12 @@ def create_app(settings: Settings | None = None) -> FastAPI:
         allow_headers=["*"],
     )
 
+    # app.state przechowuje obiekty wspólne dla całej aplikacji; endpointy dostają je przez deps.py.
+    app.state.asset_repository = build_asset_repository(settings)
+
     # include_router dołącza endpointy zdefiniowane w osobnym pliku (jeden plik na temat).
     app.include_router(health.router)
+    app.include_router(assets.router)
     return app
 
 
