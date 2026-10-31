@@ -24,7 +24,7 @@ export default tseslint.config(
   },
   // Icon.tsx to jedyne miejsce, gdzie @pxlkit jest dozwolone
   {
-    files: ['src/shared/components/ui/Icon.tsx'],
+    files: ['src/shared/components/ui/Icon/Icon.tsx'],
     rules: { 'no-restricted-imports': 'off' },
   },
 )

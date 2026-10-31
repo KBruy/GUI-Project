@@ -1,5 +1,9 @@
-/* latin-ext covers Polish characters: ą ć ę ł ń ó ś ź ż */
+/* latin: basic Latin + Latin-1 Supplement (U+0000–00FF) — zawiera m.in. ó Ó
+   latin-ext: Latin Extended-A/B (U+0100–024F) — zawiera ą ć ę ł ń ś ź ż i wielkie
+   Oba subsety są potrzebne dla pełnego pokrycia polskich znaków. */
+@import '@fontsource/press-start-2p/latin.css';
 @import '@fontsource/press-start-2p/latin-ext.css';
+@import '@fontsource/vt323/latin.css';
 @import '@fontsource/vt323/latin-ext.css';
 
 *,

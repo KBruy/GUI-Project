@@ -1,0 +1,9 @@
+.group {
+  display: inline-flex;
+  gap: 0;
+}
+
+/* Środkowe przyciski: brak prawej ramki żeby unikać podwójnej granicy między opcjami */
+.group > :not(:last-child) {
+  border-right: none;
+}
