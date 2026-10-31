@@ -3,7 +3,7 @@
 import pytest
 from fastapi.testclient import TestClient
 
-from src.config import DEFAULT_DATABASE_URL, Settings, load_settings, parse_origins
+from src.config import BACKEND_DIR, DEFAULT_DATABASE_URL, Settings, load_settings, parse_origins
 from src.main import create_app
 
 FRONTEND = "http://localhost:5173"
@@ -63,3 +63,12 @@ def test_load_settings_uses_default_database_url(monkeypatch):
     monkeypatch.delenv("DATABASE_URL", raising=False)
 
     assert load_settings().database_url == DEFAULT_DATABASE_URL
+
+
+def test_default_storage_dir_is_inside_backend():
+    assert load_settings().storage_dir == BACKEND_DIR / "storage"
+
+
+def test_default_assets_manifest_points_to_assets_folder():
+    # Manifest leży w folderze assets/ w katalogu głównym repozytorium, obok backend/.
+    assert load_settings().assets_manifest == BACKEND_DIR.parent / "assets" / "manifest.json"
