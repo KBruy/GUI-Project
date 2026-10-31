@@ -20,7 +20,8 @@ def load_manifest(path: Path) -> list[Asset]:
     """
     if not path.exists():
         return []
-    return ASSET_LIST.validate_json(path.read_bytes())
+    # utf-8-sig pomija znacznik BOM, który na Windows dopisują np. Notatnik i PowerShell 5.1.
+    return ASSET_LIST.validate_json(path.read_text(encoding="utf-8-sig"))
 
 
 class InMemoryAssetRepository:

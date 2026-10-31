@@ -37,6 +37,13 @@ def test_load_manifest_rejects_invalid_entry(tmp_path):
         load_manifest(manifest)
 
 
+def test_load_manifest_accepts_utf8_bom(tmp_path, assets_manifest):
+    manifest = tmp_path / "manifest.json"
+    manifest.write_bytes(b"\xef\xbb\xbf" + assets_manifest.read_bytes())
+
+    assert len(load_manifest(manifest)) == 3
+
+
 def test_list_assets_without_filters_returns_all(repo):
     assert ids(repo.list_assets()) == ["map_tree_oak_01", "map_rock_01", "character_hair_short_01"]
 
