@@ -1,5 +1,7 @@
 """Testy repozytoriów w pamięci: odczyt manifestu i filtrowanie assetów."""
 
+import json
+
 import pytest
 from pydantic import ValidationError
 
@@ -42,6 +44,16 @@ def test_load_manifest_accepts_utf8_bom(tmp_path, assets_manifest):
     manifest.write_bytes(b"\xef\xbb\xbf" + assets_manifest.read_bytes())
 
     assert len(load_manifest(manifest)) == 3
+
+
+def test_load_manifest_rejects_duplicate_ids(tmp_path, assets_manifest):
+    entries = json.loads(assets_manifest.read_text(encoding="utf-8"))
+    manifest = tmp_path / "manifest.json"
+    manifest.write_text(json.dumps([*entries, entries[1]]), encoding="utf-8")
+
+    # match sprawdza, czy komunikat błędu wskazuje powtórzone id.
+    with pytest.raises(ValueError, match="map_rock_01"):
+        load_manifest(manifest)
 
 
 def test_list_assets_without_filters_returns_all(repo):

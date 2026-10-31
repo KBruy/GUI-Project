@@ -14,14 +14,25 @@ ASSET_LIST = TypeAdapter(list[Asset])
 
 
 def load_manifest(path: Path) -> list[Asset]:
-    """Czyta manifest i zwraca listę assetów; błędny wpis zgłasza ValidationError.
+    """Czyta manifest i zwraca listę assetów; błędny wpis zgłasza ValidationError, powtórzone id ValueError.
 
     Brak pliku oznacza pustą bibliotekę, żeby serwer startował, zanim pojawią się pierwsze assety.
     """
     if not path.exists():
         return []
     # utf-8-sig pomija znacznik BOM, który na Windows dopisują np. Notatnik i PowerShell 5.1.
-    return ASSET_LIST.validate_json(path.read_text(encoding="utf-8-sig"))
+    assets = ASSET_LIST.validate_json(path.read_text(encoding="utf-8-sig"))
+    check_unique_ids(assets)
+    return assets
+
+
+def check_unique_ids(assets: list[Asset]) -> None:
+    """Zgłasza ValueError, gdy dwa assety mają to samo id; scena odwołuje się do assetu tylko przez id."""
+    seen: set[str] = set()
+    for asset in assets:
+        if asset.id in seen:
+            raise ValueError(f"Powtórzone id assetu w manifeście: {asset.id}")
+        seen.add(asset.id)
 
 
 class InMemoryAssetRepository:
