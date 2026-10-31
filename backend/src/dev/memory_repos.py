@@ -1,0 +1,38 @@
+"""Repozytoria w pamięci: pozwalają uruchomić API i testy bez bazy danych.
+
+Assety pochodzą z pliku manifest.json, który jest listą obiektów Asset w JSON.
+"""
+
+from pathlib import Path
+
+from pydantic import TypeAdapter
+
+from src.schemas.asset import Asset
+
+# TypeAdapter sprawdza typ, który nie jest modelem Pydantic (tu: lista Asset), według tych samych reguł co model.
+ASSET_LIST = TypeAdapter(list[Asset])
+
+
+def load_manifest(path: Path) -> list[Asset]:
+    """Czyta manifest i zwraca listę assetów; błędny wpis zgłasza ValidationError.
+
+    Brak pliku oznacza pustą bibliotekę, żeby serwer startował, zanim pojawią się pierwsze assety.
+    """
+    if not path.exists():
+        return []
+    return ASSET_LIST.validate_json(path.read_bytes())
+
+
+class InMemoryAssetRepository:
+    """Biblioteka assetów trzymana w liście; spełnia interfejs AssetRepository z ports.py."""
+
+    def __init__(self, assets: list[Asset]):
+        self._assets = list(assets)
+
+    def list_assets(self, module: str | None = None, category: str | None = None) -> list[Asset]:
+        """Zwraca assety w kolejności z manifestu, pasujące do podanych filtrów."""
+        return [
+            asset
+            for asset in self._assets
+            if (module is None or asset.module == module) and (category is None or asset.category == category)
+        ]
