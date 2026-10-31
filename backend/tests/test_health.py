@@ -3,7 +3,7 @@
 import pytest
 from fastapi.testclient import TestClient
 
-from src.config import Settings, load_settings, parse_origins
+from src.config import DEFAULT_DATABASE_URL, Settings, load_settings, parse_origins
 from src.main import create_app
 
 FRONTEND = "http://localhost:5173"
@@ -51,3 +51,15 @@ def test_load_settings_uses_default_without_env(monkeypatch):
     monkeypatch.delenv("CLIENT_ORIGIN", raising=False)
 
     assert load_settings().client_origins == [FRONTEND]
+
+#Testy 2 scenariuszy dla bazy danych: odczyt z env i użycie domyślnego URL, jeśli zmienna nie jest ustawiona.
+def test_load_settings_reads_database_url(monkeypatch):
+    monkeypatch.setenv("DATABASE_URL", "postgresql+psycopg://a:b@host:1/db")
+
+    assert load_settings().database_url == "postgresql+psycopg://a:b@host:1/db"
+
+
+def test_load_settings_uses_default_database_url(monkeypatch):
+    monkeypatch.delenv("DATABASE_URL", raising=False)
+
+    assert load_settings().database_url == DEFAULT_DATABASE_URL

@@ -3,3 +3,5 @@ fastapi==0.115.6
 # Modele i walidacja danych. Przypięta, bo FastAPI dopuszcza wiele wersji i każdy mógłby mieć inną.
 pydantic==2.14.1
 uvicorn[standard]==0.32.1
+SQLAlchemy==2.1.6
+psycopg[binary]==3.3.6

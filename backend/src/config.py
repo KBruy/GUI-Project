@@ -10,12 +10,14 @@ from dataclasses import dataclass
 
 # Domyślny adres serwera deweloperskiego Vite.
 DEFAULT_CLIENT_ORIGIN = "http://localhost:5173"
+DEFAULT_DATABASE_URL = "postgresql+psycopg://worldsmith:worldsmith@localhost:5432/worldsmith"
 
 
 # @dataclass generuje konstruktor z pól klasy; frozen=True blokuje zmianę ustawień po utworzeniu.
 @dataclass(frozen=True)
 class Settings:
     client_origins: list[str]
+    database_url: str = DEFAULT_DATABASE_URL
 
 
 def parse_origins(raw: str) -> list[str]:
@@ -27,4 +29,5 @@ def load_settings() -> Settings:
     """Czyta zmienne środowiskowe i buduje z nich Settings."""
     return Settings(
         client_origins=parse_origins(os.getenv("CLIENT_ORIGIN", DEFAULT_CLIENT_ORIGIN)),
+        database_url=os.getenv("DATABASE_URL", DEFAULT_DATABASE_URL),
     )
