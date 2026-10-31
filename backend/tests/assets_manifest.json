@@ -18,11 +18,11 @@
     "height": 32
   },
   {
-    "id": "character_hair_short_01",
+    "id": "char_hair_short_01",
     "module": "character",
     "category": "hair",
     "nameKey": "assets.character.hair_short",
-    "file": "character/hair/character_hair_short_01.png",
+    "file": "character/hair/char_hair_short_01.png",
     "width": 256,
     "height": 512
   }

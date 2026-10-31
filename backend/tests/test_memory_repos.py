@@ -21,7 +21,7 @@ def ids(assets: list[Asset]) -> list[str]:
 def test_load_manifest_reads_all_assets(assets_manifest):
     assets = load_manifest(assets_manifest)
 
-    assert ids(assets) == ["map_tree_oak_01", "map_rock_01", "character_hair_short_01"]
+    assert ids(assets) == ["map_tree_oak_01", "map_rock_01", "char_hair_short_01"]
     assert assets[0].width == 64
     assert assets[0].file == "map/trees/map_tree_oak_01.png"
 
@@ -57,7 +57,7 @@ def test_load_manifest_rejects_duplicate_ids(tmp_path, assets_manifest):
 
 
 def test_list_assets_without_filters_returns_all(repo):
-    assert ids(repo.list_assets()) == ["map_tree_oak_01", "map_rock_01", "character_hair_short_01"]
+    assert ids(repo.list_assets()) == ["map_tree_oak_01", "map_rock_01", "char_hair_short_01"]
 
 
 def test_list_assets_filters_by_module(repo):
@@ -65,7 +65,7 @@ def test_list_assets_filters_by_module(repo):
 
 
 def test_list_assets_filters_by_category(repo):
-    assert ids(repo.list_assets(category="hair")) == ["character_hair_short_01"]
+    assert ids(repo.list_assets(category="hair")) == ["char_hair_short_01"]
 
 
 def test_list_assets_filters_by_module_and_category(repo):

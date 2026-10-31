@@ -43,7 +43,7 @@ def test_list_assets_returns_all_assets_with_all_fields(client):
     response = client.get("/api/assets")
 
     assert response.status_code == 200
-    assert ids(response) == ["map_tree_oak_01", "map_rock_01", "character_hair_short_01"]
+    assert ids(response) == ["map_tree_oak_01", "map_rock_01", "char_hair_short_01"]
     assert response.json()[0] == {
         "id": "map_tree_oak_01",
         "module": "map",
@@ -58,7 +58,7 @@ def test_list_assets_returns_all_assets_with_all_fields(client):
 def test_list_assets_filters_by_module(client):
     response = client.get("/api/assets", params={"module": "character"})
 
-    assert ids(response) == ["character_hair_short_01"]
+    assert ids(response) == ["char_hair_short_01"]
 
 
 def test_list_assets_filters_by_module_and_category(client):
