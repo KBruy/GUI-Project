@@ -1,4 +1,4 @@
-"""Reguły poprawności sceny (rozdz. 5.5 dokumentu technicznego).
+"""Reguły poprawności sceny.
 
 check_scene to czysta funkcja: nie zmienia sceny, nie korzysta z bazy ani z HTTP i zwraca wszystkie problemy naraz.
 Kształt i typy pól sprawdzają wcześniej modele Pydantic (src/schemas/).

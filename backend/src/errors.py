@@ -1,6 +1,6 @@
 """Kody i klucze błędów API oraz wyjątek AppError.
 
-Każdy błąd API ma kształt {"error": {"code", "messageKey", "details"}} (rozdz. 5.6 dokumentu technicznego).
+Każdy błąd API ma kształt {"error": {"code", "messageKey", "details"}}.
 messageKey to klucz tłumaczenia; tekst komunikatu wyświetla frontend ze swojego słownika.
 """
 
@@ -16,7 +16,7 @@ MESSAGE_KEYS: dict[str, str] = {
     "NOT_FOUND": "errors.notFound",
     # Problemy z kształtem danych (zły typ, brak pola, nieznane pole).
     "INVALID_FIELD": "errors.invalidField",
-    # Reguły poprawności sceny (rozdz. 5.5); sprawdza je services/validation.py.
+    # Reguły poprawności sceny; sprawdza je services/validation.py.
     "UNSUPPORTED_SCHEMA_VERSION": "errors.unsupportedSchemaVersion",
     "NAME_REQUIRED": "errors.nameRequired",
     "INVALID_SCENE_SIZE": "errors.invalidSceneSize",

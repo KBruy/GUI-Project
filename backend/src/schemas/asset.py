@@ -1,4 +1,4 @@
-"""Model assetu: wpis z assets/manifest.json (rozdz. 5.4 dokumentu technicznego)."""
+"""Model assetu: wpis z assets/manifest.json."""
 
 from typing import Literal
 

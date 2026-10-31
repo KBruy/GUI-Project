@@ -20,7 +20,7 @@ DEFAULT_STORAGE_DIR = BACKEND_DIR / "storage"
 # Lista wszystkich assetów biblioteki (JSON: lista obiektów Asset).
 DEFAULT_ASSETS_MANIFEST = BACKEND_DIR.parent / "assets" / "manifest.json"
 
-# Stałe reguł poprawności sceny (rozdz. 5.5); używa ich services/validation.py.
+# Stałe reguł poprawności sceny; używa ich services/validation.py.
 SUPPORTED_SCHEMA_VERSION = 1
 MAX_LAYERS = 10
 # Dozwolone rozmiary płótna (szerokość, wysokość) dla każdego typu sceny.
@@ -28,7 +28,7 @@ ALLOWED_SCENE_SIZES: dict[str, set[tuple[int, int]]] = {
     "map": {(640, 480), (1280, 960), (2048, 1536)},
     "character": {(256, 512)},
 }
-# Zakresy skali i obrotu obiektu (rozdz. 5.1 i 5.5); wartości na granicach są dozwolone.
+# Zakresy skali i obrotu obiektu; wartości na granicach są dozwolone.
 MIN_SCALE = 0.1
 MAX_SCALE = 10
 MIN_ROTATION = 0

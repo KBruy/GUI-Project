@@ -1,4 +1,4 @@
-"""Wspólna klasa bazowa modeli kontraktu danych (rozdz. 5 dokumentu technicznego)."""
+"""Wspólna klasa bazowa modeli kontraktu danych."""
 
 from pydantic import BaseModel, ConfigDict
 

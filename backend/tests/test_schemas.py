@@ -92,7 +92,7 @@ def test_background_color_rejects_other_formats(scene_data, color):
 
 
 def test_rules_are_not_checked_by_model(scene_data):
-    # Reguły z rozdz. 5.5 sprawdza services/validation.py; model przepuszcza poprawny kształt.
+    # Reguły poprawności sprawdza services/validation.py; model przepuszcza poprawny kształt.
     scene_data["schemaVersion"] = 2
     scene_data["name"] = ""
     scene_data["layers"][0]["objects"][0]["scaleX"] = 50

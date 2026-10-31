@@ -1,4 +1,4 @@
-"""Modele sceny: Scene, Layer, SceneObject (rozdz. 5.2 dokumentu technicznego).
+"""Modele sceny: Scene, Layer, SceneObject.
 
 Modele sprawdzają tylko pola i ich typy. Reguły (limit warstw, zakres skali, granice sceny itd.)
 sprawdza services/validation.py.
