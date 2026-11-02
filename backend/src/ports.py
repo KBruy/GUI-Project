@@ -13,5 +13,8 @@ class AssetRepository(Protocol):
     """Biblioteka assetów (tylko odczyt)."""
 
     def list_assets(self, module: str | None = None, category: str | None = None) -> list[Asset]:
-        """Zwraca assety; None w filtrze oznacza brak filtrowania po tym polu."""
+        """Zwraca assety; None w filtrze oznacza brak filtrowania po tym polu.
+
+        Kolejność jest stała: kategorie w ustalonej kolejności biblioteki, a w kategorii assety posortowane po id.
+        """
         ...

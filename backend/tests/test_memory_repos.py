@@ -18,6 +18,30 @@ def ids(assets: list[Asset]) -> list[str]:
     return [asset.id for asset in assets]
 
 
+def map_asset(asset_id: str, category: str) -> Asset:
+    """Tworzy asset mapy; w testach kolejności liczą się tylko id i kategoria."""
+    return Asset(
+        id=asset_id,
+        module="map",
+        category=category,
+        nameKey=f"assets.map.{asset_id}",
+        file=f"map/{category}/{asset_id}.png",
+        width=32,
+        height=32,
+    )
+
+
+def test_list_assets_keeps_category_order_and_sorts_by_id_within_category():
+    repo = InMemoryAssetRepository([
+        map_asset("map_rock_02", "rocks"),
+        map_asset("map_tree_pine_01", "trees"),
+        map_asset("map_rock_01", "rocks"),
+        map_asset("map_tree_oak_01", "trees"),
+    ])
+
+    assert ids(repo.list_assets()) == ["map_rock_01", "map_rock_02", "map_tree_oak_01", "map_tree_pine_01"]
+
+
 def test_load_manifest_reads_all_assets(assets_manifest):
     assets = load_manifest(assets_manifest)
 

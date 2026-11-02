@@ -35,14 +35,24 @@ def check_unique_ids(assets: list[Asset]) -> None:
         seen.add(asset.id)
 
 
+def sort_assets(assets: list[Asset]) -> list[Asset]:
+    """Układa assety: kategorie w kolejności pierwszego wystąpienia w manifeście, w kategorii po id."""
+    category_order: dict[str, int] = {}
+    for asset in assets:
+        # setdefault dopisuje tylko kategorie, których jeszcze nie ma, więc zostaje numer pierwszego wystąpienia.
+        category_order.setdefault(asset.category, len(category_order))
+    return sorted(assets, key=lambda asset: (category_order[asset.category], asset.id))
+
+
 class InMemoryAssetRepository:
     """Biblioteka assetów trzymana w liście; spełnia interfejs AssetRepository z ports.py."""
 
     def __init__(self, assets: list[Asset]):
-        self._assets = list(assets)
+        # Sortowanie raz, przy tworzeniu; filtrowanie zachowuje tę kolejność.
+        self._assets = sort_assets(assets)
 
     def list_assets(self, module: str | None = None, category: str | None = None) -> list[Asset]:
-        """Zwraca assety w kolejności z manifestu, pasujące do podanych filtrów."""
+        """Zwraca assety pasujące do podanych filtrów, w kolejności z sort_assets."""
         return [
             asset
             for asset in self._assets
