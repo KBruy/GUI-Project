@@ -9,10 +9,7 @@ from typing import Annotated, Literal
 
 from pydantic import BeforeValidator, Field
 
-from src.schemas.base import ContractModel
-
-# Literal dopuszcza tylko wymienione wartości; inna wartość to błąd walidacji.
-SceneType = Literal["map", "character"]
+from src.schemas.base import ContractModel, Module
 
 
 def parse_iso_datetime(value: object) -> datetime:
@@ -71,7 +68,7 @@ class Scene(ContractModel):
     # Dowolna liczba całkowita; wersję inną niż 1 zgłasza walidacja reguł (UNSUPPORTED_SCHEMA_VERSION).
     schemaVersion: int
     id: str
-    type: SceneType
+    type: Module
     name: str
     width: int
     height: int

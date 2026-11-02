@@ -1,6 +1,12 @@
-"""Wspólna klasa bazowa modeli kontraktu danych."""
+"""Wspólna klasa bazowa modeli kontraktu danych i typy używane w kilku modelach."""
+
+from typing import Literal
 
 from pydantic import BaseModel, ConfigDict
+
+# Literal dopuszcza tylko wymienione wartości; inna wartość to błąd walidacji.
+# Moduł edytora: typ sceny, moduł assetu i filtr listy assetów.
+Module = Literal["map", "character"]
 
 
 class ContractModel(BaseModel):
