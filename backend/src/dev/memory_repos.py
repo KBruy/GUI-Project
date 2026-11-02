@@ -36,12 +36,8 @@ def check_unique_ids(assets: list[Asset]) -> None:
 
 
 def sort_assets(assets: list[Asset]) -> list[Asset]:
-    """Układa assety: kategorie w kolejności pierwszego wystąpienia w manifeście, w kategorii po id."""
-    category_order: dict[str, int] = {}
-    for asset in assets:
-        # setdefault dopisuje tylko kategorie, których jeszcze nie ma, więc zostaje numer pierwszego wystąpienia.
-        category_order.setdefault(asset.category, len(category_order))
-    return sorted(assets, key=lambda asset: (category_order[asset.category], asset.id))
+    """Układa assety po module, kategorii i id; ta sama kolejność co ORDER BY w repozytorium bazodanowym."""
+    return sorted(assets, key=lambda asset: (asset.module, asset.category, asset.id))
 
 
 class InMemoryAssetRepository:

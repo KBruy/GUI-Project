@@ -18,28 +18,35 @@ def ids(assets: list[Asset]) -> list[str]:
     return [asset.id for asset in assets]
 
 
-def map_asset(asset_id: str, category: str) -> Asset:
-    """Tworzy asset mapy; w testach kolejności liczą się tylko id i kategoria."""
+def make_asset(asset_id: str, module: str, category: str) -> Asset:
+    """Tworzy asset; w testach kolejności liczą się tylko id, moduł i kategoria."""
     return Asset(
         id=asset_id,
-        module="map",
+        module=module,
         category=category,
-        nameKey=f"assets.map.{asset_id}",
-        file=f"map/{category}/{asset_id}.png",
+        nameKey=f"assets.{module}.{asset_id}",
+        file=f"{module}/{category}/{asset_id}.png",
         width=32,
         height=32,
     )
 
 
-def test_list_assets_keeps_category_order_and_sorts_by_id_within_category():
+def test_list_assets_sorts_by_module_then_category_then_id():
     repo = InMemoryAssetRepository([
-        map_asset("map_rock_02", "rocks"),
-        map_asset("map_tree_pine_01", "trees"),
-        map_asset("map_rock_01", "rocks"),
-        map_asset("map_tree_oak_01", "trees"),
+        make_asset("map_tree_pine_01", "map", "trees"),
+        make_asset("map_rock_02", "map", "rocks"),
+        make_asset("char_hair_short_01", "character", "hair"),
+        make_asset("map_tree_oak_01", "map", "trees"),
+        make_asset("map_rock_01", "map", "rocks"),
     ])
 
-    assert ids(repo.list_assets()) == ["map_rock_01", "map_rock_02", "map_tree_oak_01", "map_tree_pine_01"]
+    assert ids(repo.list_assets()) == [
+        "char_hair_short_01",
+        "map_rock_01",
+        "map_rock_02",
+        "map_tree_oak_01",
+        "map_tree_pine_01",
+    ]
 
 
 def test_load_manifest_reads_all_assets(assets_manifest):
@@ -81,11 +88,11 @@ def test_load_manifest_rejects_duplicate_ids(tmp_path, assets_manifest):
 
 
 def test_list_assets_without_filters_returns_all(repo):
-    assert ids(repo.list_assets()) == ["map_tree_oak_01", "map_rock_01", "char_hair_short_01"]
+    assert ids(repo.list_assets()) == ["char_hair_short_01", "map_rock_01", "map_tree_oak_01"]
 
 
 def test_list_assets_filters_by_module(repo):
-    assert ids(repo.list_assets(module="map")) == ["map_tree_oak_01", "map_rock_01"]
+    assert ids(repo.list_assets(module="map")) == ["map_rock_01", "map_tree_oak_01"]
 
 
 def test_list_assets_filters_by_category(repo):

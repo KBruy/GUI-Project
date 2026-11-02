@@ -15,6 +15,6 @@ class AssetRepository(Protocol):
     def list_assets(self, module: str | None = None, category: str | None = None) -> list[Asset]:
         """Zwraca assety; None w filtrze oznacza brak filtrowania po tym polu.
 
-        Kolejność jest stała: kategorie w ustalonej kolejności biblioteki, a w kategorii assety posortowane po id.
+        Kolejność jest stała: alfabetycznie po module, potem po kategorii, potem po id.
         """
         ...
