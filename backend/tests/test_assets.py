@@ -13,24 +13,27 @@ from src.main import create_app
 FAKE_PNG = b"\x89PNG fake-image-data"
 
 
-@pytest.fixture
-def storage_dir(tmp_path) -> Path:
-    return tmp_path / "storage"
+def make_client(manifest: Path) -> TestClient:
+    return TestClient(create_app(Settings(client_origins=["http://localhost:5173"], assets_manifest=manifest)))
 
 
 @pytest.fixture
-def client(assets_manifest, storage_dir) -> TestClient:
-    settings = Settings(
-        client_origins=["http://localhost:5173"],
-        assets_manifest=assets_manifest,
-        storage_dir=storage_dir,
-    )
-    return TestClient(create_app(settings))
+def assets_dir(tmp_path, assets_manifest) -> Path:
+    """Zwraca tymczasowy folder assetów z kopią manifestu testowego; serwer plików wystawia cały ten folder."""
+    folder = tmp_path / "assets"
+    folder.mkdir()
+    (folder / "manifest.json").write_bytes(assets_manifest.read_bytes())
+    return folder
 
 
-def put_png(storage_dir: Path, file: str) -> None:
-    """Zapisuje FAKE_PNG w storage/assets pod ścieżką z pola file assetu."""
-    path = storage_dir / "assets" / file
+@pytest.fixture
+def client(assets_dir) -> TestClient:
+    return make_client(assets_dir / "manifest.json")
+
+
+def put_png(assets_dir: Path, file: str) -> None:
+    """Zapisuje FAKE_PNG w folderze assetów pod ścieżką z pola file assetu."""
+    path = assets_dir / file
     path.parent.mkdir(parents=True, exist_ok=True)
     path.write_bytes(FAKE_PNG)
 
@@ -87,12 +90,14 @@ def test_list_assets_rejects_unknown_module(client):
     }
 
 
-def test_app_creates_empty_assets_folder_on_start(client, storage_dir):
-    assert (storage_dir / "assets").is_dir()
+def test_app_creates_missing_assets_folder_on_start(tmp_path):
+    make_client(tmp_path / "assets" / "manifest.json")
+
+    assert (tmp_path / "assets").is_dir()
 
 
-def test_png_is_served_under_asset_file_path(client, storage_dir):
-    put_png(storage_dir, "map/trees/map_tree_oak_01.png")
+def test_png_is_served_from_manifest_folder_under_file_path(client, assets_dir):
+    put_png(assets_dir, "map/trees/map_tree_oak_01.png")
 
     response = client.get("/static/assets/map/trees/map_tree_oak_01.png")
 
@@ -101,9 +106,9 @@ def test_png_is_served_under_asset_file_path(client, storage_dir):
     assert response.content == FAKE_PNG
 
 
-def test_png_response_allows_frontend_origin(client, storage_dir):
+def test_png_response_allows_frontend_origin(client, assets_dir):
     # Nagłówek CORS pozwala frontendowi czytać piksele obrazka narysowanego na canvasie.
-    put_png(storage_dir, "map/rocks/map_rock_01.png")
+    put_png(assets_dir, "map/rocks/map_rock_01.png")
 
     response = client.get("/static/assets/map/rocks/map_rock_01.png", headers={"Origin": "http://localhost:5173"})
 

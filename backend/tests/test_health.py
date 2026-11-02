@@ -65,10 +65,6 @@ def test_load_settings_uses_default_database_url(monkeypatch):
     assert load_settings().database_url == DEFAULT_DATABASE_URL
 
 
-def test_default_storage_dir_is_inside_backend():
-    assert load_settings().storage_dir == BACKEND_DIR / "storage"
-
-
 def test_default_assets_manifest_points_to_assets_folder():
     # Manifest leży w folderze assets/ w katalogu głównym repozytorium, obok backend/.
     assert load_settings().assets_manifest == BACKEND_DIR.parent / "assets" / "manifest.json"

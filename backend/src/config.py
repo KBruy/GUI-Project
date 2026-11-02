@@ -15,8 +15,6 @@ DEFAULT_DATABASE_URL = "postgresql+psycopg://worldsmith:worldsmith@localhost:543
 
 # Ścieżki liczone od położenia tego pliku, więc nie zależą od folderu, z którego startuje serwer.
 BACKEND_DIR = Path(__file__).resolve().parent.parent
-# Pliki na dysku serwera; PNG assetów leżą w podfolderze assets/.
-DEFAULT_STORAGE_DIR = BACKEND_DIR / "storage"
 # Lista wszystkich assetów biblioteki (JSON: lista obiektów Asset).
 DEFAULT_ASSETS_MANIFEST = BACKEND_DIR.parent / "assets" / "manifest.json"
 
@@ -40,7 +38,6 @@ MAX_ROTATION = 360
 class Settings:
     client_origins: list[str]
     database_url: str = DEFAULT_DATABASE_URL
-    storage_dir: Path = DEFAULT_STORAGE_DIR
     assets_manifest: Path = DEFAULT_ASSETS_MANIFEST
 
 
