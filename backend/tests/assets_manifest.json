@@ -1,0 +1,29 @@
+[
+  {
+    "id": "map_tree_oak_01",
+    "module": "map",
+    "category": "trees",
+    "nameKey": "assets.map.tree_oak",
+    "file": "map/trees/map_tree_oak_01.png",
+    "width": 64,
+    "height": 96
+  },
+  {
+    "id": "map_rock_01",
+    "module": "map",
+    "category": "rocks",
+    "nameKey": "assets.map.rock",
+    "file": "map/rocks/map_rock_01.png",
+    "width": 32,
+    "height": 32
+  },
+  {
+    "id": "char_hair_short_01",
+    "module": "character",
+    "category": "hair",
+    "nameKey": "assets.character.hair_short",
+    "file": "character/hair/char_hair_short_01.png",
+    "width": 256,
+    "height": 512
+  }
+]

@@ -1,5 +1,7 @@
 """Wspólne dane testowe; pytest automatycznie udostępnia fixture z tego pliku wszystkim testom."""
 
+from pathlib import Path
+
 import pytest
 
 
@@ -39,3 +41,9 @@ def scene_data() -> dict:
         "createdAt": "2026-10-26T12:00:00Z",
         "updatedAt": "2026-10-26T12:00:00Z",
     }
+
+
+@pytest.fixture
+def assets_manifest() -> Path:
+    """Zwraca ścieżkę do małego manifestu testowego (2 assety mapy, 1 postaci), niezależnego od assets/."""
+    return Path(__file__).parent / "assets_manifest.json"
