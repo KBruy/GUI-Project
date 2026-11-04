@@ -28,4 +28,17 @@ describe('App', () => {
     )
     expect(screen.getByRole('heading', { name: /katalog komponentów/i })).toBeInTheDocument()
   })
+
+  it('shows visible Pxlkit attribution in the footer', () => {
+    render(
+      <AppProviders>
+        <App />
+      </AppProviders>
+    )
+    expect(screen.getByRole('link', { name: 'Joangel De La Rosa' })).toBeVisible()
+    expect(screen.getByRole('link', { name: 'Licencja ikon' })).toHaveAttribute(
+      'href',
+      'https://github.com/Joangeldelarosa/pxlkit/blob/main/LICENSE-ASSETS'
+    )
+  })
 })

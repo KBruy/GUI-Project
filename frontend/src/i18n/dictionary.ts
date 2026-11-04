@@ -15,6 +15,8 @@ const dictionary = {
   'lang.pl': { pl: 'Polski', en: 'Polish' },
   'lang.en': { pl: 'Angielski', en: 'English' },
   'dev.ui.title': { pl: 'Katalog komponentów', en: 'Component Catalog' },
+  'footer.icons': { pl: 'Ikony pixel-art: Pxlkit, autor', en: 'Pixel-art icons: Pxlkit by' },
+  'footer.license': { pl: 'Licencja ikon', en: 'Icon license' },
 } satisfies Record<string, Record<Language, string>>
 
 export type TranslationKey = keyof typeof dictionary
