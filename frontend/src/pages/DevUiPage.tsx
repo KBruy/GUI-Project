@@ -17,6 +17,7 @@ export default function DevUiPage() {
   const { theme, setTheme } = useTheme()
   const [pressed, setPressed] = useState(false)
   const [tab, setTab] = useState<'projekty' | 'mapy' | 'postacie'>('projekty')
+  const [tool, setTool] = useState<'pencil' | 'eraser' | 'bucket'>('pencil')
 
   const themeOptions = [
     { value: 'dark' as const, label: t('theme.dark') },
@@ -130,8 +131,8 @@ export default function DevUiPage() {
               { value: 'eraser' as const, label: 'Gumka', icon: 'Eraser' },
               { value: 'bucket' as const, label: 'Wypełnij', icon: 'PaintBucket' },
             ]}
-            value="pencil"
-            onChange={() => {}}
+            value={tool}
+            onChange={setTool}
             label="Narzędzie"
           />
         </div>
