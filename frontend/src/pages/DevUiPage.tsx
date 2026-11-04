@@ -7,6 +7,7 @@ import { Button } from '@/shared/components/ui/Button/Button'
 import type { ButtonVariant, ButtonSize } from '@/shared/components/ui/Button/Button'
 import { IconButton } from '@/shared/components/ui/IconButton/IconButton'
 import { SegmentedControl } from '@/shared/components/ui/SegmentedControl/SegmentedControl'
+import s from './DevUiPage.module.css'
 
 const VARIANTS: ButtonVariant[] = ['primary', 'secondary', 'danger', 'ghost']
 const SIZES: ButtonSize[] = ['sm', 'md', 'lg']
@@ -35,84 +36,111 @@ export default function DevUiPage() {
   ]
 
   return (
-    <main>
+    <main className={s.page}>
       <h1>{t('dev.ui.title')}</h1>
-      <SegmentedControl
-        options={themeOptions}
-        value={theme}
-        onChange={setTheme}
-        label={t('theme.label')}
-      />
-      <SegmentedControl
-        options={langOptions}
-        value={language}
-        onChange={setLanguage}
-        label={t('lang.label')}
-      />
 
-      <section>
+      <div className={s.row}>
+        <SegmentedControl
+          options={themeOptions}
+          value={theme}
+          onChange={setTheme}
+          label={t('theme.label')}
+        />
+        <SegmentedControl
+          options={langOptions}
+          value={language}
+          onChange={setLanguage}
+          label={t('lang.label')}
+        />
+      </div>
+
+      <section className={s.section}>
         <h2>Button / IconButton</h2>
 
-        <p>Warianty × rozmiary</p>
-        {VARIANTS.map((variant) => (
-          <div key={variant}>
-            {SIZES.map((size) => (
-              <Button key={size} variant={variant} size={size}>
-                {variant} {size}
-              </Button>
-            ))}
+        <div className={s.group}>
+          <p className={s.label}>Warianty × rozmiary</p>
+          {VARIANTS.map((variant) => (
+            <div key={variant} className={s.row}>
+              {SIZES.map((size) => (
+                <Button key={size} variant={variant} size={size}>
+                  {variant} {size}
+                </Button>
+              ))}
+            </div>
+          ))}
+        </div>
+
+        <div className={s.group}>
+          <p className={s.label}>Z ikoną</p>
+          <div className={s.row}>
+            <Button icon="Pencil">Edytuj</Button>
+            <Button icon="Trash" variant="danger">Usuń</Button>
+            <Button icon="Download" variant="primary" size="lg">Pobierz</Button>
           </div>
-        ))}
+        </div>
 
-        <p>Z ikoną</p>
-        <Button icon="Pencil">Edytuj</Button>
-        <Button icon="Trash" variant="danger">Usuń</Button>
-        <Button icon="Download" variant="primary" size="lg">Pobierz</Button>
+        <div className={s.group}>
+          <p className={s.label}>Disabled</p>
+          <div className={s.row}>
+            <Button disabled>secondary disabled</Button>
+            <Button variant="primary" disabled>primary disabled</Button>
+            <Button variant="ghost" disabled>ghost disabled</Button>
+          </div>
+        </div>
 
-        <p>Disabled</p>
-        <Button disabled>secondary disabled</Button>
-        <Button variant="primary" disabled>primary disabled</Button>
-        <Button variant="ghost" disabled>ghost disabled</Button>
+        <div className={s.group}>
+          <p className={s.label}>Pressed (toggle — kliknij, żeby przełączyć)</p>
+          <div className={s.row}>
+            <Button pressed={pressed} onClick={() => setPressed((p) => !p)}>
+              {pressed ? 'Wciśnięty' : 'Normalny'}
+            </Button>
+          </div>
+        </div>
 
-        <p>Pressed (toggle — kliknij, żeby przełączyć)</p>
-        <Button pressed={pressed} onClick={() => setPressed((p) => !p)}>
-          {pressed ? 'Wciśnięty' : 'Normalny'}
-        </Button>
-
-        <p>IconButton</p>
-        <IconButton icon="Pencil" label="Edytuj" />
-        <IconButton icon="Pencil" label="Edytuj (sm)" size="sm" />
-        <IconButton icon="Pencil" label="Edytuj (lg)" size="lg" />
-        <IconButton icon="Grid" label="Siatka" pressed={pressed} onClick={() => setPressed((p) => !p)} />
-        <IconButton icon="Trash" label="Usuń (disabled)" disabled />
+        <div className={s.group}>
+          <p className={s.label}>IconButton</p>
+          <div className={s.row}>
+            <IconButton icon="Pencil" label="Edytuj" />
+            <IconButton icon="Pencil" label="Edytuj (sm)" size="sm" />
+            <IconButton icon="Pencil" label="Edytuj (lg)" size="lg" />
+            <IconButton icon="Grid" label="Siatka" pressed={pressed} onClick={() => setPressed((p) => !p)} />
+            <IconButton icon="Trash" label="Usuń (disabled)" disabled />
+          </div>
+        </div>
       </section>
 
-      <section>
+      <section className={s.section}>
         <h2>SegmentedControl</h2>
 
-        <p>Podstawowy (3 opcje)</p>
-        <SegmentedControl
-          options={tabOptions}
-          value={tab}
-          onChange={setTab}
-          label="Filtr widoku"
-        />
+        <div className={s.group}>
+          <p className={s.label}>Podstawowy (3 opcje)</p>
+          <SegmentedControl
+            options={tabOptions}
+            value={tab}
+            onChange={setTab}
+            label="Filtr widoku"
+          />
+        </div>
 
-        <p>Z ikonami</p>
-        <SegmentedControl
-          options={[
-            { value: 'pencil' as const, label: 'Rysuj', icon: 'Pencil' },
-            { value: 'eraser' as const, label: 'Gumka', icon: 'Eraser' },
-            { value: 'bucket' as const, label: 'Wypełnij', icon: 'PaintBucket' },
-          ]}
-          value="pencil"
-          onChange={() => {}}
-          label="Narzędzie"
-        />
+        <div className={s.group}>
+          <p className={s.label}>Z ikonami</p>
+          <SegmentedControl
+            options={[
+              { value: 'pencil' as const, label: 'Rysuj', icon: 'Pencil' },
+              { value: 'eraser' as const, label: 'Gumka', icon: 'Eraser' },
+              { value: 'bucket' as const, label: 'Wypełnij', icon: 'PaintBucket' },
+            ]}
+            value="pencil"
+            onChange={() => {}}
+            label="Narzędzie"
+          />
+        </div>
 
-        <p>Rozmiary</p>
-        <SegmentedControl options={tabOptions} value={tab} onChange={setTab} label="sm" size="sm" />
-        <SegmentedControl options={tabOptions} value={tab} onChange={setTab} label="lg" size="lg" />
+        <div className={s.group}>
+          <p className={s.label}>Rozmiary</p>
+          <SegmentedControl options={tabOptions} value={tab} onChange={setTab} label="sm" size="sm" />
+          <SegmentedControl options={tabOptions} value={tab} onChange={setTab} label="lg" size="lg" />
+        </div>
       </section>
     </main>
   )
