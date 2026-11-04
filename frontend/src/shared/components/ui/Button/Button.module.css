@@ -91,10 +91,12 @@
 }
 
 /* Wyłączony: neutralne tło niezależnie od wariantu, przerywana ramka sygnalizuje
-   stan kształtem (nie tylko kolorem) — czytelne też w motywie kontrastowym. */
+   stan kształtem (nie tylko kolorem) — czytelne też w motywie kontrastowym.
+   border-color nadpisuje przezroczystą ramkę ghosta, żeby przerywana linia była widoczna. */
 .button:disabled {
   background: var(--color-surface);
   color: var(--color-text-muted);
+  border-color: var(--color-border);
   border-style: dashed;
   box-shadow: none;
   cursor: not-allowed;

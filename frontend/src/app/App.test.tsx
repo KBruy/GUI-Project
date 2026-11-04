@@ -14,7 +14,7 @@ describe('App', () => {
     render(
       <AppProviders>
         <App />
-      </AppProviders>,
+      </AppProviders>
     )
     expect(screen.getByRole('heading', { name: 'WorldSmith' })).toBeInTheDocument()
   })
@@ -24,10 +24,8 @@ describe('App', () => {
     render(
       <AppProviders>
         <App />
-      </AppProviders>,
+      </AppProviders>
     )
-    expect(
-      screen.getByRole('heading', { name: /katalog komponentów/i }),
-    ).toBeInTheDocument()
+    expect(screen.getByRole('heading', { name: /katalog komponentów/i })).toBeInTheDocument()
   })
 })

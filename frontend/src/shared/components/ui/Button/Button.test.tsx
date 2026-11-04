@@ -12,7 +12,11 @@ describe('Button', () => {
 
   it('does not call onClick when disabled', () => {
     const onClick = vi.fn()
-    render(<Button onClick={onClick} disabled>Kliknij</Button>)
+    render(
+      <Button onClick={onClick} disabled>
+        Kliknij
+      </Button>
+    )
     fireEvent.click(screen.getByRole('button'))
     expect(onClick).not.toHaveBeenCalled()
   })

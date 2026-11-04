@@ -75,8 +75,12 @@ export default function DevUiPage() {
           <p className={s.label}>Z ikoną</p>
           <div className={s.row}>
             <Button icon="Pencil">Edytuj</Button>
-            <Button icon="Trash" variant="danger">Usuń</Button>
-            <Button icon="Download" variant="primary" size="lg">Pobierz</Button>
+            <Button icon="Trash" variant="danger">
+              Usuń
+            </Button>
+            <Button icon="Download" variant="primary" size="lg">
+              Pobierz
+            </Button>
           </div>
         </div>
 
@@ -84,8 +88,12 @@ export default function DevUiPage() {
           <p className={s.label}>Disabled</p>
           <div className={s.row}>
             <Button disabled>secondary disabled</Button>
-            <Button variant="primary" disabled>primary disabled</Button>
-            <Button variant="ghost" disabled>ghost disabled</Button>
+            <Button variant="primary" disabled>
+              primary disabled
+            </Button>
+            <Button variant="ghost" disabled>
+              ghost disabled
+            </Button>
           </div>
         </div>
 
@@ -104,7 +112,12 @@ export default function DevUiPage() {
             <IconButton icon="Pencil" label="Edytuj" />
             <IconButton icon="Pencil" label="Edytuj (sm)" size="sm" />
             <IconButton icon="Pencil" label="Edytuj (lg)" size="lg" />
-            <IconButton icon="Grid" label="Siatka" pressed={pressed} onClick={() => setPressed((p) => !p)} />
+            <IconButton
+              icon="Grid"
+              label="Siatka"
+              pressed={pressed}
+              onClick={() => setPressed((p) => !p)}
+            />
             <IconButton icon="Trash" label="Usuń (disabled)" disabled />
           </div>
         </div>
@@ -139,8 +152,20 @@ export default function DevUiPage() {
 
         <div className={s.group}>
           <p className={s.label}>Rozmiary</p>
-          <SegmentedControl options={tabOptions} value={tab} onChange={setTab} label="sm" size="sm" />
-          <SegmentedControl options={tabOptions} value={tab} onChange={setTab} label="lg" size="lg" />
+          <SegmentedControl
+            options={tabOptions}
+            value={tab}
+            onChange={setTab}
+            label="sm"
+            size="sm"
+          />
+          <SegmentedControl
+            options={tabOptions}
+            value={tab}
+            onChange={setTab}
+            label="lg"
+            size="lg"
+          />
         </div>
       </section>
     </main>
