@@ -13,6 +13,9 @@ __pycache__/
 *.pyc
 .pytest_cache/
 
+# Backend: PNG files copied by the database seed script
+backend/storage/
+
 # Env (.env.example stays tracked)
 .env
 !.env.example

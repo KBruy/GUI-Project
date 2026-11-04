@@ -1,0 +1,5 @@
+# Zależności do pracy lokalnej i testów; "-r" dołącza requirements.txt, więc wystarcza jedna instalacja.
+-r requirements.txt
+pytest==8.3.4
+# Wymagany przez TestClient z FastAPI (wysyła zapytania do aplikacji w testach).
+httpx==0.28.1
