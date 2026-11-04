@@ -7,3 +7,10 @@
 .group > :not(:last-child) {
   border-right: none;
 }
+
+/* Blokujemy translate z efektu "wciśnięcia" Buttona — w zgrupowanych kontrolkach
+   przesunięcie rozbija wyrównanie sąsiednich elementów. */
+.group > button[aria-pressed='true'],
+.group > button:active:not(:disabled) {
+  transform: none;
+}
