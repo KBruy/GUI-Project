@@ -55,21 +55,7 @@ export interface Scene {
     background: { color: string };
     /** Indeks 0 to najniższa warstwa. Najwyżej MAX_LAYERS warstw. */
     layers: Layer[];
-    /** Daty w formacie ISO 8601 ze strefą czasową, np. "2026-11-05T12:00:00Z". */
+
     createdAt: string;
     updatedAt: string;
-}
-
-/** Grafika z biblioteki (wpis z assets/manifest.json). */
-export interface Asset {
-    /** Np. "map_tree_oak_01". */
-    id: string;
-    module: SceneType;
-    category: string;
-    /** Klucz tłumaczenia nazwy, np. "assets.map.tree_oak". */
-    nameKey: string;
-    /** Ścieżka PNG względem folderu assetów. */
-    file: string;
-    width: number;
-    height: number;
 }
