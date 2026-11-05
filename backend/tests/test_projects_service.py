@@ -8,7 +8,7 @@ import pytest
 from src.dev.memory_repos import InMemoryAssetRepository, InMemoryProjectRepository, load_manifest
 from src.errors import AppError
 from src.schemas.scene import Scene
-from src.services.projects import create_project, delete_project, get_project
+from src.services.projects import create_project, delete_project, get_project, update_project
 
 
 @pytest.fixture
@@ -98,3 +98,72 @@ def test_delete_unknown_project_raises_project_not_found(projects):
 
     assert error.value.code == "PROJECT_NOT_FOUND"
     assert error.value.status_code == 404
+
+
+def edited_scene(scene_data: dict, **changes) -> Scene:
+    """Zwraca scenę wysłaną przy zapisie: dane z conftest.py z podmienionymi polami."""
+    return Scene.model_validate({**scene_data, **changes})
+
+
+def test_update_project_takes_id_from_url(projects, assets, scene, scene_data):
+    saved = create_project(projects, assets, scene)
+
+    updated = update_project(projects, assets, saved.id, edited_scene(scene_data, id="other-id"))
+
+    assert updated.id == saved.id
+    assert projects.get_project("other-id") is None
+
+
+def test_update_project_keeps_created_at_and_sets_updated_at_to_now(projects, assets, scene, scene_data):
+    saved = create_project(projects, assets, scene)
+    body = edited_scene(scene_data, createdAt="2020-01-01T00:00:00Z", updatedAt="2020-01-01T00:00:00Z")
+
+    before = datetime.now(timezone.utc)
+    updated = update_project(projects, assets, saved.id, body)
+    after = datetime.now(timezone.utc)
+
+    assert updated.createdAt == saved.createdAt
+    assert before <= updated.updatedAt <= after
+
+
+def test_update_project_saves_new_scene_in_place_of_old(projects, assets, scene, scene_data):
+    saved = create_project(projects, assets, scene)
+
+    updated = update_project(projects, assets, saved.id, edited_scene(scene_data, name="Miasto"))
+
+    assert projects.get_project(saved.id) == updated
+    assert [project.name for project in projects.list_projects()] == ["Miasto"]
+
+
+def test_update_unknown_project_raises_project_not_found(projects, assets, scene):
+    with pytest.raises(AppError) as error:
+        update_project(projects, assets, "missing", scene)
+
+    assert error.value.code == "PROJECT_NOT_FOUND"
+    assert error.value.status_code == 404
+
+
+def test_update_project_rejects_type_change(projects, assets, scene, scene_data):
+    saved = create_project(projects, assets, scene)
+
+    with pytest.raises(AppError) as error:
+        update_project(projects, assets, saved.id, edited_scene(scene_data, type="character"))
+
+    assert error.value.code == "VALIDATION_FAILED"
+    assert error.value.status_code == 422
+    # Tylko problem z typem, bez problemów z reguł postaci (rozmiar płótna, moduł assetów).
+    assert [issue.to_dict() for issue in error.value.issues] == [
+        {"code": "INVALID_FIELD", "messageKey": "errors.invalidField", "field": "type"}
+    ]
+    assert projects.get_project(saved.id) == saved
+
+
+def test_update_project_rejects_invalid_scene(projects, assets, scene, scene_data):
+    saved = create_project(projects, assets, scene)
+
+    with pytest.raises(AppError) as error:
+        update_project(projects, assets, saved.id, edited_scene(scene_data, name=""))
+
+    assert error.value.code == "VALIDATION_FAILED"
+    assert [issue.code for issue in error.value.issues] == ["NAME_REQUIRED"]
+    assert projects.get_project(saved.id) == saved

@@ -6,7 +6,7 @@ Funkcje nie znają HTTP: błąd zgłaszają jako AppError, który handler z erro
 from datetime import datetime, timezone
 from uuid import uuid4
 
-from src.errors import AppError
+from src.errors import AppError, Issue
 from src.ports import AssetRepository, ProjectRepository
 from src.schemas.asset import Asset
 from src.schemas.scene import Scene
@@ -37,6 +37,22 @@ def create_project(projects: ProjectRepository, assets: AssetRepository, scene: 
     now = utc_now()
     # model_copy tworzy kopię modelu z podmienionymi polami; scena z argumentu zostaje bez zmian.
     saved = scene.model_copy(update={"id": str(uuid4()), "createdAt": now, "updatedAt": now})
+    projects.save_project(saved)
+    return saved
+
+
+def update_project(projects: ProjectRepository, assets: AssetRepository, project_id: str, scene: Scene) -> Scene:
+    """Sprawdza reguły sceny i zapisuje ją w miejscu istniejącego projektu; zwraca zapisaną scenę.
+
+    Id pochodzi z adresu, createdAt z zapisanego projektu, updatedAt = teraz; wartości z ciała zapytania są pomijane.
+    """
+    stored = get_project(projects, project_id)
+    # Typ ustala się przy tworzeniu projektu. Reguły dla innego typu (rozmiary, moduły assetów)
+    # dałyby mylące problemy, więc zmiana typu jest zgłaszana sama, bez dalszego sprawdzania.
+    if scene.type != stored.type:
+        raise AppError("VALIDATION_FAILED", 422, [Issue.of("INVALID_FIELD", field="type")])
+    ensure_valid(scene, assets)
+    saved = scene.model_copy(update={"id": project_id, "createdAt": stored.createdAt, "updatedAt": utc_now()})
     projects.save_project(saved)
     return saved
 
