@@ -58,4 +58,5 @@ export interface Scene {
 
     createdAt: string;
     updatedAt: string;
+
 }
