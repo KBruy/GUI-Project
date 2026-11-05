@@ -9,9 +9,9 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
 
-from src.api import assets, health
+from src.api import assets, health, projects
 from src.config import Settings, load_settings
-from src.deps import assets_files_dir, build_asset_repository
+from src.deps import assets_files_dir, build_asset_repository, build_project_repository
 from src.error_handlers import register_error_handlers
 
 
@@ -37,10 +37,12 @@ def create_app(settings: Settings | None = None) -> FastAPI:
 
     # app.state przechowuje obiekty wspólne dla całej aplikacji; endpointy dostają je przez deps.py.
     app.state.asset_repository = build_asset_repository(settings)
+    app.state.project_repository = build_project_repository()
 
     # include_router dołącza endpointy zdefiniowane w osobnym pliku (jeden plik na temat).
     app.include_router(health.router)
     app.include_router(assets.router)
+    app.include_router(projects.router)
 
     # Pliki PNG assetów są serwowane bez osobnego endpointu: /static/assets/<file> → <folder assetów>/<file>.
     assets_dir = assets_files_dir(settings)
