@@ -8,7 +8,6 @@ from uuid import uuid4
 
 from src.errors import AppError, Issue
 from src.ports import AssetRepository, ProjectRepository
-from src.schemas.asset import Asset
 from src.schemas.scene import Scene
 from src.services.validation import check_scene
 
@@ -34,7 +33,7 @@ def create_project(projects: ProjectRepository, assets: AssetRepository, scene: 
     Id warstw i obiektów zostają bez zmian.
     """
     ensure_valid(scene, assets)
-    now = utc_now()
+    now = datetime.now(timezone.utc)
     # model_copy tworzy kopię modelu z podmienionymi polami; scena z argumentu zostaje bez zmian.
     saved = scene.model_copy(update={"id": str(uuid4()), "createdAt": now, "updatedAt": now})
     projects.save_project(saved)
@@ -52,23 +51,16 @@ def update_project(projects: ProjectRepository, assets: AssetRepository, project
     if scene.type != stored.type:
         raise AppError("VALIDATION_FAILED", 422, [Issue.of("INVALID_FIELD", field="type")])
     ensure_valid(scene, assets)
-    saved = scene.model_copy(update={"id": project_id, "createdAt": stored.createdAt, "updatedAt": utc_now()})
+    now = datetime.now(timezone.utc)
+    saved = scene.model_copy(update={"id": project_id, "createdAt": stored.createdAt, "updatedAt": now})
     projects.save_project(saved)
     return saved
 
 
 def ensure_valid(scene: Scene, assets: AssetRepository) -> None:
     """Zgłasza 422 VALIDATION_FAILED ze wszystkimi problemami sceny, gdy scena łamie reguły."""
-    issues = check_scene(scene, asset_library(assets))
+    # check_scene wymaga biblioteki jako słownika id assetu → Asset.
+    library = {asset.id: asset for asset in assets.list_assets()}
+    issues = check_scene(scene, library)
     if issues:
         raise AppError("VALIDATION_FAILED", 422, issues)
-
-
-def asset_library(assets: AssetRepository) -> dict[str, Asset]:
-    """Zwraca bibliotekę assetów jako słownik id → Asset, w postaci, której wymaga check_scene."""
-    return {asset.id: asset for asset in assets.list_assets()}
-
-
-def utc_now() -> datetime:
-    """Zwraca bieżący czas ze strefą UTC; w JSON-ie zapisuje się jako ISO 8601 ze znakiem Z."""
-    return datetime.now(timezone.utc)
