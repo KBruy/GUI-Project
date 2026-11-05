@@ -1,6 +1,6 @@
 """Endpointy /api/projects: lista, odczyt, tworzenie, zapis i usuwanie projektów."""
 
-from fastapi import APIRouter, Depends, Query
+from fastapi import APIRouter, Depends
 
 from src.deps import get_asset_repository, get_project_repository
 from src.ports import AssetRepository, ProjectRepository
@@ -12,14 +12,13 @@ from src.services import projects as project_service
 router = APIRouter()
 
 
-# Query(alias="type"): parametr w adresie nazywa się type (?type=map), a w Pythonie scene_type,
-# bo type to wbudowana funkcja Pythona.
+# Parametr type FastAPI czyta z adresu (?type=map); zasłania wbudowane type(), które w tej funkcji nie jest używane.
 @router.get("/api/projects")
 def list_projects(
-    scene_type: Module | None = Query(None, alias="type"),
+    type: Module | None = None,
     projects: ProjectRepository = Depends(get_project_repository),
 ) -> list[ProjectSummary]:
-    return projects.list_projects(scene_type=scene_type)
+    return projects.list_projects(scene_type=type)
 
 
 # {project_id} w ścieżce FastAPI przekazuje jako argument o tej samej nazwie.
