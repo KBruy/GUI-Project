@@ -9,3 +9,5 @@ Architektura, pliki główne, integracje. Aktualizowane na bieżąco.
 - [`SHARED_COMPONENTS.md`](SHARED_COMPONENTS.md) – zasady komponentów shared i opis Button, IconButton, SegmentedControl, Layout
 - [`I18N.md`](I18N.md) – jak dodać klucz tłumaczenia i używać `useT()`
 - [`plan/TASKS.md`](plan/TASKS.md) – plan tasków frontendu (F-01 … F-50)
+
+## test
