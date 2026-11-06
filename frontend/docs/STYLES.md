@@ -138,5 +138,3 @@ Prop `label` decyduje o dostępności: z `label` → `role="img"` + `aria-label`
 Rozmiary: `16 | 32 | 48 | 64` (wielokrotność siatki ikony 16 px).
 
 Poza `Icon.tsx` nie importuj niczego z `@pxlkit` bezpośrednio — pilnuje tego reguła ESLint. Żeby dodać ikonę: zaimportuj z `@pxlkit/ui` lub `@pxlkit/feedback` w `Icon.tsx` i dopisz do mapy `icons`.
-
-## test
