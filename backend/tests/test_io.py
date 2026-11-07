@@ -103,7 +103,6 @@ def test_import_file_with_wrong_shape_returns_400_with_fields(client, scene_data
 
 
 def test_import_file_over_size_limit_returns_413(client):
-    # Plik powyżej 2 MB, ale całe zapytanie poniżej 3 MB, więc odrzuca go dopiero sprawdzenie pliku.
     response = import_file(client, b" " * (MAX_IMPORT_FILE_BYTES + 1))
 
     assert response.status_code == 413
@@ -129,3 +128,16 @@ def test_import_without_file_field_returns_422(client):
     assert response.json()["error"]["details"]["issues"] == [
         {"code": "INVALID_FIELD", "messageKey": "errors.invalidField", "field": "file"}
     ]
+
+
+def test_large_saved_project_can_be_exported_and_imported_back(client, scene_data):
+    # Ok. 18 tys. obiektów daje scenę ponad 2 MB, czyli bliżej limitu niż prawdziwe projekty.
+    template = scene_data["layers"][0]["objects"][0]
+    scene_data["layers"][0]["objects"] = [{**template, "id": f"o{number}"} for number in range(18_000)]
+    saved = client.post("/api/projects", json=scene_data).json()
+
+    exported = client.get(f"/api/projects/{saved['id']}/export")
+    response = import_file(client, exported.content)
+
+    assert len(exported.content) > 2 * 1024 * 1024
+    assert response.status_code == 201

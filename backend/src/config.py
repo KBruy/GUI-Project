@@ -34,8 +34,10 @@ MAX_ROTATION = 360
 
 # Największe dozwolone ciało zapytania (3 MB); większe odrzuca src/body_limit.py.
 MAX_BODY_BYTES = 3 * 1024 * 1024
-# Największy plik importu (2 MB); mniejszy od MAX_BODY_BYTES, bo multipart dokłada do pliku własne nagłówki.
-MAX_IMPORT_FILE_BYTES = 2 * 1024 * 1024
+# Największy plik importu: ten sam limit co ciało zapytania, więc projekt zapisany przez PUT da się wyeksportować
+# i zaimportować z powrotem. Nie przejdzie tylko scena tuż przy limicie: eksport zapisuje liczby jako 100.0 zamiast 100,
+# a multipart dokłada do pliku kilkaset bajtów nagłówków.
+MAX_IMPORT_FILE_BYTES = MAX_BODY_BYTES
 
 
 # @dataclass generuje konstruktor z pól klasy; frozen=True blokuje zmianę ustawień po utworzeniu.
