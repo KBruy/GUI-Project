@@ -63,7 +63,7 @@ Zamiast ścieżek relatywnych (`../../../`) używamy aliasu `@/`:
 
 ```ts
 import { API_URL } from '@/config/env.ts'
-import { Button } from '@/shared/components/ui/Button.tsx'
+import { Button } from '@/shared/components/ui/Button/Button.tsx'
 ```
 
 Alias `@/*` → `src/*` jest skonfigurowany w `tsconfig.app.json` (pole `paths`) i w `vite.config.ts` (pole `resolve.alias`).

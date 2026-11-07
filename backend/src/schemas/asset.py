@@ -1,8 +1,6 @@
-"""Model assetu: wpis z assets/manifest.json (rozdz. 5.4 dokumentu technicznego)."""
+"""Model assetu: wpis z assets/manifest.json."""
 
-from typing import Literal
-
-from src.schemas.base import ContractModel
+from src.schemas.base import ContractModel, Module
 
 
 class Asset(ContractModel):
@@ -10,7 +8,7 @@ class Asset(ContractModel):
 
     # Identyfikator tekstowy, np. "map_tree_oak_01".
     id: str
-    module: Literal["map", "character"]
+    module: Module
     category: str
     # Klucz tłumaczenia nazwy, np. "assets.map.tree_oak"; tekst wyświetla frontend.
     nameKey: str
