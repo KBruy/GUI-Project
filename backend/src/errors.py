@@ -57,6 +57,22 @@ class Issue(BaseModel):
         return self.model_dump(exclude_none=True)
 
 
+def field_issue(location: tuple) -> Issue:
+    """Tworzy problem INVALID_FIELD ze ścieżką błędu Pydantic, np. ("layers", 0, "x") → field "layers[0].x".
+
+    Błąd całych danych (pusta ścieżka, np. lista zamiast obiektu) nie ma pola field.
+    """
+    path = ""
+    for part in location:
+        if isinstance(part, int):
+            path += f"[{part}]"
+        else:
+            path += f".{part}" if path else str(part)
+    if not path:
+        return Issue.of("INVALID_FIELD")
+    return Issue.of("INVALID_FIELD", field=path)
+
+
 class AppError(Exception):
     """Błąd zgłaszany przez kod aplikacji; handler w error_handlers.py zamienia go na odpowiedź JSON."""
 
