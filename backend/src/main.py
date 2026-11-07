@@ -9,7 +9,7 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
 
-from src.api import assets, health, projects
+from src.api import assets, health, io, projects
 from src.config import Settings, load_settings
 from src.deps import assets_files_dir, build_asset_repository, build_project_repository
 from src.error_handlers import register_error_handlers
@@ -33,6 +33,8 @@ def create_app(settings: Settings | None = None) -> FastAPI:
         allow_origins=settings.client_origins,
         allow_methods=["*"],
         allow_headers=["*"],
+        # Bez tego przeglądarka ukrywa przed frontendem nagłówek z nazwą pliku eksportu.
+        expose_headers=["Content-Disposition"],
     )
 
     # app.state przechowuje obiekty wspólne dla całej aplikacji; endpointy dostają je przez deps.py.
@@ -43,6 +45,7 @@ def create_app(settings: Settings | None = None) -> FastAPI:
     app.include_router(health.router)
     app.include_router(assets.router)
     app.include_router(projects.router)
+    app.include_router(io.router)
 
     # Pliki PNG assetów są serwowane bez osobnego endpointu: /static/assets/<file> → <folder assetów>/<file>.
     assets_dir = assets_files_dir(settings)
