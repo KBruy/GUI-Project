@@ -32,6 +32,9 @@ MAX_SCALE = 10
 MIN_ROTATION = 0
 MAX_ROTATION = 360
 
+# Największe dozwolone ciało zapytania (3 MB); większe odrzuca src/body_limit.py.
+MAX_BODY_BYTES = 3 * 1024 * 1024
+
 
 # @dataclass generuje konstruktor z pól klasy; frozen=True blokuje zmianę ustawień po utworzeniu.
 @dataclass(frozen=True)
