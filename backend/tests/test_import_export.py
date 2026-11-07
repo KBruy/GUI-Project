@@ -110,10 +110,10 @@ def test_parse_import_file_rejects_wrong_type(scene_data):
 
 
 def test_parse_import_file_rejects_nan(scene_data):
-    # json.loads przyjmuje NaN jako liczbę, ale model sceny go odrzuca.
-    content = file_content(scene_data).replace(b'"x": 100', b'"x": NaN')
+    # json.dumps zapisuje float("nan") jako NaN, a json.loads przyjmuje go jako liczbę; odrzuca go dopiero model sceny.
+    scene_data["layers"][0]["objects"][0]["x"] = float("nan")
 
-    assert rejected_file_issues(content) == [invalid_field("layers[0].objects[0].x")]
+    assert rejected_file_issues(file_content(scene_data)) == [invalid_field("layers[0].objects[0].x")]
 
 
 def test_parse_import_file_does_not_check_scene_rules(scene_data):

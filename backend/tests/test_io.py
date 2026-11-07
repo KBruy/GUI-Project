@@ -66,6 +66,7 @@ def test_import_creates_new_project(client, scene_data):
     saved = response.json()
     # Serwer nadaje nowe id (UUID) i daty, reszta sceny zostaje z pliku.
     assert saved["id"] != scene_data["id"]
+    # UUID() rzuca ValueError, gdy napis nie jest poprawnym UUID, więc ta linia sprawdza format id.
     UUID(saved["id"])
     assert saved["createdAt"] == saved["updatedAt"]
     assert without_server_fields(saved) == without_server_fields(scene_data)

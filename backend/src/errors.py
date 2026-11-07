@@ -64,10 +64,13 @@ def field_issue(location: tuple) -> Issue:
     """
     path = ""
     for part in location:
+        # Liczba to numer elementu listy, napis to nazwa pola; przed pierwszą nazwą nie ma kropki.
         if isinstance(part, int):
             path += f"[{part}]"
+        elif path:
+            path += f".{part}"
         else:
-            path += f".{part}" if path else str(part)
+            path += str(part)
     if not path:
         return Issue.of("INVALID_FIELD")
     return Issue.of("INVALID_FIELD", field=path)
