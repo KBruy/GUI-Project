@@ -10,7 +10,7 @@ from fastapi.exceptions import RequestValidationError
 from fastapi.responses import JSONResponse
 from starlette.exceptions import HTTPException as StarletteHTTPException
 
-from src.errors import AppError, Issue, error_body
+from src.errors import AppError, Issue, error_body, field_issue
 
 logger = logging.getLogger(__name__)
 
@@ -37,7 +37,7 @@ def handle_request_validation_error(request: Request, exc: RequestValidationErro
 
     Każdy błąd Pydantic staje się jednym problemem INVALID_FIELD ze ścieżką do pola.
     """
-    issues = [Issue.of("INVALID_FIELD", **field_of(error)) for error in exc.errors()]
+    issues = [request_field_issue(error) for error in exc.errors()]
     return JSONResponse(status_code=422, content=error_body("VALIDATION_FAILED", issues))
 
 
@@ -73,17 +73,10 @@ async def catch_unexpected_errors(request: Request, call_next) -> Response:
         return JSONResponse(status_code=500, content=error_body("SERVER_ERROR"))
 
 
-def field_of(error: dict) -> dict[str, str]:
-    """Zamienia ścieżkę błędu Pydantic na napis, np. ("body", "layers", 0, "x") → {"field": "layers[0].x"}."""
+def request_field_issue(error: dict) -> Issue:
+    """Zamienia błąd Pydantic z zapytania na problem INVALID_FIELD, np. ("body", "layers", 0, "x") → "layers[0].x"."""
     # Zły JSON nie dotyczy żadnego pola.
     if error["type"] == "json_invalid":
-        return {}
-
-    path = ""
+        return Issue.of("INVALID_FIELD")
     # Pierwszy element ("body", "query" lub "path") mówi tylko, skąd jest wartość, więc jest pomijany.
-    for part in error["loc"][1:]:
-        if isinstance(part, int):
-            path += f"[{part}]"
-        else:
-            path += f".{part}" if path else str(part)
-    return {"field": path} if path else {}
+    return field_issue(error["loc"][1:])
