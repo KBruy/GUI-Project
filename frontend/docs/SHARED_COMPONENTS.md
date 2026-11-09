@@ -63,6 +63,31 @@ Wybór jednej opcji z kilku (motyw, język, narzędzie). Rząd `Button` z `press
 
 Opcja może mieć `icon`. `size` jak w Button. Typ `value` wynika z `options`, więc `onChange={setTheme}` nie wymaga rzutowania.
 
+## Input, Select i Slider (pola formularzy)
+
+Każde pole ma etykietę nad sobą (`label`, wymagany) i opcjonalny błąd pod sobą (`error`, gotowy tekst). Wspólną oprawę daje `ui/Field/Field.tsx`, a strony jej nie używają bezpośrednio. Etykieta jest powiązana z polem przez `useId`, więc kliknięcie w nią ustawia fokus. Błąd ma kolor `--color-danger`, ramka pola też zmienia kolor, a pole dostaje `aria-invalid` i `aria-describedby` wskazujące na tekst błędu. Wyłączone pole ma przerywaną ramkę jak `Button`.
+
+```tsx
+<Input
+  label={t('project.name')}
+  value={name}
+  onChange={(event) => setName(event.target.value)}
+  error={name ? undefined : t('errors.required')}
+/>
+
+<Select label={t('map.size')} options={sizeOptions} value={size} onChange={setSize} />
+
+<Slider label={t('object.scale')} min={1} max={4} value={scale} onChange={setScale} />
+```
+
+| Komponent | Na czym                     | `onChange`                                   | Uwagi                                    |
+| --------- | --------------------------- | -------------------------------------------- | ---------------------------------------- |
+| `Input`   | `<input>` (tekst, `number`) | natywny (`event.target.value`, zawsze tekst) | wszystkie propsy `<input>`               |
+| `Select`  | `<select>`                  | dostaje wartość, typ z `options`             | `options` jak w `SegmentedControl`       |
+| `Slider`  | `<input type="range">`      | dostaje liczbę                               | `min`, `max`, `step`; obok widać wartość |
+
+Klawiatura działa natywnie: strzałki w `Select` i `Slider`, Home i End w `Slider`.
+
 ---
 
 ## Layout (`layout/Layout.tsx`)

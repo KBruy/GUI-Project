@@ -7,6 +7,9 @@ import { Button } from '@/shared/components/ui/Button/Button'
 import type { ButtonVariant, ButtonSize } from '@/shared/components/ui/Button/Button'
 import { IconButton } from '@/shared/components/ui/IconButton/IconButton'
 import { SegmentedControl } from '@/shared/components/ui/SegmentedControl/SegmentedControl'
+import { Input } from '@/shared/components/ui/Input/Input'
+import { Select } from '@/shared/components/ui/Select/Select'
+import { Slider } from '@/shared/components/ui/Slider/Slider'
 import { Container, Stack, Panel } from '@/shared/components/layout/Layout'
 
 const VARIANTS: ButtonVariant[] = ['primary', 'secondary', 'danger', 'ghost']
@@ -18,6 +21,10 @@ export default function DevUiPage() {
   const [pressed, setPressed] = useState(false)
   const [tab, setTab] = useState<'projekty' | 'mapy' | 'postacie'>('projekty')
   const [tool, setTool] = useState<'pencil' | 'eraser' | 'bucket'>('pencil')
+  const [name, setName] = useState('')
+  const [gridSize, setGridSize] = useState('32')
+  const [mapSize, setMapSize] = useState<'small' | 'medium' | 'large'>('medium')
+  const [scale, setScale] = useState(2)
 
   const themeOptions = [
     { value: 'dark' as const, label: t('theme.dark') },
@@ -28,6 +35,12 @@ export default function DevUiPage() {
   const langOptions = [
     { value: 'pl' as const, label: t('lang.pl') },
     { value: 'en' as const, label: t('lang.en') },
+  ]
+
+  const mapSizeOptions = [
+    { value: 'small' as const, label: 'Mała (16 × 16)' },
+    { value: 'medium' as const, label: 'Średnia (32 × 32)' },
+    { value: 'large' as const, label: 'Duża (64 × 64)' },
   ]
 
   const tabOptions = [
@@ -167,6 +180,50 @@ export default function DevUiPage() {
                 size="lg"
               />
             </Stack>
+          </Stack>
+        </Panel>
+
+        <Panel title="Input / Select / Slider">
+          <Stack direction="column" gap={4}>
+            <Input
+              label="Nazwa projektu (pusta = błąd)"
+              value={name}
+              onChange={(event) => setName(event.target.value)}
+              error={name ? undefined : 'Pole jest wymagane'}
+            />
+            <Input
+              label="Rozmiar siatki (liczba)"
+              type="number"
+              min={8}
+              step={8}
+              value={gridSize}
+              onChange={(event) => setGridSize(event.target.value)}
+            />
+            <Input label="Disabled" value="Nie można edytować" disabled />
+
+            <Select
+              label="Rozmiar mapy"
+              options={mapSizeOptions}
+              value={mapSize}
+              onChange={setMapSize}
+            />
+            <Select
+              label="Z błędem"
+              options={mapSizeOptions}
+              value={mapSize}
+              onChange={setMapSize}
+              error="Ten rozmiar jest niedostępny"
+            />
+            <Select
+              label="Disabled"
+              options={mapSizeOptions}
+              value={mapSize}
+              onChange={setMapSize}
+              disabled
+            />
+
+            <Slider label="Skala" min={1} max={4} value={scale} onChange={setScale} />
+            <Slider label="Disabled" min={1} max={4} value={scale} onChange={setScale} disabled />
           </Stack>
         </Panel>
       </Stack>
