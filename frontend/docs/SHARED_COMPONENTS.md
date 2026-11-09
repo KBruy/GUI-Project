@@ -43,7 +43,7 @@ Przycisk z samą ikoną. Owija `Button`, więc ma te same warianty, rozmiary i `
 <IconButton icon="Trash" label={t('actions.delete')} variant="danger" />
 ```
 
-`label` jest wymagany — trafia do `aria-label` i `title` (później Tooltip, F-17).
+`label` jest wymagany — trafia do `aria-label` (czytniki ekranu) i do `Tooltip` (widoczny dymek).
 
 ## SegmentedControl
 
@@ -62,6 +62,18 @@ Wybór jednej opcji z kilku (motyw, język, narzędzie). Rząd `Button` z `press
 ```
 
 Opcja może mieć `icon`. `size` jak w Button. Typ `value` wynika z `options`, więc `onChange={setTheme}` nie wymaga rzutowania.
+
+## Tooltip
+
+Dymek z podpowiedzią nad elementem. Pokazuje się po 300 ms od najechania myszą albo fokusu z klawiatury, chowa po zjechaniu, utracie fokusu i Esc. Nie wychodzi poza ekran: przy bocznej krawędzi przesuwa się w bok, a gdy brak miejsca u góry, pokazuje się pod elementem.
+
+```tsx
+<Tooltip text={t('actions.saveHint')}>
+  <Button icon="Download">{t('actions.save')}</Button>
+</Tooltip>
+```
+
+Dymek jest **tylko wizualny** (`aria-hidden`). Tekst dla czytników ekranu musi mieć sam element, np. `aria-label` w `IconButton`, inaczej czytnik przeczytałby go dwa razy. Renderuje się przez portal w `body`, więc nie obcina go `overflow` panelu.
 
 ## Input, Select i Slider (pola formularzy)
 

@@ -10,6 +10,7 @@ import { SegmentedControl } from '@/shared/components/ui/SegmentedControl/Segmen
 import { Input } from '@/shared/components/ui/Input/Input'
 import { Select } from '@/shared/components/ui/Select/Select'
 import { Slider } from '@/shared/components/ui/Slider/Slider'
+import { Tooltip } from '@/shared/components/ui/Tooltip/Tooltip'
 import { Container, Stack, Panel } from '@/shared/components/layout/Layout'
 
 const VARIANTS: ButtonVariant[] = ['primary', 'secondary', 'danger', 'ghost']
@@ -179,6 +180,25 @@ export default function DevUiPage() {
                 label="lg"
                 size="lg"
               />
+            </Stack>
+          </Stack>
+        </Panel>
+
+        <Panel title="Tooltip">
+          <Stack direction="column" gap={3}>
+            <p>Najedź myszą albo przejdź Tabem (pokazuje się po 300 ms, Esc chowa)</p>
+            <Stack direction="row" gap={2} wrap>
+              <Tooltip text="Zapisuje projekt na serwerze">
+                <Button icon="Download">Zapisz</Button>
+              </Tooltip>
+              <Tooltip text="Długi opis, który zawija się w kilka linijek, żeby sprawdzić maksymalną szerokość dymka">
+                <Button>Długi tekst</Button>
+              </Tooltip>
+            </Stack>
+            <p>Przy krawędziach (dymek nie wychodzi poza ekran)</p>
+            <Stack direction="row" justify="space-between">
+              <IconButton icon="Undo" label="Cofnij przy lewej krawędzi" />
+              <IconButton icon="Redo" label="Ponów przy prawej krawędzi" />
             </Stack>
           </Stack>
         </Panel>
