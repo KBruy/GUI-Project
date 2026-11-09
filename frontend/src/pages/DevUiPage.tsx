@@ -12,6 +12,7 @@ import { Select } from '@/shared/components/ui/Select/Select'
 import { Slider } from '@/shared/components/ui/Slider/Slider'
 import { Tooltip } from '@/shared/components/ui/Tooltip/Tooltip'
 import { Modal } from '@/shared/components/ui/Modal/Modal'
+import { toast } from '@/shared/components/ui/Toast/toast'
 import { Container, Stack, Panel } from '@/shared/components/layout/Layout'
 
 const VARIANTS: ButtonVariant[] = ['primary', 'secondary', 'danger', 'ghost']
@@ -245,6 +246,17 @@ export default function DevUiPage() {
               />
             </Stack>
           </Modal>
+        </Panel>
+
+        <Panel title="Toast">
+          <Stack direction="column" gap={3}>
+            <p>Pojawia się w prawym dolnym rogu i znika po 4 s (albo po kliknięciu X)</p>
+            <Stack direction="row" gap={2} wrap>
+              <Button onClick={() => toast.success('project.saved')}>success</Button>
+              <Button onClick={() => toast.error('errors.network')}>error</Button>
+              <Button onClick={() => toast.info('common.comingSoon')}>info</Button>
+            </Stack>
+          </Stack>
         </Panel>
 
         <Panel title="Input / Select / Slider">

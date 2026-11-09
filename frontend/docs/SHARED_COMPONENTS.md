@@ -8,7 +8,7 @@ Komponenty wielokrotnego użytku z `src/shared/components/`. **Zmiana w komponen
 
 - **Folder na komponent** w `ui/`: `ui/Button/Button.tsx` + `Button.module.css` + `Button.test.tsx`. Komponenty układu są razem w `layout/Layout.tsx`.
 - **Bez `index.ts`** — importujemy bezpośrednio: `import { Button } from '@/shared/components/ui/Button/Button'`.
-- **Gotowy tekst, nie klucz** — komponenty shared nie importują i18n. Strona robi `t('...')` i podaje wynik w propsie (`label`, `children`). Wyjątek (planowany): Toast.
+- **Gotowy tekst, nie klucz** — komponenty shared nie importują i18n. Strona robi `t('...')` i podaje wynik w propsie (`label`, `children`). Wyjątek: Toast (przyjmuje klucz).
 - **Natywne propsy przechodzą dalej** — np. `Button` przyjmuje wszystko, co `<button>` (`onClick`, `disabled`, `aria-*`, `className`).
 - **Stan wizualny przez atrybuty**, nie osobne klasy: `[aria-pressed='true']`, `:disabled`.
 - **W CSS tylko tokeny** z `shared/styles/theme.css` (`--space-*`, `--color-*`, `--pixel-border`, `--pixel-shadow`). Bez `border-radius`.
@@ -99,6 +99,22 @@ Okno modalne z tytułem, treścią i przyciskami na dole. Stan otwarcia trzyma s
 ```
 
 Działa na natywnym `<dialog>` i `showModal()`, więc przeglądarka sama blokuje resztę strony, trzyma fokus w oknie i oddaje go po zamknięciu na element, który okno otworzył. W testach jsdom nie ma `showModal()`, dlatego `src/test/setup.ts` ma zaślepkę.
+
+## Toast
+
+Krótki komunikat w prawym dolnym rogu, który znika sam po 4 s albo po kliknięciu X. Wywołuje się go funkcją, z dowolnego miejsca, także spoza komponentów (np. z apiClient):
+
+```tsx
+import { toast } from '@/shared/components/ui/Toast/toast'
+
+toast.success('project.saved')
+toast.error('errors.network')
+toast.info('common.comingSoon')
+```
+
+Przyjmuje **klucz tłumaczenia**, nie gotowy tekst (wyjątek od zasad shared), bo kod spoza Reacta nie ma dostępu do `t()`. Tekst tłumaczy dopiero `ToastViewport`, więc toast zmienia język razem z aplikacją.
+
+Pliki: `toast.ts` to magazyn i funkcje `toast.*` (bez Reacta), a `ToastViewport.tsx` je wyświetla. `ToastViewport` jest wstawiony raz w `src/app/AppProviders.tsx`, strony go nie dodają. Lista ma `role="status"`, więc czytnik ekranu przeczyta nowy toast.
 
 ## Input, Select i Slider (pola formularzy)
 
