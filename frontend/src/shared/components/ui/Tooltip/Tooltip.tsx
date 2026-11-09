@@ -36,14 +36,21 @@ export function Tooltip({ text, children }: TooltipProps) {
   // Sprzątanie timera, gdy komponent znika ze strony.
   useEffect(() => () => window.clearTimeout(timerRef.current), [])
 
-  // Esc chowa dymek (wymóg dostępności dla treści pokazywanej po najechaniu).
+  // Gdy dymek jest widoczny: Esc go chowa (wymóg dostępności dla treści po najechaniu),
+  // a przewijanie też, bo dymek ma stałą pozycję na ekranie i jechałby razem z kursorem.
+  // capture: true łapie przewijanie każdego kontenera, nie tylko całej strony.
   useEffect(() => {
     if (!visible) return
     const onKeyDown = (event: KeyboardEvent) => {
       if (event.key === 'Escape') setVisible(false)
     }
+    const onScroll = () => setVisible(false)
     document.addEventListener('keydown', onKeyDown)
-    return () => document.removeEventListener('keydown', onKeyDown)
+    window.addEventListener('scroll', onScroll, { capture: true, passive: true })
+    return () => {
+      document.removeEventListener('keydown', onKeyDown)
+      window.removeEventListener('scroll', onScroll, { capture: true })
+    }
   }, [visible])
 
   // Pozycja liczona przed narysowaniem: nad elementem, wyśrodkowany,

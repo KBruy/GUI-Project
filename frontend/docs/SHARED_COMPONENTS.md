@@ -65,7 +65,7 @@ Opcja może mieć `icon`. `size` jak w Button. Typ `value` wynika z `options`, w
 
 ## Tooltip
 
-Dymek z podpowiedzią nad elementem. Pokazuje się po 300 ms od najechania myszą albo fokusu z klawiatury, chowa po zjechaniu, utracie fokusu i Esc. Nie wychodzi poza ekran: przy bocznej krawędzi przesuwa się w bok, a gdy brak miejsca u góry, pokazuje się pod elementem.
+Dymek z podpowiedzią nad elementem. Pokazuje się po 300 ms od najechania myszą albo fokusu z klawiatury, chowa po zjechaniu, utracie fokusu, Esc i przy przewijaniu. Nie wychodzi poza ekran: przy bocznej krawędzi przesuwa się w bok, a gdy brak miejsca u góry, pokazuje się pod elementem.
 
 ```tsx
 <Tooltip text={t('actions.saveHint')}>

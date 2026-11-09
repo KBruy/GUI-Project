@@ -35,4 +35,11 @@ describe('Tooltip', () => {
     fireEvent.blur(button)
     expect(screen.queryByText('Usuń obiekt')).not.toBeInTheDocument()
   })
+  it('hides when the page scrolls', () => {
+    const button = renderTooltip()
+    fireEvent.mouseEnter(button)
+    act(() => vi.advanceTimersByTime(300))
+    fireEvent.scroll(window)
+    expect(screen.queryByText('Usuń obiekt')).not.toBeInTheDocument()
+  })
 })
