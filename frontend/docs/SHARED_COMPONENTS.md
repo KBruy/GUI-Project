@@ -116,6 +116,31 @@ Przyjmuje **klucz tłumaczenia**, nie gotowy tekst (wyjątek od zasad shared), b
 
 Pliki: `toast.ts` to magazyn i funkcje `toast.*` (bez Reacta), a `ToastViewport.tsx` je wyświetla. `ToastViewport` jest wstawiony raz w `src/app/AppProviders.tsx`, strony go nie dodają. Lista ma `role="status"`, więc czytnik ekranu przeczyta nowy toast.
 
+## OptionTile
+
+Kafelek wyboru z miniaturą i podpisem: paleta assetów, rozmiar mapy w oknie „Nowa mapa”, baza i ubrania w kreatorze postaci. Działa jak przycisk przełącznik (`aria-pressed`), więc obsługuje go Tab, Enter i Spacja.
+
+```tsx
+<OptionTile
+  label={t('asset.grass')}
+  imageUrl={asset.url}
+  selected={selectedId === asset.id}
+  onClick={() => setSelectedId(asset.id)}
+/>
+<OptionTile label={t('creator.none')} selected={!hair} onClick={() => setHair(null)} />
+```
+
+| Prop       | Wartości                                             | Domyślnie |
+| ---------- | ---------------------------------------------------- | --------- |
+| `label`    | podpis pod miniaturą, też nazwa dla czytnika ekranu  | —         |
+| `imageUrl` | adres miniatury (proporcje zachowane, ostre piksele) | —         |
+| `children` | własny podgląd zamiast obrazka (np. `Icon`)          | —         |
+| `selected` | `boolean` — gruba ramka w kolorze akcentu            | `false`   |
+| `size`     | `sm` (paleta) \| `md` (większe kafelki)              | `md`      |
+| `tooltip`  | dodatkowy opis w dymku (gotowy tekst)                | —         |
+
+Bez `imageUrl` i bez `children` kafelek pokazuje krzyżyk: to wariant „Brak”. Kliknięcie obsługuje zwykły `onClick`, a `disabled` daje przerywaną ramkę jak w `Button`.
+
 ## Input, Select i Slider (pola formularzy)
 
 Każde pole ma etykietę nad sobą (`label`, wymagany) i opcjonalny błąd pod sobą (`error`, gotowy tekst). Wspólną oprawę daje `ui/Field/Field.tsx`, a strony jej nie używają bezpośrednio. Etykieta jest powiązana z polem przez `useId`, więc kliknięcie w nią ustawia fokus. Błąd ma kolor `--color-danger`, ramka pola też zmienia kolor, a pole dostaje `aria-invalid` i `aria-describedby` wskazujące na tekst błędu. Wyłączone pole ma przerywaną ramkę jak `Button`.

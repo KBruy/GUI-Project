@@ -13,10 +13,47 @@ import { Slider } from '@/shared/components/ui/Slider/Slider'
 import { Tooltip } from '@/shared/components/ui/Tooltip/Tooltip'
 import { Modal } from '@/shared/components/ui/Modal/Modal'
 import { toast } from '@/shared/components/ui/Toast/toast'
+import { OptionTile } from '@/shared/components/ui/OptionTile/OptionTile'
+import { Icon } from '@/shared/components/ui/Icon/Icon'
 import { Container, Stack, Panel } from '@/shared/components/layout/Layout'
 
 const VARIANTS: ButtonVariant[] = ['primary', 'secondary', 'danger', 'ghost']
 const SIZES: ButtonSize[] = ['sm', 'md', 'lg']
+
+// Przykładowe miniatury do OptionTile (pikselowe SVG 8×8 i 8×4). Prawdziwe assety przyjdą z backendu (F-31).
+const pixelSvg = (w: number, h: number, rects: string) =>
+  `data:image/svg+xml,${encodeURIComponent(
+    `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${w} ${h}" shape-rendering="crispEdges">${rects}</svg>`
+  )}`
+const SAMPLE_TILES = [
+  {
+    id: 'grass',
+    label: 'Trawa',
+    imageUrl: pixelSvg(
+      8,
+      8,
+      '<rect width="8" height="8" fill="#7a4a24"/><rect width="8" height="3" fill="#3fa34d"/><rect x="1" y="3" width="2" height="1" fill="#3fa34d"/><rect x="5" y="3" width="1" height="1" fill="#3fa34d"/><rect x="2" y="6" width="1" height="1" fill="#5c3518"/>'
+    ),
+  },
+  {
+    id: 'log',
+    label: 'Kłoda (2:1)',
+    imageUrl: pixelSvg(
+      8,
+      4,
+      '<rect width="8" height="4" fill="#8b5a2b"/><rect y="0" width="8" height="1" fill="#a8743f"/><rect width="2" height="4" fill="#d9b27c"/><rect x="0" y="1" width="1" height="2" fill="#a8743f"/>'
+    ),
+  },
+  {
+    id: 'sky',
+    label: 'Niebo',
+    imageUrl: pixelSvg(
+      8,
+      8,
+      '<rect width="8" height="8" fill="#5fb7ff"/><rect x="1" y="2" width="4" height="2" fill="#fff"/><rect x="2" y="1" width="2" height="1" fill="#fff"/>'
+    ),
+  },
+]
 
 export default function DevUiPage() {
   const { t, language, setLanguage } = useT()
@@ -29,6 +66,7 @@ export default function DevUiPage() {
   const [mapSize, setMapSize] = useState<'small' | 'medium' | 'large'>('medium')
   const [scale, setScale] = useState(2)
   const [modalOpen, setModalOpen] = useState(false)
+  const [tile, setTile] = useState('grass')
 
   const themeOptions = [
     { value: 'dark' as const, label: t('theme.dark') },
@@ -255,6 +293,60 @@ export default function DevUiPage() {
               <Button onClick={() => toast.success('project.saved')}>success</Button>
               <Button onClick={() => toast.error('errors.network')}>error</Button>
               <Button onClick={() => toast.info('common.comingSoon')}>info</Button>
+            </Stack>
+          </Stack>
+        </Panel>
+
+        <Panel title="OptionTile">
+          <Stack direction="column" gap={4}>
+            <Stack direction="column" gap={3}>
+              <p>md (kliknij, żeby zaznaczyć; ostatni bez obrazka = wariant „Brak”)</p>
+              <Stack direction="row" gap={3} wrap>
+                {SAMPLE_TILES.map((item) => (
+                  <OptionTile
+                    key={item.id}
+                    label={item.label}
+                    imageUrl={item.imageUrl}
+                    selected={tile === item.id}
+                    onClick={() => setTile(item.id)}
+                  />
+                ))}
+                <OptionTile
+                  label="Brak"
+                  selected={tile === 'none'}
+                  onClick={() => setTile('none')}
+                />
+              </Stack>
+            </Stack>
+            <Stack direction="column" gap={3}>
+              <p>sm (paleta), z tooltipem, z children i disabled</p>
+              <Stack direction="row" gap={2} wrap>
+                {SAMPLE_TILES.map((item) => (
+                  <OptionTile
+                    key={item.id}
+                    size="sm"
+                    label={item.label}
+                    imageUrl={item.imageUrl}
+                    tooltip={`Dodaj: ${item.label}`}
+                    selected={tile === item.id}
+                    onClick={() => setTile(item.id)}
+                  />
+                ))}
+                <OptionTile
+                  size="sm"
+                  label="Wiadro"
+                  selected={tile === 'bucket'}
+                  onClick={() => setTile('bucket')}
+                >
+                  <Icon name="PaintBucket" size={16} />
+                </OptionTile>
+                <OptionTile
+                  size="sm"
+                  label="Zablokowane"
+                  imageUrl={SAMPLE_TILES[0].imageUrl}
+                  disabled
+                />
+              </Stack>
             </Stack>
           </Stack>
         </Panel>
