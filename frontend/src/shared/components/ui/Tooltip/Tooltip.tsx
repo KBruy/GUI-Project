@@ -18,19 +18,24 @@ export interface TooltipProps {
 // Jest tylko wizualny: tekst dla czytników ekranu musi mieć sam element
 // (np. aria-label w IconButton), inaczej czytnik przeczytałby go dwa razy.
 export function Tooltip({ text, children }: TooltipProps) {
-  const [visible, setVisible] = useState(false)
+  // Gdzie wstawić dymek; null = dymek schowany. Zwykle body, ale wewnątrz Modala
+  // sam <dialog>, bo okno modalne leży nad całą stroną i zakryłoby dymek z body.
+  const [container, setContainer] = useState<HTMLElement | null>(null)
+  const visible = container !== null
   const triggerRef = useRef<HTMLSpanElement>(null)
   const tooltipRef = useRef<HTMLSpanElement>(null)
   const timerRef = useRef<number | undefined>(undefined)
 
   function show() {
     window.clearTimeout(timerRef.current)
-    timerRef.current = window.setTimeout(() => setVisible(true), SHOW_DELAY_MS)
+    timerRef.current = window.setTimeout(() => {
+      setContainer(triggerRef.current?.closest('dialog') ?? document.body)
+    }, SHOW_DELAY_MS)
   }
 
   function hide() {
     window.clearTimeout(timerRef.current)
-    setVisible(false)
+    setContainer(null)
   }
 
   // Sprzątanie timera, gdy komponent znika ze strony.
@@ -42,9 +47,9 @@ export function Tooltip({ text, children }: TooltipProps) {
   useEffect(() => {
     if (!visible) return
     const onKeyDown = (event: KeyboardEvent) => {
-      if (event.key === 'Escape') setVisible(false)
+      if (event.key === 'Escape') setContainer(null)
     }
-    const onScroll = () => setVisible(false)
+    const onScroll = () => setContainer(null)
     document.addEventListener('keydown', onKeyDown)
     window.addEventListener('scroll', onScroll, { capture: true, passive: true })
     return () => {
@@ -83,8 +88,8 @@ export function Tooltip({ text, children }: TooltipProps) {
       onBlur={hide}
     >
       {children}
-      {/* Portal do body: dymek nie jest obcinany przez overflow ani przesuwany przez transform rodzica. */}
-      {visible &&
+      {/* Portal: dymek nie jest obcinany przez overflow ani przesuwany przez transform rodzica. */}
+      {container &&
         createPortal(
           <span
             ref={tooltipRef}
@@ -93,7 +98,7 @@ export function Tooltip({ text, children }: TooltipProps) {
           >
             {text}
           </span>,
-          document.body
+          container
         )}
     </span>
   )

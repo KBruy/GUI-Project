@@ -11,6 +11,7 @@ import { Input } from '@/shared/components/ui/Input/Input'
 import { Select } from '@/shared/components/ui/Select/Select'
 import { Slider } from '@/shared/components/ui/Slider/Slider'
 import { Tooltip } from '@/shared/components/ui/Tooltip/Tooltip'
+import { Modal } from '@/shared/components/ui/Modal/Modal'
 import { Container, Stack, Panel } from '@/shared/components/layout/Layout'
 
 const VARIANTS: ButtonVariant[] = ['primary', 'secondary', 'danger', 'ghost']
@@ -26,6 +27,7 @@ export default function DevUiPage() {
   const [gridSize, setGridSize] = useState('32')
   const [mapSize, setMapSize] = useState<'small' | 'medium' | 'large'>('medium')
   const [scale, setScale] = useState(2)
+  const [modalOpen, setModalOpen] = useState(false)
 
   const themeOptions = [
     { value: 'dark' as const, label: t('theme.dark') },
@@ -201,6 +203,48 @@ export default function DevUiPage() {
               <IconButton icon="Redo" label="Ponów przy prawej krawędzi" />
             </Stack>
           </Stack>
+        </Panel>
+
+        <Panel title="Modal">
+          <Stack direction="column" gap={3}>
+            <p>
+              Esc, kliknięcie w tło i X zamykają okno; Tab nie wychodzi poza nie; fokus wraca na
+              przycisk
+            </p>
+            <Stack direction="row" gap={2}>
+              <Button variant="primary" onClick={() => setModalOpen(true)}>
+                Otwórz modal
+              </Button>
+            </Stack>
+          </Stack>
+          <Modal
+            open={modalOpen}
+            onClose={() => setModalOpen(false)}
+            title="Nowa mapa"
+            closeLabel="Zamknij"
+            actions={
+              <>
+                <Button onClick={() => setModalOpen(false)}>Anuluj</Button>
+                <Button variant="primary" onClick={() => setModalOpen(false)}>
+                  Utwórz
+                </Button>
+              </>
+            }
+          >
+            <Stack direction="column" gap={3}>
+              <Input
+                label="Nazwa mapy"
+                value={name}
+                onChange={(event) => setName(event.target.value)}
+              />
+              <Select
+                label="Rozmiar mapy"
+                options={mapSizeOptions}
+                value={mapSize}
+                onChange={setMapSize}
+              />
+            </Stack>
+          </Modal>
         </Panel>
 
         <Panel title="Input / Select / Slider">

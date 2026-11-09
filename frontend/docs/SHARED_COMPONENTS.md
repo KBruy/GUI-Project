@@ -75,6 +75,31 @@ Dymek z podpowiedzią nad elementem. Pokazuje się po 300 ms od najechania mysz�
 
 Dymek jest **tylko wizualny** (`aria-hidden`). Tekst dla czytników ekranu musi mieć sam element, np. `aria-label` w `IconButton`, inaczej czytnik przeczytałby go dwa razy. Renderuje się przez portal w `body`, więc nie obcina go `overflow` panelu.
 
+## Modal
+
+Okno modalne z tytułem, treścią i przyciskami na dole. Stan otwarcia trzyma strona (`open`), a `onClose` jest wołane przy Esc, kliknięciu w tło i przycisku X.
+
+```tsx
+<Modal
+  open={isOpen}
+  onClose={() => setIsOpen(false)}
+  title={t('map.new')}
+  closeLabel={t('actions.close')}
+  actions={
+    <>
+      <Button onClick={() => setIsOpen(false)}>{t('actions.cancel')}</Button>
+      <Button variant="primary" onClick={create}>
+        {t('actions.create')}
+      </Button>
+    </>
+  }
+>
+  <Input label={t('map.name')} value={name} onChange={(event) => setName(event.target.value)} />
+</Modal>
+```
+
+Działa na natywnym `<dialog>` i `showModal()`, więc przeglądarka sama blokuje resztę strony, trzyma fokus w oknie i oddaje go po zamknięciu na element, który okno otworzył. W testach jsdom nie ma `showModal()`, dlatego `src/test/setup.ts` ma zaślepkę.
+
 ## Input, Select i Slider (pola formularzy)
 
 Każde pole ma etykietę nad sobą (`label`, wymagany) i opcjonalny błąd pod sobą (`error`, gotowy tekst). Wspólną oprawę daje `ui/Field/Field.tsx`, a strony jej nie używają bezpośrednio. Etykieta jest powiązana z polem przez `useId`, więc kliknięcie w nią ustawia fokus. Błąd ma kolor `--color-danger`, ramka pola też zmienia kolor, a pole dostaje `aria-invalid` i `aria-describedby` wskazujące na tekst błędu. Wyłączone pole ma przerywaną ramkę jak `Button`.

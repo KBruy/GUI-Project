@@ -1,0 +1,43 @@
+/* Sam <dialog> bez paddingu: kliknięcie w niego (poza .content) = kliknięcie w tło. */
+.dialog {
+  width: min(480px, calc(100vw - 2 * var(--space-4)));
+  max-height: calc(100vh - 2 * var(--space-4));
+  margin: auto;
+  padding: 0;
+  border: var(--pixel-border);
+  box-shadow: calc(var(--border-width) * 2) calc(var(--border-width) * 2) 0 var(--color-shadow);
+  background: var(--color-surface);
+  color: var(--color-text);
+}
+
+/* Przyciemnione tło za oknem. Pierwsza linia to zapas dla przeglądarek,
+   w których ::backdrop nie widzi zmiennych CSS. */
+.dialog::backdrop {
+  background: rgb(0 0 0 / 0.6);
+  background: color-mix(in srgb, var(--color-shadow) 70%, transparent);
+}
+
+.content {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+  padding: var(--space-4) var(--space-5) var(--space-5);
+}
+
+.header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-3);
+}
+
+.title {
+  font-size: var(--font-size-md);
+}
+
+.actions {
+  display: flex;
+  justify-content: flex-end;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+}
