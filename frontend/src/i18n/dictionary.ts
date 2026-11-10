@@ -6,6 +6,7 @@ const dictionary = {
   'nav.editor': { pl: 'Edytor map', en: 'Map Editor' },
   'nav.characters': { pl: 'Postacie', en: 'Characters' },
   'nav.projects': { pl: 'Projekty', en: 'Projects' },
+  'nav.label': { pl: 'Główna nawigacja', en: 'Main navigation' },
   'nav.settings': { pl: 'Ustawienia', en: 'Settings' },
   'theme.label': { pl: 'Motyw', en: 'Theme' },
   'theme.dark': { pl: 'Ciemny', en: 'Dark' },

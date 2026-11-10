@@ -5,15 +5,22 @@ import MapEditorPage from '@/pages/MapEditorPage'
 import CharacterCreatorPage from '@/pages/CharacterCreatorPage'
 import ProjectsPage from '@/pages/ProjectsPage'
 import DevUiPage from '@/pages/DevUiPage'
+import { AppLayout } from './AppLayout'
 
 // Wszystkie trasy aplikacji w jednym miejscu. Nowa podstrona = nowy wpis tutaj.
 // Tablica jest osobno, żeby testy mogły użyć jej z createMemoryRouter.
+// Wszystkie podstrony są dziećmi AppLayout, więc mają wspólny nagłówek i stopkę.
 export const routes: RouteObject[] = [
-  { path: '/', element: <HomePage /> },
-  { path: '/map', element: <MapEditorPage /> },
-  { path: '/character', element: <CharacterCreatorPage /> },
-  { path: '/projects', element: <ProjectsPage /> },
-  { path: '/dev/ui', element: <DevUiPage /> },
+  {
+    element: <AppLayout />,
+    children: [
+      { path: '/', element: <HomePage /> },
+      { path: '/map', element: <MapEditorPage /> },
+      { path: '/character', element: <CharacterCreatorPage /> },
+      { path: '/projects', element: <ProjectsPage /> },
+      { path: '/dev/ui', element: <DevUiPage /> },
+    ],
+  },
 ]
 
 export const router = createBrowserRouter(routes)

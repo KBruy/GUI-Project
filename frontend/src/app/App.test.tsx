@@ -1,8 +1,7 @@
-import { render, screen } from '@testing-library/react'
+import { render, screen, within } from '@testing-library/react'
 import { createMemoryRouter, RouterProvider } from 'react-router'
 import { describe, expect, it } from 'vitest'
 import { AppProviders } from './AppProviders'
-import { AppFooter } from './AppFooter'
 import { routes } from './router'
 
 // Pamięciowy router z tymi samymi trasami co aplikacja, ale startujący od podanego adresu.
@@ -32,13 +31,19 @@ describe('routes', () => {
   })
 })
 
-describe('AppFooter', () => {
-  it('shows visible Pxlkit attribution', () => {
-    render(
-      <AppProviders>
-        <AppFooter />
-      </AppProviders>
+describe('AppLayout', () => {
+  it('marks the link of the current page as active', () => {
+    renderAt('/map')
+    const nav = screen.getByRole('navigation', { name: 'Główna nawigacja' })
+    expect(within(nav).getByRole('link', { name: 'Edytor map' })).toHaveAttribute(
+      'aria-current',
+      'page'
     )
+    expect(within(nav).getByRole('link', { name: 'Projekty' })).not.toHaveAttribute('aria-current')
+  })
+
+  it('shows visible Pxlkit attribution in the footer', () => {
+    renderAt('/')
     expect(screen.getByRole('link', { name: 'Joangel De La Rosa' })).toBeVisible()
     expect(screen.getByRole('link', { name: 'Licencja ikon' })).toHaveAttribute(
       'href',
