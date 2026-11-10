@@ -1,0 +1,24 @@
+/* Wrapper trzyma własną strzałkę, bo natywna nie pasuje do pikselowego wyglądu. */
+.wrapper {
+  position: relative;
+  display: block;
+}
+
+.select {
+  appearance: none;
+  padding-right: var(--space-6);
+  cursor: pointer;
+}
+
+/* Strzałka w dół z obramowań (ostre krawędzie, bez obrazka). */
+.wrapper::after {
+  content: '';
+  position: absolute;
+  top: 50%;
+  right: var(--space-3);
+  border-left: var(--space-1) solid transparent;
+  border-right: var(--space-1) solid transparent;
+  border-top: var(--space-1) solid var(--color-text);
+  transform: translateY(-50%);
+  pointer-events: none;
+}

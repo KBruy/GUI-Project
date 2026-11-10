@@ -114,10 +114,10 @@ import styles from '@/shared/animations/animations.module.css'
 | Klasa | Efekt |
 |---|---|
 | `hoverLift` | Unosi element o 2 px na hover |
-| `fadeIn` | Pojawienie się (2 kroki opacity) |
+| `fadeIn` | Płynne pojawienie się (przenikanie + wysunięcie o 4 px), używane przez Tooltip, Modal i Toast |
 | `shake` | Drżenie lewo-prawo (feedback kolizji) |
 
-Wszystkie używają `steps()` dla pikselowego charakteru i czasów z tokenów (`--duration-fast`, `--duration-normal`). Przy `prefers-reduced-motion: reduce` animacje są wyłączone.
+`hoverLift` i `shake` używają `steps()` dla pikselowego charakteru, `fadeIn` jest płynny (skokowe przenikanie wyglądało jak zacięcie). Wszystkie biorą czasy z tokenów (`--duration-fast`, `--duration-normal`). Przy `prefers-reduced-motion: reduce` animacje są wyłączone.
 
 ---
 

@@ -8,7 +8,7 @@ Komponenty wielokrotnego użytku z `src/shared/components/`. **Zmiana w komponen
 
 - **Folder na komponent** w `ui/`: `ui/Button/Button.tsx` + `Button.module.css` + `Button.test.tsx`. Komponenty układu są razem w `layout/Layout.tsx`.
 - **Bez `index.ts`** — importujemy bezpośrednio: `import { Button } from '@/shared/components/ui/Button/Button'`.
-- **Gotowy tekst, nie klucz** — komponenty shared nie importują i18n. Strona robi `t('...')` i podaje wynik w propsie (`label`, `children`). Wyjątek (planowany): Toast.
+- **Gotowy tekst, nie klucz** — komponenty shared nie importują i18n. Strona robi `t('...')` i podaje wynik w propsie (`label`, `children`). Wyjątek: Toast (przyjmuje klucz).
 - **Natywne propsy przechodzą dalej** — np. `Button` przyjmuje wszystko, co `<button>` (`onClick`, `disabled`, `aria-*`, `className`).
 - **Stan wizualny przez atrybuty**, nie osobne klasy: `[aria-pressed='true']`, `:disabled`.
 - **W CSS tylko tokeny** z `shared/styles/theme.css` (`--space-*`, `--color-*`, `--pixel-border`, `--pixel-shadow`). Bez `border-radius`.
@@ -43,7 +43,7 @@ Przycisk z samą ikoną. Owija `Button`, więc ma te same warianty, rozmiary i `
 <IconButton icon="Trash" label={t('actions.delete')} variant="danger" />
 ```
 
-`label` jest wymagany — trafia do `aria-label` i `title` (później Tooltip, F-17).
+`label` jest wymagany — trafia do `aria-label` (czytniki ekranu) i do `Tooltip` (widoczny dymek).
 
 ## SegmentedControl
 
@@ -62,6 +62,109 @@ Wybór jednej opcji z kilku (motyw, język, narzędzie). Rząd `Button` z `press
 ```
 
 Opcja może mieć `icon`. `size` jak w Button. Typ `value` wynika z `options`, więc `onChange={setTheme}` nie wymaga rzutowania.
+
+## Tooltip
+
+Dymek z podpowiedzią nad elementem. Pokazuje się po 300 ms od najechania myszą albo fokusu z klawiatury, chowa po zjechaniu, utracie fokusu, Esc i przy przewijaniu. Nie wychodzi poza ekran: przy bocznej krawędzi przesuwa się w bok, a gdy brak miejsca u góry, pokazuje się pod elementem.
+
+```tsx
+<Tooltip text={t('actions.saveHint')}>
+  <Button icon="Download">{t('actions.save')}</Button>
+</Tooltip>
+```
+
+Dymek jest **tylko wizualny** (`aria-hidden`). Tekst dla czytników ekranu musi mieć sam element, np. `aria-label` w `IconButton`, inaczej czytnik przeczytałby go dwa razy. Renderuje się przez portal w `body`, więc nie obcina go `overflow` panelu.
+
+## Modal
+
+Okno modalne z tytułem, treścią i przyciskami na dole. Stan otwarcia trzyma strona (`open`), a `onClose` jest wołane przy Esc, kliknięciu w tło i przycisku X.
+
+```tsx
+<Modal
+  open={isOpen}
+  onClose={() => setIsOpen(false)}
+  title={t('map.new')}
+  closeLabel={t('actions.close')}
+  actions={
+    <>
+      <Button onClick={() => setIsOpen(false)}>{t('actions.cancel')}</Button>
+      <Button variant="primary" onClick={create}>
+        {t('actions.create')}
+      </Button>
+    </>
+  }
+>
+  <Input label={t('map.name')} value={name} onChange={(event) => setName(event.target.value)} />
+</Modal>
+```
+
+Działa na natywnym `<dialog>` i `showModal()`, więc przeglądarka sama blokuje resztę strony, trzyma fokus w oknie i oddaje go po zamknięciu na element, który okno otworzył. W testach jsdom nie ma `showModal()`, dlatego `src/test/setup.ts` ma zaślepkę.
+
+## Toast
+
+Krótki komunikat w prawym dolnym rogu, który znika sam po 4 s albo po kliknięciu X. Wywołuje się go funkcją, z dowolnego miejsca, także spoza komponentów (np. z apiClient):
+
+```tsx
+import { toast } from '@/shared/components/ui/Toast/toast'
+
+toast.success('project.saved')
+toast.error('errors.network')
+toast.info('common.comingSoon')
+```
+
+Przyjmuje **klucz tłumaczenia**, nie gotowy tekst (wyjątek od zasad shared), bo kod spoza Reacta nie ma dostępu do `t()`. Tekst tłumaczy dopiero `ToastViewport`, więc toast zmienia język razem z aplikacją.
+
+Pliki: `toast.ts` to magazyn i funkcje `toast.*` (bez Reacta), a `ToastViewport.tsx` je wyświetla. `ToastViewport` jest wstawiony raz w `src/app/AppProviders.tsx`, strony go nie dodają. Lista ma `role="status"`, więc czytnik ekranu przeczyta nowy toast.
+
+## OptionTile
+
+Kafelek wyboru z miniaturą i podpisem: paleta assetów, rozmiar mapy w oknie „Nowa mapa”, baza i ubrania w kreatorze postaci. Działa jak przycisk przełącznik (`aria-pressed`), więc obsługuje go Tab, Enter i Spacja.
+
+```tsx
+<OptionTile
+  label={t('asset.grass')}
+  imageUrl={asset.url}
+  selected={selectedId === asset.id}
+  onClick={() => setSelectedId(asset.id)}
+/>
+<OptionTile label={t('creator.none')} selected={!hair} onClick={() => setHair(null)} />
+```
+
+| Prop       | Wartości                                             | Domyślnie |
+| ---------- | ---------------------------------------------------- | --------- |
+| `label`    | podpis pod miniaturą, też nazwa dla czytnika ekranu  | —         |
+| `imageUrl` | adres miniatury (proporcje zachowane, ostre piksele) | —         |
+| `children` | własny podgląd zamiast obrazka (np. `Icon`)          | —         |
+| `selected` | `boolean` — gruba ramka w kolorze akcentu            | `false`   |
+| `size`     | `sm` (paleta) \| `md` (większe kafelki)              | `md`      |
+| `tooltip`  | dodatkowy opis w dymku (gotowy tekst)                | —         |
+
+Bez `imageUrl` i bez `children` kafelek pokazuje krzyżyk: to wariant „Brak”. Kliknięcie obsługuje zwykły `onClick`, a `disabled` daje przerywaną ramkę jak w `Button`.
+
+## Input, Select i Slider (pola formularzy)
+
+Każde pole ma etykietę nad sobą (`label`, wymagany) i opcjonalny błąd pod sobą (`error`, gotowy tekst). Wspólną oprawę daje `ui/Field/Field.tsx`, a strony jej nie używają bezpośrednio. Etykieta jest powiązana z polem przez `useId`, więc kliknięcie w nią ustawia fokus. Błąd ma kolor `--color-danger`, ramka pola też zmienia kolor, a pole dostaje `aria-invalid` i `aria-describedby` wskazujące na tekst błędu. Wyłączone pole ma przerywaną ramkę jak `Button`.
+
+```tsx
+<Input
+  label={t('project.name')}
+  value={name}
+  onChange={(event) => setName(event.target.value)}
+  error={name ? undefined : t('errors.required')}
+/>
+
+<Select label={t('map.size')} options={sizeOptions} value={size} onChange={setSize} />
+
+<Slider label={t('object.scale')} min={1} max={4} value={scale} onChange={setScale} />
+```
+
+| Komponent | Na czym                     | `onChange`                                   | Uwagi                                    |
+| --------- | --------------------------- | -------------------------------------------- | ---------------------------------------- |
+| `Input`   | `<input>` (tekst, `number`) | natywny (`event.target.value`, zawsze tekst) | wszystkie propsy `<input>`               |
+| `Select`  | `<select>`                  | dostaje wartość, typ z `options`             | `options` jak w `SegmentedControl`       |
+| `Slider`  | `<input type="range">`      | dostaje liczbę                               | `min`, `max`, `step`; obok widać wartość |
+
+Klawiatura działa natywnie: strzałki w `Select` i `Slider`, Home i End w `Slider`.
 
 ---
 

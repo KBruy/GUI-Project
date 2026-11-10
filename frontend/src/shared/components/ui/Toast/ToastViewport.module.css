@@ -1,0 +1,36 @@
+/* Kolumna toastów w prawym dolnym rogu, nowe na dole. */
+.viewport {
+  position: fixed;
+  right: var(--space-4);
+  bottom: var(--space-4);
+  z-index: 1000;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  width: min(360px, calc(100vw - 2 * var(--space-4)));
+}
+
+.toast {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  padding: var(--space-2) var(--space-2) var(--space-2) var(--space-3);
+  border: var(--pixel-border);
+  box-shadow: var(--pixel-shadow);
+  background: var(--color-surface-raised);
+  color: var(--color-text);
+}
+
+.message {
+  flex: 1;
+}
+
+/* Typ rozpoznajemy po ikonie; błąd ma dodatkowo ramkę w kolorze błędu. */
+.success,
+.info {
+  border-color: var(--color-border);
+}
+
+.error {
+  border-color: var(--color-danger);
+}

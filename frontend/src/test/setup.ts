@@ -22,3 +22,14 @@ Object.defineProperty(window, 'matchMedia', {
     dispatchEvent: () => false,
   }),
 })
+
+// jsdom nie ma showModal() i close() na <dialog> (używa ich Modal).
+// Zaślepka tylko przełącza atrybut open, bez blokowania reszty strony.
+if (!HTMLDialogElement.prototype.showModal) {
+  HTMLDialogElement.prototype.showModal = function () {
+    this.open = true
+  }
+  HTMLDialogElement.prototype.close = function () {
+    this.open = false
+  }
+}

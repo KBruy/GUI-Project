@@ -1,0 +1,38 @@
+.field {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+}
+
+.label {
+  color: var(--color-text);
+}
+
+.error {
+  color: var(--color-danger);
+}
+
+/* Pikselowe pudełko pola (Input, Select) — ta sama ramka i cień co Button. */
+.control {
+  width: 100%;
+  border: var(--pixel-border);
+  box-shadow: var(--pixel-shadow);
+  background: var(--color-surface);
+  color: var(--color-text);
+  font-size: var(--font-size-lg);
+  padding: var(--space-1) var(--space-2);
+}
+
+/* Błąd: ramka w kolorze błędu (sam kolor nie wystarcza, dlatego jest też tekst pod polem). */
+.control[aria-invalid='true'] {
+  border-color: var(--color-danger);
+}
+
+/* Wyłączone: przerywana ramka jak w Button — różni się kształtem, nie tylko kolorem. */
+.control:disabled {
+  color: var(--color-text-muted);
+  border-color: var(--color-border);
+  border-style: dashed;
+  box-shadow: none;
+  cursor: not-allowed;
+}

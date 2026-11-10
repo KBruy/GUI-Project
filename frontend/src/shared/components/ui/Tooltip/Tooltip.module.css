@@ -1,0 +1,22 @@
+/* Owija element, nad którym pokazuje się dymek; sam nie zmienia układu. */
+.trigger {
+  display: inline-flex;
+}
+
+/* position: fixed — współrzędne liczy Tooltip.tsx względem okna. */
+.tooltip {
+  position: fixed;
+  top: 0;
+  left: 0;
+  z-index: 1000;
+  max-width: 240px;
+  padding: var(--space-1) var(--space-2);
+  border: var(--pixel-border);
+  box-shadow: var(--pixel-shadow);
+  background: var(--color-surface-raised);
+  color: var(--color-text);
+  font-family: var(--font-body);
+  font-size: var(--font-size-md);
+  line-height: 1.2;
+  pointer-events: none;
+}

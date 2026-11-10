@@ -1,0 +1,88 @@
+.row {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+}
+
+/* Własny wygląd suwaka: pikselowy tor i kwadratowy uchwyt.
+   Przeglądarki mają osobne pseudo-elementy (-webkit- i -moz-), stąd powtórzenia. */
+.slider {
+  flex: 1;
+  appearance: none;
+  background: transparent;
+  cursor: pointer;
+}
+
+.slider::-webkit-slider-runnable-track {
+  height: var(--space-3);
+  border: var(--pixel-border);
+  background: var(--color-surface);
+}
+
+.slider::-moz-range-track {
+  height: var(--space-3);
+  border: var(--pixel-border);
+  background: var(--color-surface);
+}
+
+.slider::-webkit-slider-thumb {
+  appearance: none;
+  width: var(--space-4);
+  height: var(--space-5);
+  /* Chrome/Safari nie centrują uchwytu: (wnętrze toru − wysokość uchwytu) / 2 */
+  margin-top: calc((var(--space-3) - 2 * var(--border-width) - var(--space-5)) / 2);
+  border: var(--pixel-border);
+  border-radius: 0;
+  background: var(--color-primary);
+  box-shadow: var(--pixel-shadow);
+}
+
+.slider::-moz-range-thumb {
+  width: var(--space-4);
+  height: var(--space-5);
+  border: var(--pixel-border);
+  border-radius: 0;
+  background: var(--color-primary);
+  box-shadow: var(--pixel-shadow);
+}
+
+.slider[aria-invalid='true']::-webkit-slider-runnable-track {
+  border-color: var(--color-danger);
+}
+
+.slider[aria-invalid='true']::-moz-range-track {
+  border-color: var(--color-danger);
+}
+
+/* Wyłączony: przerywany tor i szary uchwyt, jak w Button. */
+.slider:disabled {
+  cursor: not-allowed;
+}
+
+.slider:disabled::-webkit-slider-runnable-track {
+  border-style: dashed;
+}
+
+.slider:disabled::-moz-range-track {
+  border-style: dashed;
+}
+
+.slider:disabled::-webkit-slider-thumb {
+  background: var(--color-surface);
+  box-shadow: none;
+}
+
+.slider:disabled::-moz-range-thumb {
+  background: var(--color-surface);
+  box-shadow: none;
+}
+
+/* Stała szerokość, żeby suwak nie skakał przy zmianie liczby cyfr. */
+.value {
+  min-width: 3ch;
+  text-align: right;
+}
+
+.slider:disabled + .value {
+  color: var(--color-text-muted);
+}
