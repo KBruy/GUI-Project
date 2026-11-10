@@ -30,3 +30,15 @@ editor.objectsInRect({ x, y, width, height })         // id obiektów z widoczny
 - Kolizja to zwykłe prostokąty bez obrotu. Stykanie się krawędziami nie jest kolizją.
 - Nie sprawdza reguł z rozdz. 5.5 (granice sceny, zakres skali, zablokowane warstwy).
 - Cofnij/ponów pamięta kopie całej sceny.
+
+## Store edytora
+
+Komponenty nie trzymają silnika u siebie, tylko biorą go ze store'u Zustand (`features/map-editor/store/editorStore.ts`):
+
+```ts
+const scene = useEditorStore((s) => s.scene)          // komponent odświeża się po każdej zmianie sceny
+const execute = useEditorStore((s) => s.execute)
+execute(addObject(layerId, asset, { x, y }))
+```
+
+Store trzyma też zaznaczenie (`selectedIds`), narzędzie (`tool`), aktywną warstwę (`activeLayerId`), `zoom` i `offset` widoku. `loadScene(scene)` tworzy nowy silnik i czyści zaznaczenie.
