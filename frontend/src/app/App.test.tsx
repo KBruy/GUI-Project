@@ -1,38 +1,42 @@
 import { render, screen } from '@testing-library/react'
-import { afterEach, describe, expect, it, vi } from 'vitest'
+import { createMemoryRouter, RouterProvider } from 'react-router'
+import { describe, expect, it } from 'vitest'
 import { AppProviders } from './AppProviders'
-import App from './App.tsx'
+import { AppFooter } from './AppFooter'
+import { routes } from './router'
 
-// vi.stubGlobal nie resetuje się automatycznie — czyścimy po każdym teście, żeby pathname
-// nie wyciekało między przypadkami testowymi.
-afterEach(() => {
-  vi.unstubAllGlobals()
-})
+// Pamięciowy router z tymi samymi trasami co aplikacja, ale startujący od podanego adresu.
+function renderAt(path: string) {
+  const router = createMemoryRouter(routes, { initialEntries: [path] })
+  render(
+    <AppProviders>
+      <RouterProvider router={router} />
+    </AppProviders>
+  )
+}
 
-describe('App', () => {
-  it('renders WorldSmith heading', () => {
-    render(
-      <AppProviders>
-        <App />
-      </AppProviders>
-    )
+describe('routes', () => {
+  it('renders the home page at /', () => {
+    renderAt('/')
     expect(screen.getByRole('heading', { name: 'WorldSmith' })).toBeInTheDocument()
   })
 
-  it('renders demo page at /dev/ui', () => {
-    vi.stubGlobal('location', { pathname: '/dev/ui' })
-    render(
-      <AppProviders>
-        <App />
-      </AppProviders>
-    )
-    expect(screen.getByRole('heading', { name: /katalog komponentów/i })).toBeInTheDocument()
+  it('renders the map editor page at /map', () => {
+    renderAt('/map')
+    expect(screen.getByRole('heading', { name: 'Edytor map' })).toBeInTheDocument()
   })
 
-  it('shows visible Pxlkit attribution in the footer', () => {
+  it('renders the demo page at /dev/ui', () => {
+    renderAt('/dev/ui')
+    expect(screen.getByRole('heading', { name: /katalog komponentów/i })).toBeInTheDocument()
+  })
+})
+
+describe('AppFooter', () => {
+  it('shows visible Pxlkit attribution', () => {
     render(
       <AppProviders>
-        <App />
+        <AppFooter />
       </AppProviders>
     )
     expect(screen.getByRole('link', { name: 'Joangel De La Rosa' })).toBeVisible()
