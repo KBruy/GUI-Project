@@ -13,8 +13,6 @@ const dictionary = {
   'theme.light': { pl: 'Jasny', en: 'Light' },
   'theme.contrast': { pl: 'Kontrastowy', en: 'Contrast' },
   'lang.label': { pl: 'Język', en: 'Language' },
-  'lang.pl': { pl: 'Polski', en: 'Polish' },
-  'lang.en': { pl: 'Angielski', en: 'English' },
   'actions.close': { pl: 'Zamknij', en: 'Close' },
   'project.saved': { pl: 'Projekt zapisany', en: 'Project saved' },
   'common.comingSoon': { pl: 'Ta funkcja będzie wkrótce', en: 'This feature is coming soon' },

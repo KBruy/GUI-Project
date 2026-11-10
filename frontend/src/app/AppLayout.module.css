@@ -52,6 +52,14 @@
   text-decoration: underline;
 }
 
+/* Przełączniki dosunięte do prawej krawędzi nagłówka. */
+.settings {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-3);
+  margin-left: auto;
+}
+
 .main {
   flex: 1;
   padding: var(--space-5) 0;

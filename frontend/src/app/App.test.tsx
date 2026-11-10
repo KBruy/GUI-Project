@@ -1,6 +1,6 @@
-import { render, screen, within } from '@testing-library/react'
+import { fireEvent, render, screen, within } from '@testing-library/react'
 import { createMemoryRouter, RouterProvider } from 'react-router'
-import { describe, expect, it } from 'vitest'
+import { afterEach, describe, expect, it } from 'vitest'
 import { AppProviders } from './AppProviders'
 import { routes } from './router'
 
@@ -56,5 +56,28 @@ describe('AppLayout', () => {
       'href',
       'https://github.com/Joangeldelarosa/pxlkit/blob/main/LICENSE-ASSETS'
     )
+  })
+})
+
+describe('settings switchers in the header', () => {
+  // Wybór trafia do localStorage — czyścimy, żeby kolejne testy startowały po polsku.
+  afterEach(() => {
+    localStorage.clear()
+  })
+
+  it('changes the theme and remembers it', () => {
+    renderAt('/map')
+    const group = screen.getByRole('group', { name: 'Motyw' })
+    fireEvent.click(within(group).getByRole('button', { name: 'Kontrastowy' }))
+    expect(document.documentElement.dataset.theme).toBe('contrast')
+    expect(localStorage.getItem('worldsmith.theme')).toBe('contrast')
+  })
+
+  it('changes the language of the whole layout and remembers it', () => {
+    renderAt('/map')
+    fireEvent.click(screen.getByRole('button', { name: 'EN' }))
+    expect(screen.getByRole('navigation', { name: 'Main navigation' })).toBeInTheDocument()
+    expect(screen.getByRole('link', { name: 'Map Editor' })).toHaveAttribute('aria-current', 'page')
+    expect(localStorage.getItem('worldsmith.lang')).toBe('en')
   })
 })

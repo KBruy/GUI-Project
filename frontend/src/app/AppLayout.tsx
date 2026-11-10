@@ -1,6 +1,8 @@
 import { Link, NavLink, Outlet } from 'react-router'
 import { useT } from '@/i18n/language'
 import type { TranslationKey } from '@/i18n/dictionary'
+import { ThemeSwitcher } from '@/features/settings/ThemeSwitcher'
+import { LanguageSwitcher } from '@/features/settings/LanguageSwitcher'
 import { AppFooter } from './AppFooter'
 import styles from './AppLayout.module.css'
 
@@ -11,7 +13,7 @@ const NAV_LINKS: { to: string; labelKey: TranslationKey }[] = [
   { to: '/projects', labelKey: 'nav.projects' },
 ]
 
-// Wspólna rama każdej podstrony: nagłówek z nawigacją, treść strony (Outlet) i stopka.
+// Wspólna rama każdej podstrony: nagłówek z nawigacją i przełącznikami, treść strony (Outlet) i stopka.
 export function AppLayout() {
   const { t } = useT()
 
@@ -33,6 +35,10 @@ export function AppLayout() {
             ))}
           </ul>
         </nav>
+        <div className={styles.settings}>
+          <ThemeSwitcher />
+          <LanguageSwitcher />
+        </div>
       </header>
 
       <main className={styles.main}>
