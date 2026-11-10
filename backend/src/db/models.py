@@ -1,12 +1,10 @@
 import uuid
 from datetime import datetime
-from typing import Any, get_args
+from typing import Any
 
 from sqlalchemy import CheckConstraint, DateTime, ForeignKey, Index, MetaData, func
 from sqlalchemy.dialects.postgresql import JSONB
 from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column, relationship
-
-from src.schemas.base import Module
 
 # Wzory nazw ograniczeń i indeksów
 NAMING_CONVENTION = {
@@ -23,17 +21,11 @@ class Base(DeclarativeBase):
 
     metadata = MetaData(naming_convention=NAMING_CONVENTION)
 
-
-# Dozwolone moduły
-MODULES=("map", "character")
-
-
 class AssetCategory(Base):
     """Kategoria assetów, np. "trees" w module map."""
 
     __tablename__ = "asset_categories"
-    # Przecinek na końcu: bez niego nawiasy nie tworzą krotki.
-    __table_args__ = (CheckConstraint(f"module IN ('map', 'character')", name="module_allowed"),)
+    __table_args__ = (CheckConstraint("module IN ('map', 'character')", name="module_allowed"),)
     id: Mapped[int] = mapped_column(primary_key=True)
     key: Mapped[str] = mapped_column(unique=True)
     module: Mapped[str]
@@ -44,6 +36,7 @@ class AssetCategory(Base):
 
 
 class Asset(Base):
+    """Pojedynczy asset, np. drzewo lub postać; w scenie odwołujemy się do niego przez id."""
 
     __tablename__ = "assets"
     __table_args__ = (CheckConstraint("width > 0 AND height > 0", name="size_positive"),)
@@ -65,7 +58,7 @@ class Project(Base):
     """
 
     __tablename__ = "projects"
-    __table_args__ = (CheckConstraint(f"type IN ('map', 'character')", name="type_allowed"),)
+    __table_args__ = (CheckConstraint("type IN ('map', 'character')", name="type_allowed"),)
 
     id: Mapped[uuid.UUID] = mapped_column(primary_key=True)
     type: Mapped[str]

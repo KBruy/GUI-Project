@@ -33,7 +33,10 @@ docker compose exec db psql -U worldsmith -d worldsmith
 Jeśli port 5432 jest zajęty (np. przez zainstalowany PostgreSQL), ustaw w `.env` `POSTGRES_PORT=5433`.
 Backend i Alembic nie czytają `.env` same, więc ustaw też adres bazy w terminalu (PowerShell):
 ```
+# Windows (PowerShell)
 $env:DATABASE_URL="postgresql+psycopg://worldsmith:worldsmith@localhost:5433/worldsmith"
+# macOS / Linux
+export DATABASE_URL="postgresql+psycopg://worldsmith:worldsmith@localhost:5433/worldsmith"
 ```
 
 ## Tabele
@@ -91,7 +94,7 @@ Adres bazy Alembic bierze z `DATABASE_URL`, tak jak aplikacja (`src/config.py`),
 | `tests/test_migrations.py` | migracja tworzy to, co opisują modele; `downgrade` i `upgrade` działają; baza odrzuca złe dane | tak |
 
 ```
-python -m pytest tests\test_models.py tests\test_migrations.py -v
+python -m pytest tests/test_models.py tests/test_migrations.py -v
 ```
 
 `test_migrations.py` tworzy osobną bazę `worldsmith_test` i usuwa ją po testach, więc nie rusza danych w bazie `worldsmith`.
