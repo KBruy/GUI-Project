@@ -25,6 +25,13 @@ describe('routes', () => {
     expect(screen.getByRole('heading', { name: 'Edytor map' })).toBeInTheDocument()
   })
 
+  it('renders the 404 page for an unknown address, inside the layout', () => {
+    renderAt('/nie-ma-takiej-strony')
+    expect(screen.getByRole('heading', { name: '404' })).toBeInTheDocument()
+    expect(screen.getByRole('link', { name: 'Wróć na stronę główną' })).toHaveAttribute('href', '/')
+    expect(screen.getByRole('navigation')).toBeInTheDocument()
+  })
+
   it('renders the demo page at /dev/ui', () => {
     renderAt('/dev/ui')
     expect(screen.getByRole('heading', { name: /katalog komponentów/i })).toBeInTheDocument()

@@ -45,6 +45,12 @@ svg[data-icon] {
   image-rendering: crisp-edges; /* Firefox fallback */
 }
 
+/* Linki w treści w kolorze akcentu zamiast domyślnego niebieskiego przeglądarki
+   (stopka i nawigacja nadpisują to własnymi klasami). */
+a {
+  color: var(--color-accent);
+}
+
 :focus-visible {
   outline: var(--focus-width) solid var(--color-focus);
   outline-offset: 2px;

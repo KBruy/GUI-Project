@@ -5,6 +5,7 @@ import MapEditorPage from '@/pages/MapEditorPage'
 import CharacterCreatorPage from '@/pages/CharacterCreatorPage'
 import ProjectsPage from '@/pages/ProjectsPage'
 import DevUiPage from '@/pages/DevUiPage'
+import NotFoundPage from '@/pages/NotFoundPage'
 import { AppLayout } from './AppLayout'
 
 // Wszystkie trasy aplikacji w jednym miejscu. Nowa podstrona = nowy wpis tutaj.
@@ -19,6 +20,8 @@ export const routes: RouteObject[] = [
       { path: '/character', element: <CharacterCreatorPage /> },
       { path: '/projects', element: <ProjectsPage /> },
       { path: '/dev/ui', element: <DevUiPage /> },
+      // '*' musi być ostatni: łapie każdy adres, który nie pasuje do tras powyżej.
+      { path: '*', element: <NotFoundPage /> },
     ],
   },
 ]
