@@ -40,5 +40,12 @@ jobs:
       - name: Test
         run: npm test --workspace=frontend
 
+      # Frontend importuje @worldsmith/engine, więc silnik sprawdzamy w tym samym jobie.
+      - name: Engine typecheck
+        run: npm run typecheck --workspace=engine
+
+      - name: Engine test
+        run: npm test --workspace=engine
+
       - name: Build
         run: npm run build --workspace=frontend
