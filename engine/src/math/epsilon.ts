@@ -3,4 +3,4 @@
  * Obiekty, które tylko stykają się krawędziami (albo nachodzą o mniej niż EPSILON
  * przez błędy zaokrągleń), nie kolidują.
  */
-export const EPSILON = 1e-6;
+export const EPSILON = 1e-6

@@ -1,8 +1,8 @@
-import { describe, expect, it } from 'vitest';
-import { ENGINE_VERSION } from './index';
+import { describe, expect, it } from 'vitest'
+import { ENGINE_VERSION } from './index'
 
 describe('engine', () => {
-    it('eksportuje wersję', () => {
-        expect(ENGINE_VERSION).toBe('0.0.0');
-    });
-});
+  it('eksportuje wersję', () => {
+    expect(ENGINE_VERSION).toBe('0.0.0')
+  })
+})
