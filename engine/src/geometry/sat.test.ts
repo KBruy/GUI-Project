@@ -39,4 +39,11 @@ describe('satOverlap', () => {
         expect(aabbOverlap(getAABB(a), getAABB(b))).toBe(true);
         expect(satOverlap(a, b)).toBe(false);
     });
+
+    it('obiekt o zerowej szerokości nie psuje testu (bez NaN)', () => {
+        // Pionowy odcinek: szerokość 0, więc dwa boki mają długość 0.
+        const line = getCorners({ x: 100, y: 100, width: 0, height: 20, rotation: 0, scaleX: 1, scaleY: 1 });
+        expect(satOverlap(line, shape(100, 100))).toBe(true);
+        expect(satOverlap(line, shape(300, 300))).toBe(false);
+    });
 });
