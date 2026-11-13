@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { GRID_SIZE, SCHEMA_VERSION } from '../types';
-import { createCharacterScene, createLayer, createMapScene } from './create';
+import { createCharacterScene, createLayer, createMapScene, isAllowedMapSize, MAP_SIZES } from './create';
 
 describe('createLayer', () => {
     it('tworzy pustą, widoczną warstwę', () => {
@@ -9,6 +9,21 @@ describe('createLayer', () => {
         expect(layer.visible).toBe(true);
         expect(layer.locked).toBe(false);
         expect(layer.objects).toHaveLength(0);
+    });
+});
+
+describe('MAP_SIZES', () => {
+    it('ma trzy rozmiary zgodne z backendem', () => {
+        expect(MAP_SIZES).toEqual([
+            { width: 640, height: 480 },
+            { width: 1280, height: 960 },
+            { width: 2048, height: 1536 },
+        ]);
+    });
+
+    it('isAllowedMapSize odróżnia dozwolony rozmiar od dowolnego', () => {
+        expect(isAllowedMapSize({ width: 1280, height: 960 })).toBe(true);
+        expect(isAllowedMapSize({ width: 1000, height: 1000 })).toBe(false);
     });
 });
 

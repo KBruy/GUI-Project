@@ -1,9 +1,30 @@
 import { newId } from '../ids';
 import { GRID_SIZE, SCHEMA_VERSION, type Layer, type Scene } from '../types';
 
+/** Rozmiar płótna w pikselach. */
+export interface SceneSize {
+    width: number;
+    height: number;
+}
+
+/**
+ * Dozwolone rozmiary mapy: mała, średnia, duża (rozdz. 1 dokumentu technicznego).
+ * Te same wartości ma backend w ALLOWED_SCENE_SIZES (backend/src/config.py).
+ */
+export const MAP_SIZES: readonly SceneSize[] = [
+    { width: 640, height: 480 },
+    { width: 1280, height: 960 },
+    { width: 2048, height: 1536 },
+];
+
 /** Płótno postaci ma stały rozmiar (rozdz. 5.3 dokumentu technicznego). */
 export const CHARACTER_WIDTH = 256;
 export const CHARACTER_HEIGHT = 512;
+
+/** Czy rozmiar jest jednym z dozwolonych rozmiarów mapy. */
+export function isAllowedMapSize(size: SceneSize): boolean {
+    return MAP_SIZES.some((allowed) => allowed.width === size.width && allowed.height === size.height);
+}
 
 /** Warstwy postaci od najniższej do najwyższej (rozdz. 5.3). */
 export const CHARACTER_LAYERS = ['ciało', 'spodnie', 'koszulka', 'włosy'];
