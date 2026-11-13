@@ -1,5 +1,5 @@
 import type { Vec2 } from '../math/vec2';
-import { EPSILON } from './aabb';
+import { EPSILON } from '../math/epsilon';
 import type { Corners } from './corners';
 
 /** Oś długości 1 wzdłuż boku od punktu a do punktu b. */

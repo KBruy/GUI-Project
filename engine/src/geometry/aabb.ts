@@ -1,10 +1,5 @@
+import { EPSILON } from '../math/epsilon';
 import type { Corners } from './corners';
-
-/**
- * Tolerancja w pikselach. Obiekty, które tylko stykają się krawędziami
- * (albo nachodzą o mniej niż EPSILON przez błędy zaokrągleń), nie kolidują.
- */
-export const EPSILON = 1e-6;
 
 /** Prostokąt otaczający, nieobrócony (Axis-Aligned Bounding Box). */
 export interface AABB {

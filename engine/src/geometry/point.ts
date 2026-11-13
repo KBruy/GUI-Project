@@ -1,6 +1,6 @@
 import { rotatePoint } from '../math/rotate';
 import type { Vec2 } from '../math/vec2';
-import { EPSILON } from './aabb';
+import { EPSILON } from '../math/epsilon';
 import type { Shape } from './corners';
 
 export function pointInShape(point: Vec2, shape: Shape): boolean {
