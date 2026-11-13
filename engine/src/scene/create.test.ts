@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { GRID_SIZE, SCHEMA_VERSION } from '../types';
+import { EngineError } from '../errors';
 import { createCharacterScene, createLayer, createMapScene, isAllowedMapSize, MAP_SIZES } from './create';
 
 describe('createLayer', () => {
@@ -28,7 +29,7 @@ describe('MAP_SIZES', () => {
 });
 
 describe('createMapScene', () => {
-    const scene = createMapScene('Wioska', 1280, 960);
+    const scene = createMapScene('Wioska',  { width: 1280, height: 960 });
 
     it('ustawia pola z kontraktu danych', () => {
         expect(scene.type).toBe('map');
@@ -39,9 +40,25 @@ describe('createMapScene', () => {
         expect(scene.schemaVersion).toBe(SCHEMA_VERSION);
     });
 
-    it('ma jedną pustą warstwę', () => {
+    it('ma jedną pustą warstwę z domyślną nazwą', () => {
         expect(scene.layers).toHaveLength(1);
+        expect(scene.layers[0].name).toBe('Warstwa 1');
         expect(scene.layers[0].objects).toHaveLength(0);
+    });
+
+    it('przyjmuje nazwę warstwy od frontendu', () => {
+        const english = createMapScene('Village', MAP_SIZES[0], 'Layer 1');
+        expect(english.layers[0].name).toBe('Layer 1');
+    });
+
+    it('odrzuca rozmiar spoza listy kodem INVALID_SCENE_SIZE', () => {
+        try {
+            createMapScene('Zła', { width: 1000, height: 1000 });
+            throw new Error('createMapScene powinno rzucić błąd');
+        } catch (error) {
+            expect(error instanceof EngineError).toBe(true);
+            expect((error as EngineError).code).toBe('INVALID_SCENE_SIZE');
+        }
     });
 
     it('daty są w formacie ISO ze strefą czasową', () => {
@@ -52,6 +69,11 @@ describe('createMapScene', () => {
 
 describe('createCharacterScene', () => {
     const scene = createCharacterScene('Bohater');
+
+    it('przyjmuje nazwy warstw od frontendu', () => {
+        const english = createCharacterScene('Hero', ['body', 'pants', 'shirt', 'hair']);
+        expect(english.layers.map((layer) => layer.name)).toEqual(['body', 'pants', 'shirt', 'hair']);
+    });
 
     it('ma stały rozmiar płótna 256 × 512', () => {
         expect(scene.type).toBe('character');

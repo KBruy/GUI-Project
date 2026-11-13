@@ -1,5 +1,6 @@
 import { newId } from '../ids';
 import { GRID_SIZE, SCHEMA_VERSION, type Layer, type Scene } from '../types';
+import { EngineError } from '../errors';
 
 /** Rozmiar płótna w pikselach. */
 export interface SceneSize {
@@ -27,7 +28,7 @@ export function isAllowedMapSize(size: SceneSize): boolean {
 }
 
 /** Warstwy postaci od najniższej do najwyższej (rozdz. 5.3). */
-export const CHARACTER_LAYERS = ['ciało', 'spodnie', 'koszulka', 'włosy'];
+export const CHARACTER_LAYERS:readonly string[] = ['ciało', 'spodnie', 'koszulka', 'włosy'];
 
 /** Tworzy pustą warstwę. */
 export function createLayer(name: string, locked = false): Layer {
@@ -38,25 +39,28 @@ export function createLayer(name: string, locked = false): Layer {
  * Tworzy nową, pustą mapę z jedną warstwą.
  * Id sceny i daty są tymczasowe: przy pierwszym zapisie backend nadaje własne.
  */
-export function createMapScene(name: string, width: number, height: number): Scene {
+export function createMapScene(name: string, size: SceneSize, layerName = 'Warstwa 1'): Scene {
+    if (!isAllowedMapSize(size)) {
+        throw new EngineError('INVALID_SCENE_SIZE');
+    }
     const now = new Date().toISOString();
     return {
         schemaVersion: SCHEMA_VERSION,
         id: newId('scene'),
         type: 'map',
         name,
-        width,
-        height,
+        width : size.width,
+        height : size.height,
         gridSize: GRID_SIZE,
         background: { color: '#7ec850' },
-        layers: [createLayer('Warstwa 1')],
+        layers: [createLayer(layerName)],
         createdAt: now,
         updatedAt: now,
     };
 }
 
 /** Tworzy nową postać z czterema warstwami; warstwa ciała jest zablokowana. */
-export function createCharacterScene(name: string): Scene {
+export function createCharacterScene(name: string, layerNames: readonly string[] = CHARACTER_LAYERS): Scene {
     const now = new Date().toISOString();
     return {
         schemaVersion: SCHEMA_VERSION,
@@ -67,7 +71,7 @@ export function createCharacterScene(name: string): Scene {
         height: CHARACTER_HEIGHT,
         gridSize: GRID_SIZE,
         background: { color: '#ffffff' },
-        layers: CHARACTER_LAYERS.map((layerName, index) => createLayer(layerName, index === 0)),
+        layers: layerNames.map((layerName, index) => createLayer(layerName, index === 0)),
         createdAt: now,
         updatedAt: now,
     };
