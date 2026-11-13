@@ -1,6 +1,7 @@
 """Repozytoria w pamięci: pozwalają uruchomić API i testy bez bazy danych.
 
 Assety pochodzą z pliku manifest.json, który jest listą obiektów Asset w JSON.
+Projekty istnieją tylko do zatrzymania serwera.
 """
 
 from pathlib import Path
@@ -8,6 +9,8 @@ from pathlib import Path
 from pydantic import TypeAdapter
 
 from src.schemas.asset import Asset
+from src.schemas.project import ProjectSummary
+from src.schemas.scene import Scene
 
 # TypeAdapter sprawdza typ, który nie jest modelem Pydantic (tu: lista Asset), według tych samych reguł co model.
 ASSET_LIST = TypeAdapter(list[Asset])
@@ -54,3 +57,38 @@ class InMemoryAssetRepository:
             for asset in self._assets
             if (module is None or asset.module == module) and (category is None or asset.category == category)
         ]
+
+
+def summary_of(scene: Scene) -> ProjectSummary:
+    """Zwraca dane projektu do listy projektów, bez warstw i obiektów sceny."""
+    return ProjectSummary(
+        id=scene.id,
+        type=scene.type,
+        name=scene.name,
+        createdAt=scene.createdAt,
+        updatedAt=scene.updatedAt,
+    )
+
+
+class InMemoryProjectRepository:
+    """Projekty trzymane w słowniku id projektu → Scene; spełnia interfejs ProjectRepository z ports.py."""
+
+    def __init__(self):
+        self._scenes: dict[str, Scene] = {}
+
+    def list_projects(self, scene_type: str | None = None) -> list[ProjectSummary]:
+        """Zwraca projekty danego typu (None = wszystkie), od ostatnio zmienionego."""
+        scenes = [scene for scene in self._scenes.values() if scene_type is None or scene.type == scene_type]
+        # reverse=True: od najnowszej daty updatedAt do najstarszej.
+        scenes.sort(key=lambda scene: scene.updatedAt, reverse=True)
+        return [summary_of(scene) for scene in scenes]
+
+    def get_project(self, project_id: str) -> Scene | None:
+        return self._scenes.get(project_id)
+
+    def save_project(self, scene: Scene) -> None:
+        self._scenes[scene.id] = scene
+
+    def delete_project(self, project_id: str) -> bool:
+        # pop zwraca usuniętą scenę albo None, gdy klucza nie było.
+        return self._scenes.pop(project_id, None) is not None
