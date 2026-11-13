@@ -1,6 +1,10 @@
+
+
 import { describe, expect, it } from 'vitest';
 import { getCorners } from './corners';
 import { satOverlap } from './sat';
+import { aabbOverlap, getAABB } from './aabb';
+
 
 const shape = (x: number, y: number, rotation = 0) =>
     getCorners({ x, y, width: 20, height: 20, rotation, scaleX: 1, scaleY: 1 });
@@ -26,5 +30,13 @@ describe('satOverlap', () => {
     it('AABB się nakładają, ale obrócone kwadraty nie (tu SAT jest potrzebny)', () => {
         // Dwa romby po skosie: prostokąty otaczające nachodzą, same kształty nie.
         expect(satOverlap(shape(100, 100, 45), shape(120, 120, 45))).toBe(false);
+    });
+
+    it('AABB się nakładają, ale obrócone kwadraty nie (tu SAT jest potrzebny)', () => {
+        // Dwa romby po skosie: prostokąty otaczające nachodzą, same kształty nie.
+        const a = shape(100, 100, 45);
+        const b = shape(120, 120, 45);
+        expect(aabbOverlap(getAABB(a), getAABB(b))).toBe(true);
+        expect(satOverlap(a, b)).toBe(false);
     });
 });
