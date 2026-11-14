@@ -14,3 +14,6 @@ export {
 export type { SceneSize } from './scene/create'
 export { EngineError } from './errors'
 export type { EngineErrorCode } from './errors'
+export { findCollisions } from './collision/collisions'
+export { canPlace } from './collision/can-place'
+export type { Transform, PlaceResult } from './collision/types'
