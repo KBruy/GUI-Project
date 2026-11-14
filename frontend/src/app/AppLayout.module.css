@@ -1,0 +1,66 @@
+/* Nagłówek u góry, stopka zawsze na dole, a treść wypełnia resztę ekranu. */
+.layout {
+  display: flex;
+  flex-direction: column;
+  min-height: 100dvh;
+}
+
+.header {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: var(--space-5);
+  padding: var(--space-3) var(--space-6);
+  border-bottom: var(--pixel-border);
+  background: var(--color-surface);
+}
+
+.logo {
+  font-family: var(--font-heading);
+  font-size: var(--font-size-md);
+  color: var(--color-primary);
+  text-decoration: none;
+}
+
+.links {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+}
+
+/* Przezroczysta ramka trzyma miejsce, żeby aktywny link nie przesuwał sąsiadów. */
+.link {
+  display: inline-block;
+  padding: var(--space-1) var(--space-3);
+  border: var(--border-width) solid transparent;
+  color: var(--color-text);
+  text-decoration: none;
+}
+
+.link:hover {
+  border-color: var(--color-border);
+}
+
+/* Aktywna podstrona: ramka i tekst w kolorze akcentu (kształt + kolor). */
+.link[aria-current='page'] {
+  border-color: var(--color-accent);
+  color: var(--color-accent);
+}
+
+/* Motyw kontrastowy: dodatkowo podkreślenie, jak w Button. */
+[data-theme='contrast'] .link[aria-current='page'] {
+  text-decoration: underline;
+}
+
+/* Przełączniki dosunięte do prawej krawędzi nagłówka. */
+.settings {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-3);
+  margin-left: auto;
+}
+
+.main {
+  flex: 1;
+  padding: var(--space-5) 0;
+}
