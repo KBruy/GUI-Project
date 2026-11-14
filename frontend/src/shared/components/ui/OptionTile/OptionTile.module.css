@@ -1,0 +1,86 @@
+.tile {
+  display: inline-flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--space-1);
+  padding: var(--space-1);
+  border: var(--pixel-border);
+  box-shadow: var(--pixel-shadow);
+  background: var(--color-surface);
+  color: var(--color-text);
+  font-family: var(--font-body);
+  cursor: pointer;
+}
+
+/* Kwadratowe pole na miniaturę; obrazek mieści się w nim w całości. */
+.preview {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--color-bg);
+}
+
+.sm .preview {
+  width: var(--space-6);
+  height: var(--space-6);
+}
+
+.md .preview {
+  width: calc(var(--space-6) * 3);
+  height: calc(var(--space-6) * 3);
+}
+
+/* Proporcje zachowane (contain), piksele ostre (pixelated). */
+.image {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  image-rendering: pixelated;
+}
+
+.label {
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.sm .label {
+  max-width: var(--space-6);
+  font-size: var(--font-size-sm);
+}
+
+.md .label {
+  font-size: var(--font-size-md);
+}
+
+/* Zaznaczony: ramka w kolorze akcentu, pogrubiona drugą ramką z cienia,
+   i „wciśnięcie” jak w Button. Różni się kształtem, nie tylko kolorem. */
+.tile[aria-pressed='true'] {
+  border-color: var(--color-accent);
+  box-shadow: 0 0 0 var(--border-width) var(--color-accent);
+  background: var(--color-surface-raised);
+}
+
+/* Motyw kontrastowy: dodatkowo podkreślony podpis, jak w Button. */
+[data-theme='contrast'] .tile[aria-pressed='true'] .label {
+  text-decoration: underline;
+}
+
+.tile:active:not(:disabled) {
+  box-shadow: none;
+  transform: translate(var(--border-width), var(--border-width));
+}
+
+/* Wyłączony: przerywana ramka i przygaszona miniatura, jak w Button. */
+.tile:disabled {
+  color: var(--color-text-muted);
+  border-color: var(--color-border);
+  border-style: dashed;
+  box-shadow: none;
+  cursor: not-allowed;
+}
+
+.tile:disabled .preview {
+  opacity: 0.4;
+}
