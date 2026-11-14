@@ -85,6 +85,22 @@ python -m alembic revision --autogenerate --rev-id 0002 -m "opis zmiany"
 
 Adres bazy Alembic bierze z `DATABASE_URL`, tak jak aplikacja (`src/config.py`), więc w `alembic.ini` nie ma hasła.
 
+## Seed: assety z manifestu
+
+`src/db/seed.py` wgrywa `assets/manifest.json` do tabel `asset_categories` i `assets`.
+Uruchamiaj z folderu `backend/`, po `python -m alembic upgrade head`:
+```
+python -m src.db.seed
+```
+
+- Kategorie nie są w manifeście osobno: seed wyciąga je z pola `category` assetów.
+  `name_key` = `categories.<module>.<key>`, `sort_order` = kolejność alfabetyczna po `key`, od 0.
+- Można uruchamiać wielokrotnie (upsert): istniejące wiersze są aktualizowane, a `id` kategorii się nie zmieniają.
+- Wszystko idzie w jednej transakcji: błąd w dowolnym wierszu cofa cały seed.
+- Ta sama kategoria w dwóch modułach to błąd, bo `key` jest unikalny w całej tabeli.
+- Brak pliku i pusty manifest nie są błędem (prawdziwych assetów jeszcze nie ma).
+- Seed **nie usuwa** z bazy assetów, których nie ma już w manifeście.
+
 ## Testy bazy
 
 | Plik | Co sprawdza | Wymaga bazy |
@@ -92,10 +108,11 @@ Adres bazy Alembic bierze z `DATABASE_URL`, tak jak aplikacja (`src/config.py`),
 | `tests/test_db.py` | połączenie z bazą | tak |
 | `tests/test_models.py` | nazwy tabel i kolumn, CHECK-i, indeks, klucz obcy (opis w Pythonie) | nie |
 | `tests/test_migrations.py` | migracja tworzy to, co opisują modele; `downgrade` i `upgrade` działają; baza odrzuca złe dane | tak |
+| `tests/test_seed.py` | wyciąganie kategorii, upsert kategorii i assetów, powtórne uruchomienie, rollback przy błędzie | częściowo (testy `seed` tak) |
 
 ```
-python -m pytest tests/test_models.py tests/test_migrations.py -v
+python -m pytest tests/test_models.py tests/test_migrations.py tests/test_seed.py -v
 ```
 
-`test_migrations.py` tworzy osobną bazę `worldsmith_test` i usuwa ją po testach, więc nie rusza danych w bazie `worldsmith`.
+`test_migrations.py` i `test_seed.py` tworzą osobną bazę `worldsmith_test` i usuwają ją po testach (fixture w `tests/conftest.py`), więc nie ruszają danych w bazie `worldsmith`.
 Bez działającej bazy testy z bazą są pomijane (`SKIPPED`). W CI baza działa zawsze, bo `backend.yml` uruchamia kontener PostgreSQL.
