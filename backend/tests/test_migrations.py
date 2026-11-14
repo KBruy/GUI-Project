@@ -2,73 +2,21 @@
 
 Testy działają na osobnej bazie <nazwa>_test, tworzonej od nowa i usuwanej na końcu,
 więc nie ruszają danych w bazie deweloperskiej. Bez działającej bazy są pomijane (skip).
+Fixture bazy (test_db_url, alembic_cfg, engine, session) są w conftest.py.
 """
 
 import uuid
-from collections.abc import Iterator
-from pathlib import Path
 
 import pytest
 from alembic import command
 from alembic.autogenerate import compare_metadata
 from alembic.config import Config
 from alembic.migration import MigrationContext
-from sqlalchemy import URL, Engine, create_engine, inspect, make_url, text
-from sqlalchemy.exc import IntegrityError, OperationalError
+from sqlalchemy import Engine, inspect, text
+from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
 
-from src.config import load_settings
 from src.db.models import Asset, AssetCategory, Base, Project
-
-ALEMBIC_INI = Path(__file__).resolve().parent.parent / "alembic.ini"
-
-
-def alembic_config(url: URL) -> Config:
-    """Konfiguracja Alembica wskazująca na bazę testową zamiast DATABASE_URL."""
-    config = Config(str(ALEMBIC_INI))
-    # ConfigParser traktuje % jako początek zmiennej, więc % w haśle trzeba podwoić.
-    config.set_main_option("sqlalchemy.url", url.render_as_string(hide_password=False).replace("%", "%%"))
-    return config
-
-
-@pytest.fixture(scope="module")
-def test_db_url() -> Iterator[URL]:
-    """Tworzy pustą bazę <nazwa>_test obok bazy z ustawień i usuwa ją po testach z tego pliku."""
-    base_url = make_url(load_settings().database_url)
-    test_url = base_url.set(database=f"{base_url.database}_test")
-    # CREATE/DROP DATABASE nie działa w transakcji, stąd AUTOCOMMIT.
-    admin = create_engine(base_url, isolation_level="AUTOCOMMIT")
-    try:
-        with admin.connect() as connection:
-            connection.execute(text(f'DROP DATABASE IF EXISTS "{test_url.database}"'))
-            connection.execute(text(f'CREATE DATABASE "{test_url.database}"'))
-    except OperationalError:
-        admin.dispose()
-        pytest.skip("Baza nie działa, uruchom: docker compose up -d")
-    yield test_url
-    with admin.connect() as connection:
-        connection.execute(text(f'DROP DATABASE IF EXISTS "{test_url.database}" WITH (FORCE)'))
-    admin.dispose()
-
-
-@pytest.fixture(scope="module")
-def engine(test_db_url: URL) -> Iterator[Engine]:
-    """Silnik bazy testowej z tabelami utworzonymi migracją (nie create_all), tak jak na produkcji."""
-    command.upgrade(alembic_config(test_db_url), "head")
-    engine = create_engine(test_db_url)
-    yield engine
-    engine.dispose()
-
-
-@pytest.fixture
-def session(engine: Engine) -> Iterator[Session]:
-    """Sesja w transakcji cofanej po każdym teście, więc testy nie widzą swoich danych."""
-    with engine.connect() as connection:
-        transaction = connection.begin()
-        # create_savepoint: commit/rollback w teście dotyczy savepointu, a zewnętrzna transakcja zostaje.
-        with Session(bind=connection, join_transaction_mode="create_savepoint") as session:
-            yield session
-        transaction.rollback()
 
 
 def make_category(**overrides) -> AssetCategory:
@@ -100,8 +48,8 @@ def test_projects_index_exists(engine: Engine):
     assert indexes["ix_projects_type_updated_at"]["column_sorting"] == {"updated_at": ("desc",)}
 
 
-def test_downgrade_and_upgrade_again(test_db_url: URL, engine: Engine):
-    config = alembic_config(test_db_url)
+def test_downgrade_and_upgrade_again(alembic_cfg: Config, engine: Engine):
+    config = alembic_cfg
     command.downgrade(config, "base")
     # Zostaje tylko tabela z numerem wersji Alembica.
     assert set(inspect(engine).get_table_names()) == {"alembic_version"}
