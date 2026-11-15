@@ -24,7 +24,7 @@
 }
 
 .server[data-state='online'] {
-  color: var(--color-text);
+  color: var(--color-success);
 }
 
 .server[data-state='offline'] {

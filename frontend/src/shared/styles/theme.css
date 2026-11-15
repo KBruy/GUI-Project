@@ -39,6 +39,7 @@
   --color-on-accent: #0a0a0b;      /* text on accent */
   --color-danger: #ffc21f;         /* warning / destructive */
   --color-on-danger: #0a0a0b;      /* text on danger */
+  --color-success: #3ddc84;        /* success / online status */
   --color-focus: #ffffff;          /* focus ring */
 
   /* === Pixel-art primitives (derived from color tokens) === */
@@ -62,6 +63,7 @@
   --color-on-accent: #ffffff;
   --color-danger: #a35400;
   --color-on-danger: #ffffff;
+  --color-success: #1a7f37;
   --color-focus: #0068b8;
 }
 
@@ -82,5 +84,6 @@
   --color-on-accent: #000000;
   --color-danger: #ffd400;
   --color-on-danger: #000000;
+  --color-success: #5cff8a;
   --color-focus: #ffd400;
 }
