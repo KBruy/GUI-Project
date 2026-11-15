@@ -23,6 +23,29 @@ Scenę rysujemy biblioteką Konva przez `react-konva`. Kod wspólny dla edytora 
 - Warstwy mają `imageSmoothingEnabled={false}`, więc pixel art po powiększeniu zostaje ostry.
 - Bez `getAssetUrl` albo dopóki PNG się ładuje obiekt jest czerwonym prostokątem zastępczym.
 
+## GridLayer
+
+```tsx
+<SceneRenderer scene={scene} width={width} height={height}>
+  {gridVisible && <GridLayer width={scene.width} height={scene.height} size={scene.gridSize} />}
+</SceneRenderer>
+```
+
+- Linie co `size` px na całej scenie, łącznie z krawędziami.
+- Jeden `Shape` z własnym `sceneFunc` zamiast setek `Line`, więc duża mapa nie spowalnia przeciągania.
+- `strokeScaleEnabled={false}`: linia ma zawsze 1 px na ekranie, także po zoomie.
+- `listening={false}`: siatka nie łapie kliknięć.
+- Przełączniki „Siatka” i „Przyciąganie” są w pasku narzędzi (`features/map-editor/components/GridToggles.tsx`), a ich stan w store (`gridVisible`, `gridSnap`). Przyciąganie (`editor.snapToGrid`) użyjemy przy dodawaniu (F-31) i przeciąganiu (F-33).
+
+## Zoom i przesuwanie widoku
+
+Widok to `zoom` i `offset` w store: punkt sceny `(x, y)` jest na ekranie w `(offset.x + x * zoom, offset.y + y * zoom)`. `SceneRenderer` dostaje je jako propsy i ustawia na całym `Stage` (skala i pozycja), więc siatka i obiekty skalują się razem.
+
+- Obliczenia są w `features/map-editor/view.ts` (czyste funkcje z testami): `zoomAt` (punkt pod kursorem zostaje w miejscu), `fitView` (cała mapa na środku), `clampZoom` (25–400%), `clampOffset` (zawsze widać co najmniej 64 px mapy).
+- Store: `zoomTo(zoom, punkt?)`, `panBy(dx, dy)`, `fitToScreen()`, `setViewport(rozmiar)`. Pierwszy pomiar canvasu i wczytanie sceny dopasowują widok do ekranu.
+- Mysz i klawiatura: `features/map-editor/useViewControls.ts`. Kółko = zoom w miejscu kursora, `+`/`−` = zoom w środku, spacja z przeciąganiem albo środkowy przycisk = przesuwanie. Klawisze nie działają w polach formularza.
+- Pasek narzędzi: `ZoomControls` (−, procent, +, „Dopasuj”).
+
 ## useAssetImage
 
 `useAssetImage(url)` zwraca gotowy `HTMLImageElement` albo `null` (ładuje się, błąd, brak adresu).
