@@ -1,6 +1,6 @@
 import { describe, expect, it, vi } from 'vitest'
 import type { Scene, SceneObject } from '@worldsmith/engine'
-import { addObject, createEditor, transformObjects } from './mockEditor'
+import { addObject, createEditor, moveObjects, transformObjects } from './mockEditor'
 
 const TREE = { id: 'map_tree_oak_01', width: 64, height: 64 }
 
@@ -87,6 +87,38 @@ describe('mock editor', () => {
 
     editor.redo()
     expect(editor.getScene().layers[0].objects[0]).toMatchObject({ x: 320, y: 128 })
+  })
+
+  it('moves several objects by the same vector in one undo step', () => {
+    const editor = createEditor(makeScene())
+    editor.execute(addObject('ground', TREE, { x: 200, y: 100 }))
+    const ids = editor.getScene().layers[0].objects.map((o) => o.id)
+
+    // Obiekty stykają się krawędziami i jadą razem, więc nie kolidują ze sobą.
+    expect(editor.execute(moveObjects(ids, { x: 32, y: 64 }))).toEqual({ ok: true })
+    expect(editor.getScene().layers[0].objects).toMatchObject([
+      { x: 132, y: 164 },
+      { x: 232, y: 164 },
+    ])
+
+    editor.undo()
+    expect(editor.getScene().layers[0].objects).toMatchObject([
+      { x: 100, y: 100 },
+      { x: 200, y: 100 },
+    ])
+  })
+
+  it('checks a command with canExecute without changing the scene', () => {
+    const editor = createEditor(makeScene())
+    editor.execute(addObject('ground', TREE, { x: 300, y: 100 }))
+    const before = editor.getScene()
+
+    expect(editor.canExecute(moveObjects(['a'], { x: 180, y: 0 }))).toEqual({
+      ok: false,
+      collidesWith: [before.layers[0].objects[1].id],
+    })
+    expect(editor.canExecute(moveObjects(['a'], { x: 0, y: 200 }))).toEqual({ ok: true })
+    expect(editor.getScene()).toBe(before)
   })
 
   it('snaps a point to the nearest grid point', () => {
