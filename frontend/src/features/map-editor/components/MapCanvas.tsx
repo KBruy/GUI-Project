@@ -15,6 +15,9 @@ import { toScenePoint } from '../view'
 import { ASSET_DRAG_TYPE } from './AssetPalette'
 import styles from './MapCanvas.module.css'
 
+// Odsunięcie etykiety ze współrzędnymi od kursora, żeby go nie zasłaniała.
+const LABEL_OFFSET = 16
+
 // Kopia sceny z obiektami ids przesuniętymi o wektor (tylko do podglądu przeciągania).
 function moveInScene(scene: Scene, ids: string[], delta: Point): Scene {
   return {
@@ -61,6 +64,8 @@ export function MapCanvas() {
       collisions: objects.filter((o) => drag?.collidesWith.includes(o.id)),
     }
   }, [shownScene, selectedIds, drag])
+  // Etykieta przy kursorze: środek chwyconego obiektu, tak jak x, y w panelu właściwości.
+  const anchor = drag && selected.find((o) => o.id === drag.anchorId)
 
   // Store potrzebuje rozmiaru canvasu do zoomu w środku i „Dopasuj do ekranu”.
   useEffect(() => {
@@ -127,8 +132,21 @@ export function MapCanvas() {
               size={shownScene.gridSize}
             />
           )}
-          <SelectionLayer objects={selected} collisions={collisions} marquee={selection.marquee} />
+          <SelectionLayer
+            objects={selected}
+            collisions={collisions}
+            marquee={selection.marquee}
+            shakeKey={selection.shakeKey}
+          />
         </SceneRenderer>
+      )}
+      {drag && anchor && (
+        <div
+          className={styles.coords}
+          style={{ left: drag.pointer.x + LABEL_OFFSET, top: drag.pointer.y + LABEL_OFFSET }}
+        >
+          {anchor.x}, {anchor.y}
+        </div>
       )}
     </div>
   )

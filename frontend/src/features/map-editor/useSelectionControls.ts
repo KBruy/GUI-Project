@@ -3,7 +3,8 @@
 // - Shift + klik: dodaje obiekt do zaznaczenia albo go z niego zdejmuje,
 // - przeciągnięcie po pustym miejscu: prostokąt zaznaczenia (z Shiftem dokłada do zaznaczenia),
 // - Esc: czyści zaznaczenie,
-// - przeciągnięcie obiektu: przesuwa całe zaznaczenie (F-33), z podglądem kolizji przed upuszczeniem.
+// - przeciągnięcie obiektu: przesuwa całe zaznaczenie (F-33), z podglądem kolizji przed upuszczeniem;
+//   upuszczenie na zajęte miejsce zostawia obiekty, pokazuje toast i potrząsa ramkami.
 import { useEffect, useRef, useState, type PointerEvent, type RefObject } from 'react'
 import type { SelectionRect } from '@/shared/canvas/SelectionLayer'
 import { toast } from '@/shared/components/ui/Toast/toast'
@@ -29,6 +30,9 @@ function rectBetween(a: Point, b: Point): SelectionRect {
 export interface DragPreview {
   delta: Point
   collidesWith: string[]
+  // Chwycony obiekt (jego współrzędne pokazuje etykieta) i kursor w px względem canvasu.
+  anchorId: string
+  pointer: Point
 }
 
 export function useSelectionControls(ref: RefObject<HTMLElement | null>) {
@@ -43,6 +47,8 @@ export function useSelectionControls(ref: RefObject<HTMLElement | null>) {
     null
   )
   const [drag, setDrag] = useState<DragPreview | null>(null)
+  // Rośnie przy każdym upuszczeniu na zajęte miejsce, SelectionLayer wtedy potrząsa ramkami.
+  const [shakeKey, setShakeKey] = useState(0)
 
   useEffect(() => {
     function onKeyDown(event: KeyboardEvent) {
@@ -90,7 +96,12 @@ export function useSelectionControls(ref: RefObject<HTMLElement | null>) {
       const plan = useEditorStore
         .getState()
         .planMove({ x: scene.x - from.scene.x, y: scene.y - from.scene.y }, from.id)
-      setDrag({ delta: plan.delta, collidesWith: plan.result.ok ? [] : plan.result.collidesWith })
+      setDrag({
+        delta: plan.delta,
+        collidesWith: plan.result.ok ? [] : plan.result.collidesWith,
+        anchorId: from.id,
+        pointer: screen,
+      })
       return
     }
     if (!start.current) return
@@ -110,8 +121,12 @@ export function useSelectionControls(ref: RefObject<HTMLElement | null>) {
     if (marquee && start.current) selectInRect(marquee, start.current.add)
     if (grab.current && drag) {
       // Upuszczenie: przy kolizji obiekty zostają na starym miejscu.
-      if (drag.collidesWith.length > 0) toast.error('errors.collision')
-      else useEditorStore.getState().moveSelected(drag.delta)
+      if (drag.collidesWith.length > 0) {
+        toast.error('errors.collision')
+        setShakeKey((key) => key + 1)
+      } else {
+        useEditorStore.getState().moveSelected(drag.delta)
+      }
     } else if (grab.current?.wasSelected) {
       // Zwykły klik (bez przeciągania) w zaznaczony obiekt zostawia zaznaczony tylko jego.
       select([grab.current.id])
@@ -122,6 +137,7 @@ export function useSelectionControls(ref: RefObject<HTMLElement | null>) {
   return {
     marquee,
     drag,
+    shakeKey,
     // Przerwane przeciąganie (np. utrata okna) nie zmienia zaznaczenia.
     handlers: { onPointerDown, onPointerMove, onPointerUp, onPointerCancel: stop },
   }

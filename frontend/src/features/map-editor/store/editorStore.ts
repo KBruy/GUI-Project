@@ -279,7 +279,8 @@ export const useEditorStore = create<EditorState>()((set, get) => ({
   planMove(delta, anchorId) {
     const { scene, editor, selectedIds, gridSnap } = get()
     if (!scene || !editor) return { delta: { x: 0, y: 0 }, result: { ok: true } }
-    let move = delta
+    // Pixel art: obiekty stoją na całych pikselach, także przy zoomie i bez przyciągania.
+    let move = { x: Math.round(delta.x), y: Math.round(delta.y) }
     const anchor = scene.layers.flatMap((layer) => layer.objects).find((o) => o.id === anchorId)
     if (gridSnap && anchor) {
       const snap = (start: number, value: number) =>

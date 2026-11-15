@@ -1,7 +1,7 @@
 import { render } from '@testing-library/react'
 import Konva from 'konva'
 import { Stage } from 'react-konva'
-import { describe, expect, it } from 'vitest'
+import { describe, expect, it, vi } from 'vitest'
 import type { SceneObject } from '@worldsmith/engine'
 import { SelectionLayer, type SelectionRect } from './SelectionLayer'
 
@@ -56,6 +56,27 @@ describe('SelectionLayer', () => {
 
     const frames = renderLayer([TREE], undefined, [rock]).find('.selection-frame')
     expect(frames.map((frame) => frame.attrs.stroke)).toEqual(['#ffc21f', '#ffc21f'])
+  })
+
+  it('shakes the frames when shakeKey changes', () => {
+    vi.useFakeTimers()
+    const { rerender } = render(
+      <Stage width={640} height={480}>
+        <SelectionLayer objects={[TREE]} />
+      </Stage>
+    )
+    const layer = Konva.stages.at(-1)!.getLayers()[0]
+
+    rerender(
+      <Stage width={640} height={480}>
+        <SelectionLayer objects={[TREE]} shakeKey={1} />
+      </Stage>
+    )
+    vi.advanceTimersByTime(40)
+    expect(layer.x()).toBe(-4)
+    vi.advanceTimersByTime(120)
+    expect(layer.x()).toBe(0)
+    vi.useRealTimers()
   })
 
   it('does not catch clicks', () => {

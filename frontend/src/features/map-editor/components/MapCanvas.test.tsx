@@ -209,6 +209,17 @@ describe('MapCanvas', () => {
       expect(useEditorStore.getState().selectedIds).toEqual([a])
     })
 
+    it('shows the grabbed object position next to the cursor while dragging', () => {
+      const { canvas } = setup()
+
+      pointer(canvas, 'pointerDown', 196, 146)
+      pointer(canvas, 'pointerMove', 296, 246)
+      expect(canvas).toHaveTextContent('112, 112')
+
+      pointer(canvas, 'pointerUp', 296, 246)
+      expect(canvas).not.toHaveTextContent('112, 112')
+    })
+
     it('leaves the object in place when dropped on another one', () => {
       const { canvas, a } = setup()
 
