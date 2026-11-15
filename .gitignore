@@ -23,4 +23,3 @@ backend/storage/
 # OS / IDE
 .DS_Store
 .idea/
-.run/
