@@ -35,7 +35,7 @@ Scenę rysujemy biblioteką Konva przez `react-konva`. Kod wspólny dla edytora 
 - Jeden `Shape` z własnym `sceneFunc` zamiast setek `Line`, więc duża mapa nie spowalnia przeciągania.
 - `strokeScaleEnabled={false}`: linia ma zawsze 1 px na ekranie, także po zoomie.
 - `listening={false}`: siatka nie łapie kliknięć.
-- Przełączniki „Siatka” i „Przyciąganie” są w pasku narzędzi (`features/map-editor/components/GridToggles.tsx`), a ich stan w store (`gridVisible`, `gridSnap`). Przyciąganie (`editor.snapToGrid`) użyjemy przy dodawaniu (F-31) i przeciąganiu (F-33).
+- Przełączniki „Siatka” i „Przyciąganie” są w pasku narzędzi (`features/map-editor/components/GridToggles.tsx`), a ich stan w store (`gridVisible`, `gridSnap`). Przyciąganie działa przy dodawaniu z palety (F-31), a użyjemy go też przy przeciąganiu (F-33).
 
 ## Zoom i przesuwanie widoku
 
@@ -59,6 +59,20 @@ Widok to `zoom` i `offset` w store: punkt sceny `(x, y)` jest na ekranie w `(off
 
 Canvas wypełnia komórkę `EditorLayout` (`position: absolute; inset: 0`). Jego rozmiar mierzy `useElementSize()` z `shared/hooks/` (ResizeObserver), więc Stage dopasowuje się do zmiany rozmiaru okna. Przed pierwszym pomiarem (rozmiar 0) Stage się nie renderuje.
 
+## Paleta assetów
+
+`features/map-editor/components/AssetPalette.tsx` w lewym panelu edytora (F-31).
+
+- Przy pierwszym wyświetleniu woła `loadAssets()` ze store'u: `GET /api/assets?module=map`. Stan ładowania jest w store (`assetsStatus`, `assetsError`), przy błędzie paleta pokazuje komunikat i przycisk „Spróbuj ponownie”.
+- Kategorie (zakładki `SegmentedControl`) są w kolejności z manifestu. Etykieta to klucz `categories.<module>.<category>`, nazwa assetu to jego `nameKey`. Brak klucza w słowniku = pokazujemy surowy tekst, więc nowy asset od Moniki nie psuje widoku.
+- Kafelek (`OptionTile`) ma obrazek z `assetUrl(file)` (`shared/lib/assets.ts`) i dymek „nazwa · szer.×wys.”. Bez sceny kafelki są wyłączone.
+- Kliknięcie: `addAsset(asset)` stawia obiekt w środku widoku. Jeśli tam coś stoi, szuka najbliższego wolnego miejsca w kolejnych pierścieniach komórek siatki (do 8). Brak miejsca = toast `errors.collision`.
+- Przeciągnięcie na canvas: kafelek wysyła id w `dataTransfer` (typ `ASSET_DRAG_TYPE`), `MapCanvas` przelicza punkt upuszczenia na współrzędne sceny (`toScenePoint` z `view.ts`) i woła `addAsset(asset, punkt)`. Tu nie szukamy innego miejsca: kolizja = toast.
+- Zasady stawiania (`placeAsset` w store): przy włączonym przyciąganiu lewy górny róg trafia na siatkę, obiekt zawsze mieści się w mapie, a `x`, `y` obiektu to jego środek.
+- `<img>` w `OptionTile` ma `crossOrigin="anonymous"` tak jak `useAssetImage`. Bez tego przeglądarka zapamiętuje obrazek bez nagłówków CORS i canvas nie może go potem wczytać (zamiast grafiki widać czerwone prostokąty).
+
+Zastępcze grafiki (figury z literą) i `assets/manifest.json` są w katalogu `assets/` w głównym folderze repo, do czasu grafik Moniki. Backend czyta manifest tylko przy starcie, więc po zmianie manifestu trzeba go zrestartować.
+
 ## Testy
 
-jsdom nie rysuje na `<canvas>`, więc `src/test/setup.ts` podmienia `getContext` na zaślepkę, która przyjmuje każde wywołanie. Testy sprawdzają węzły Konvy (pozycja, obrót, kolejność warstw), nie piksele. Stage bierzemy z `Konva.stages.at(-1)`. jsdom nie ma też `ResizeObserver`, więc `setup.ts` daje zaślepkę, która nic nie mierzy.
+jsdom nie rysuje na `<canvas>`, więc `src/test/setup.ts` podmienia `getContext` na zaślepkę, która przyjmuje każde wywołanie. Testy sprawdzają węzły Konvy (pozycja, obrót, kolejność warstw), nie piksele. Stage bierzemy z `Konva.stages.at(-1)`. jsdom nie ma też `ResizeObserver`, więc `setup.ts` daje zaślepkę, która nic nie mierzy. Przeciąganie z palety testujemy przez `createEvent.drop` z ręcznie ustawionymi `clientX`/`clientY`, bo jsdom ich nie przekazuje.
