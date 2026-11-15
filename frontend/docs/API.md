@@ -38,3 +38,9 @@ Backend zwraca błąd w formacie `{"error": {"code", "messageKey", "details"}}` 
 - klucz, którego nie ma w słowniku, albo odpowiedź bez JSON-a → `errors.serverError`.
 
 Gdy Franek doda nowy kod błędu w `MESSAGE_KEYS`, dopisujemy jego klucz `errors.*` do `dictionary.ts`. Do tego czasu użytkownik zobaczy ogólny komunikat.
+
+## Status serwera w stopce
+
+`AppFooter` odpytuje `GET /api/health` zaraz po starcie i potem co 30 s. Po prawej stronie stopki widać „Serwer: połączono” albo „Serwer: brak połączenia” (kolor `--color-danger`). Gdy backend nie działa, od razu widać to w aplikacji, a nie dopiero po pierwszym zapisie.
+
+W testach, które renderują cały layout, `fetch` jest podmieniony (`vi.stubGlobal`), żeby nie łączyć się z prawdziwym backendem. Przykład w `src/app/App.test.tsx`.

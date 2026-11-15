@@ -79,6 +79,9 @@ const dictionary = {
   'dev.ui.title': { pl: 'Katalog komponentów', en: 'Component Catalog' },
   'footer.icons': { pl: 'Ikony pixel-art: Pxlkit, autor', en: 'Pixel-art icons: Pxlkit by' },
   'footer.license': { pl: 'Licencja ikon', en: 'Icon license' },
+  'footer.serverChecking': { pl: 'Serwer: sprawdzam…', en: 'Server: checking…' },
+  'footer.serverOnline': { pl: 'Serwer: połączono', en: 'Server: connected' },
+  'footer.serverOffline': { pl: 'Serwer: brak połączenia', en: 'Server: not connected' },
 } satisfies Record<string, Record<Language, string>>
 
 export type TranslationKey = keyof typeof dictionary
