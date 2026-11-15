@@ -55,7 +55,7 @@ Widok to `zoom` i `offset` w store: punkt sceny `(x, y)` jest na ekranie w `(off
 
 ## Edytor map
 
-`features/map-editor/components/MapCanvas.tsx` bierze scenę ze store'u i podaje ją do `SceneRenderer`. Do czasu okna „Nowa mapa” (F-30) bez sceny ładuje `demoScene.ts`.
+`features/map-editor/components/MapCanvas.tsx` bierze scenę ze store'u i podaje ją do `SceneRenderer`. Bez sceny canvas jest pusty. Scenę tworzy okno „Nowa mapa” (`NewMapButton` + `NewMapModal`, F-30), które otwiera się samo przy wejściu na `/map`. Pusta mapa powstaje przez `createMapScene` z silnika Kuby (rozmiary z `MAP_SIZES`, nazwa pierwszej warstwy z tłumaczeń).
 
 Canvas wypełnia komórkę `EditorLayout` (`position: absolute; inset: 0`). Jego rozmiar mierzy `useElementSize()` z `shared/hooks/` (ResizeObserver), więc Stage dopasowuje się do zmiany rozmiaru okna. Przed pierwszym pomiarem (rozmiar 0) Stage się nie renderuje.
 

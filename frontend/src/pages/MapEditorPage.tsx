@@ -1,6 +1,7 @@
 import { useT } from '@/i18n/language'
 import { GridToggles } from '@/features/map-editor/components/GridToggles'
 import { MapCanvas } from '@/features/map-editor/components/MapCanvas'
+import { NewMapButton } from '@/features/map-editor/components/NewMapButton'
 import { ZoomControls } from '@/features/map-editor/components/ZoomControls'
 import { EditorLayout, Panel, Sidebar, Toolbar } from '@/shared/components/layout/Layout'
 
@@ -13,6 +14,7 @@ export default function MapEditorPage() {
       title={t('nav.editor')}
       toolbar={
         <Toolbar label={t('editor.toolbar')}>
+          <NewMapButton />
           <GridToggles />
           <ZoomControls />
         </Toolbar>
