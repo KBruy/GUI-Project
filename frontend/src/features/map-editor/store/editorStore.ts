@@ -23,6 +23,9 @@ interface EditorState {
   zoom: number
   // Przesunięcie widoku w pikselach ekranu.
   offset: Point
+  // Przełączniki z paska narzędzi (F-27). Zostają po wczytaniu innej sceny.
+  gridVisible: boolean
+  gridSnap: boolean
 
   loadScene: (scene: Scene) => void
   execute: (command: Command) => PlaceResult
@@ -32,6 +35,8 @@ interface EditorState {
   setTool: (tool: Tool) => void
   setActiveLayer: (layerId: string) => void
   setView: (view: { zoom?: number; offset?: Point }) => void
+  setGridVisible: (visible: boolean) => void
+  setGridSnap: (snap: boolean) => void
 }
 
 // Wypisuje store z poprzedniego silnika przy wczytaniu nowej sceny.
@@ -45,6 +50,8 @@ export const useEditorStore = create<EditorState>()((set, get) => ({
   activeLayerId: null,
   zoom: 1,
   offset: { x: 0, y: 0 },
+  gridVisible: true,
+  gridSnap: true,
 
   loadScene(scene) {
     unsubscribe?.()
@@ -77,4 +84,6 @@ export const useEditorStore = create<EditorState>()((set, get) => ({
   setTool: (tool) => set({ tool }),
   setActiveLayer: (layerId) => set({ activeLayerId: layerId }),
   setView: (view) => set(view),
+  setGridVisible: (gridVisible) => set({ gridVisible }),
+  setGridSnap: (gridSnap) => set({ gridSnap }),
 }))

@@ -1,5 +1,6 @@
 // Canvas edytora map: rysuje scenę ze store'u i wypełnia całe miejsce, które dostanie od rodzica.
 import { useEffect } from 'react'
+import { GridLayer } from '@/shared/canvas/GridLayer'
 import { SceneRenderer } from '@/shared/canvas/SceneRenderer'
 import { useElementSize } from '@/shared/hooks/useElementSize'
 import { demoScene } from '../demoScene'
@@ -9,6 +10,7 @@ import styles from './MapCanvas.module.css'
 export function MapCanvas() {
   const scene = useEditorStore((s) => s.scene)
   const loadScene = useEditorStore((s) => s.loadScene)
+  const gridVisible = useEditorStore((s) => s.gridVisible)
   const { ref, width, height } = useElementSize<HTMLDivElement>()
 
   // Do czasu okna „Nowa mapa” (F-30) bez sceny pokazujemy scenę demo.
@@ -20,7 +22,11 @@ export function MapCanvas() {
     <div ref={ref} className={styles.canvas}>
       {/* Przed pierwszym pomiarem rozmiar to 0, a Konva nie przyjmuje pustego canvasu. */}
       {scene && width > 0 && height > 0 && (
-        <SceneRenderer scene={scene} width={width} height={height} />
+        <SceneRenderer scene={scene} width={width} height={height}>
+          {gridVisible && (
+            <GridLayer width={scene.width} height={scene.height} size={scene.gridSize} />
+          )}
+        </SceneRenderer>
       )}
     </div>
   )

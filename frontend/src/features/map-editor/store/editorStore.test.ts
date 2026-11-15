@@ -52,4 +52,17 @@ describe('editor store', () => {
     expect(store().scene?.layers[1].objects).toHaveLength(0)
     expect(store().selectedIds).toEqual([])
   })
+
+  it('keeps grid toggles when another scene is loaded', () => {
+    store().setGridVisible(false)
+    store().setGridSnap(false)
+
+    store().loadScene(makeScene())
+
+    expect(store().gridVisible).toBe(false)
+    expect(store().gridSnap).toBe(false)
+    // Przywracamy domyślne, bo store jest wspólny dla wszystkich testów.
+    store().setGridVisible(true)
+    store().setGridSnap(true)
+  })
 })

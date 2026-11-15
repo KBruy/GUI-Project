@@ -1,4 +1,5 @@
 import { useT } from '@/i18n/language'
+import { GridToggles } from '@/features/map-editor/components/GridToggles'
 import { MapCanvas } from '@/features/map-editor/components/MapCanvas'
 import { EditorLayout, Panel, Sidebar, Toolbar } from '@/shared/components/layout/Layout'
 
@@ -9,7 +10,11 @@ export default function MapEditorPage() {
   return (
     <EditorLayout
       title={t('nav.editor')}
-      toolbar={<Toolbar label={t('editor.toolbar')} />}
+      toolbar={
+        <Toolbar label={t('editor.toolbar')}>
+          <GridToggles />
+        </Toolbar>
+      }
       left={
         <Sidebar side="left" width={240}>
           <Panel title={t('editor.palette')} />

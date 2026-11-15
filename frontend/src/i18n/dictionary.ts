@@ -17,6 +17,8 @@ const dictionary = {
   'project.saved': { pl: 'Projekt zapisany', en: 'Project saved' },
   'common.comingSoon': { pl: 'Ta funkcja będzie wkrótce', en: 'This feature is coming soon' },
   'editor.toolbar': { pl: 'Narzędzia edytora', en: 'Editor tools' },
+  'editor.grid': { pl: 'Siatka', en: 'Grid' },
+  'editor.snap': { pl: 'Przyciąganie', en: 'Snap' },
   'editor.palette': { pl: 'Paleta', en: 'Palette' },
   'editor.layers': { pl: 'Warstwy', en: 'Layers' },
   'editor.properties': { pl: 'Właściwości', en: 'Properties' },
