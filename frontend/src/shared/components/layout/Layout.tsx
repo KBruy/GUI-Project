@@ -1,4 +1,4 @@
-import type { ComponentProps, CSSProperties } from 'react'
+import type { ComponentProps, CSSProperties, ReactNode } from 'react'
 import styles from './Layout.module.css'
 
 // --- Container ---
@@ -90,5 +90,33 @@ export function Sidebar({ width, side, className, style, ...props }: SidebarProp
       data-side={side}
       {...props}
     />
+  )
+}
+
+// --- EditorLayout ---
+
+export interface EditorLayoutProps {
+  // Nagłówek strony (h1) na początku górnego paska.
+  title: string
+  toolbar?: ReactNode
+  left?: ReactNode
+  right?: ReactNode
+  // Obszar roboczy (canvas). Wypełnia całe wolne miejsce, a jego rozmiar nie zależy od treści.
+  children: ReactNode
+}
+
+// Układ edytora: pasek z tytułem na górze, panele po bokach, canvas na środku.
+// Wypełnia całą wysokość między nagłówkiem a stopką.
+export function EditorLayout({ title, toolbar, left, right, children }: EditorLayoutProps) {
+  return (
+    <div className={styles.editor}>
+      <div className={styles.editorTop}>
+        <h1 className={styles.editorTitle}>{title}</h1>
+        {toolbar}
+      </div>
+      <div className={styles.editorLeft}>{left}</div>
+      <div className={styles.editorCanvas}>{children}</div>
+      <div className={styles.editorRight}>{right}</div>
+    </div>
   )
 }
