@@ -3,7 +3,11 @@
 // Scena w store jest kopią z silnika: odświeża ją subscribe, więc po każdym execute,
 // undo i redo komponenty, które jej używają, renderują się od nowa.
 import { create } from 'zustand'
+import type { TranslationKey } from '@/i18n/dictionary'
+import { ApiError, api } from '@/shared/lib/apiClient'
+import type { Asset } from '@/shared/lib/assets'
 import {
+  addObject,
   createEditor,
   type Command,
   type Editor,
@@ -11,7 +15,7 @@ import {
   type Point,
   type Scene,
 } from '../engine/engine'
-import { clampOffset, fitView, zoomAt, type Size } from '../view'
+import { clampOffset, fitView, toScenePoint, zoomAt, type Size } from '../view'
 
 export type Tool = 'select' | 'pan'
 
@@ -29,6 +33,9 @@ interface EditorState {
   // Przełączniki z paska narzędzi (F-27). Zostają po wczytaniu innej sceny.
   gridVisible: boolean
   gridSnap: boolean
+  // Biblioteka assetów mapy z backendu (F-31) i klucz błędu, gdy nie udało się jej pobrać.
+  assets: Asset[]
+  assetsError: TranslationKey | null
 
   loadScene: (scene: Scene) => void
   execute: (command: Command) => PlaceResult
@@ -44,6 +51,24 @@ interface EditorState {
   fitToScreen: () => void
   setGridVisible: (visible: boolean) => void
   setGridSnap: (snap: boolean) => void
+  loadAssets: () => Promise<void>
+  // Dodaje asset na aktywną warstwę: w punkcie sceny `at` albo na środku widoku.
+  addAsset: (asset: Asset, at?: Point) => PlaceResult
+}
+
+// Środek nowego obiektu: z przyciąganiem lewy górny róg trafia w siatkę,
+// a cały obiekt zostaje w granicach mapy (backend odrzuca obiekty poza nią).
+function placeAsset(target: Point, asset: Asset, scene: Scene, snap: boolean): Point {
+  const axis = (value: number, size: number, max: number) => {
+    let start = value - size / 2
+    if (snap) start = Math.round(start / scene.gridSize) * scene.gridSize
+    start = Math.max(0, Math.min(max - size, start))
+    return start + size / 2
+  }
+  return {
+    x: axis(target.x, asset.width, scene.width),
+    y: axis(target.y, asset.height, scene.height),
+  }
 }
 
 // Wypisuje store z poprzedniego silnika przy wczytaniu nowej sceny.
@@ -60,6 +85,8 @@ export const useEditorStore = create<EditorState>()((set, get) => ({
   viewport: { width: 0, height: 0 },
   gridVisible: true,
   gridSnap: true,
+  assets: [],
+  assetsError: null,
 
   loadScene(scene) {
     unsubscribe?.()
@@ -118,4 +145,22 @@ export const useEditorStore = create<EditorState>()((set, get) => ({
   },
   setGridVisible: (gridVisible) => set({ gridVisible }),
   setGridSnap: (gridSnap) => set({ gridSnap }),
+
+  async loadAssets() {
+    try {
+      const assets = await api.get<Asset[]>('/api/assets?module=map')
+      set({ assets, assetsError: null })
+    } catch (err) {
+      set({ assetsError: err instanceof ApiError ? err.messageKey : 'errors.serverError' })
+    }
+  },
+
+  addAsset(asset, at) {
+    const { scene, activeLayerId, viewport, gridSnap } = get()
+    if (!scene || !activeLayerId) throw new Error('No scene loaded')
+    const target = at ?? toScenePoint({ x: viewport.width / 2, y: viewport.height / 2 }, get())
+    return get().execute(
+      addObject(activeLayerId, asset, placeAsset(target, asset, scene, gridSnap))
+    )
+  },
 }))

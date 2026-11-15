@@ -1,5 +1,6 @@
-import { beforeEach, describe, expect, it } from 'vitest'
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import type { Scene } from '@worldsmith/engine'
+import type { Asset } from '@/shared/lib/assets'
 import { addObject } from '../engine/engine'
 import { useEditorStore } from './editorStore'
 
@@ -91,6 +92,74 @@ describe('editor store', () => {
       store().panBy(10_000, 0)
 
       expect(store().offset.x).toBe(800 - 64)
+    })
+  })
+
+  describe('assets', () => {
+    const ROCK: Asset = {
+      id: 'map_rock_01',
+      module: 'map',
+      category: 'rocks',
+      nameKey: 'assets.map.rock',
+      file: 'map/rocks/map_rock_01.png',
+      width: 32,
+      height: 32,
+    }
+
+    beforeEach(() => {
+      // Widok 1:1 bez przesunięcia: punkt ekranu = punkt sceny. Środek canvasu to (100, 90).
+      useEditorStore.setState({
+        viewport: { width: 200, height: 180 },
+        zoom: 1,
+        offset: { x: 0, y: 0 },
+      })
+    })
+
+    afterEach(() => {
+      vi.unstubAllGlobals()
+    })
+
+    it('loads the map assets from the backend', async () => {
+      vi.stubGlobal(
+        'fetch',
+        vi.fn(() => Promise.resolve(new Response(JSON.stringify([ROCK]), { status: 200 })))
+      )
+      await store().loadAssets()
+      expect(store().assets).toEqual([ROCK])
+      expect(store().assetsError).toBeNull()
+    })
+
+    it('keeps the error key when the backend is down', async () => {
+      vi.stubGlobal(
+        'fetch',
+        vi.fn(() => Promise.reject(new TypeError('Failed to fetch')))
+      )
+      await store().loadAssets()
+      expect(store().assetsError).toBe('errors.network')
+    })
+
+    it('adds the asset in the middle of the view, snapped to the grid', () => {
+      expect(store().addAsset(ROCK)).toEqual({ ok: true })
+      // Środek (100, 90) → lewy górny róg (84, 74) → siatka (96, 64) → środek obiektu (112, 80).
+      expect(store().scene!.layers[1].objects[0]).toMatchObject({ x: 112, y: 80 })
+    })
+
+    it('does not snap when snapping is off', () => {
+      store().setGridSnap(false)
+      store().addAsset(ROCK)
+      expect(store().scene!.layers[1].objects[0]).toMatchObject({ x: 100, y: 90 })
+      store().setGridSnap(true)
+    })
+
+    it('keeps the whole object inside the map', () => {
+      store().addAsset(ROCK, { x: 630, y: -50 })
+      expect(store().scene!.layers[1].objects[0]).toMatchObject({ x: 624, y: 16 })
+    })
+
+    it('refuses to add on top of another object on the same layer', () => {
+      store().addAsset(ROCK)
+      expect(store().addAsset(ROCK)).toMatchObject({ ok: false })
+      expect(store().scene!.layers[1].objects).toHaveLength(1)
     })
   })
 })

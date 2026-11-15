@@ -1,0 +1,56 @@
+[
+  {
+    "id": "map_ground_grass_01",
+    "module": "map",
+    "category": "ground",
+    "nameKey": "assets.map.grass",
+    "file": "map/ground/map_ground_grass_01.png",
+    "width": 32,
+    "height": 32
+  },
+  {
+    "id": "map_ground_water_01",
+    "module": "map",
+    "category": "ground",
+    "nameKey": "assets.map.water",
+    "file": "map/ground/map_ground_water_01.png",
+    "width": 32,
+    "height": 32
+  },
+  {
+    "id": "map_plants_bush_01",
+    "module": "map",
+    "category": "plants",
+    "nameKey": "assets.map.bush",
+    "file": "map/plants/map_plants_bush_01.png",
+    "width": 64,
+    "height": 64
+  },
+  {
+    "id": "map_plants_tree_01",
+    "module": "map",
+    "category": "plants",
+    "nameKey": "assets.map.tree",
+    "file": "map/plants/map_plants_tree_01.png",
+    "width": 64,
+    "height": 96
+  },
+  {
+    "id": "map_objects_rock_01",
+    "module": "map",
+    "category": "objects",
+    "nameKey": "assets.map.rock",
+    "file": "map/objects/map_objects_rock_01.png",
+    "width": 32,
+    "height": 32
+  },
+  {
+    "id": "map_objects_log_01",
+    "module": "map",
+    "category": "objects",
+    "nameKey": "assets.map.log",
+    "file": "map/objects/map_objects_log_01.png",
+    "width": 96,
+    "height": 32
+  }
+]
