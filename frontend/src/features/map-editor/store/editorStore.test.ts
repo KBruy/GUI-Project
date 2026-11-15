@@ -65,4 +65,32 @@ describe('editor store', () => {
     store().setGridVisible(true)
     store().setGridSnap(true)
   })
+
+  describe('view', () => {
+    beforeEach(() => {
+      // Pierwszy pomiar canvasu dopasowuje scenę 640×480 do ekranu.
+      useEditorStore.setState({ viewport: { width: 0, height: 0 } })
+      store().setViewport({ width: 800, height: 600 })
+    })
+
+    it('fits the scene to the screen after the first measurement', () => {
+      expect(store().zoom).toBeCloseTo(536 / 480)
+    })
+
+    it('zooms at the center of the canvas by default', () => {
+      store().zoomTo(2)
+
+      const { zoom, offset } = store()
+      expect(zoom).toBe(2)
+      // Środek canvasu (400, 300) pokazuje środek sceny (320, 240), tak jak przed zoomem.
+      expect(offset.x + 320 * zoom).toBeCloseTo(400)
+      expect(offset.y + 240 * zoom).toBeCloseTo(300)
+    })
+
+    it('does not pan the scene off the screen', () => {
+      store().panBy(10_000, 0)
+
+      expect(store().offset.x).toBe(800 - 64)
+    })
+  })
 })

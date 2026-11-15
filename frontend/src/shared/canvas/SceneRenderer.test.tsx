@@ -46,8 +46,11 @@ function makeScene(): Scene {
 }
 
 // SceneRenderer nie wystawia Stage na zewnątrz, więc bierzemy ostatni utworzony.
-function renderScene(scene: Scene) {
-  render(<SceneRenderer scene={scene} width={640} height={480} />)
+function renderScene(
+  scene: Scene,
+  view: { zoom?: number; offset?: { x: number; y: number } } = {}
+) {
+  render(<SceneRenderer scene={scene} width={640} height={480} {...view} />)
   return Konva.stages.at(-1)!
 }
 
@@ -74,5 +77,12 @@ describe('SceneRenderer', () => {
     expect(node.offset()).toEqual({ x: 32, y: 16 })
     expect(node.rotation()).toBe(90)
     expect(node.scale()).toEqual({ x: 2, y: 0.5 })
+  })
+
+  it('applies zoom and offset to the whole stage', () => {
+    const stage = renderScene(makeScene(), { zoom: 2, offset: { x: 10, y: 20 } })
+
+    expect(stage.scale()).toEqual({ x: 2, y: 2 })
+    expect(stage.position()).toEqual({ x: 10, y: 20 })
   })
 })

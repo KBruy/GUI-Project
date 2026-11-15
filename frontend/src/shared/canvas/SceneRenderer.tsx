@@ -18,12 +18,23 @@ interface SceneRendererProps {
   height: number
   // Adres PNG dla assetu. Bez niego obiekty rysują się jako prostokąty zastępcze.
   getAssetUrl?: (assetId: string) => string | undefined
+  // Widok: punkt sceny (x, y) jest na ekranie w (offset.x + x * zoom, offset.y + y * zoom).
+  zoom?: number
+  offset?: { x: number; y: number }
   children?: ReactNode
 }
 
-export function SceneRenderer({ scene, width, height, getAssetUrl, children }: SceneRendererProps) {
+export function SceneRenderer({
+  scene,
+  width,
+  height,
+  getAssetUrl,
+  zoom = 1,
+  offset = { x: 0, y: 0 },
+  children,
+}: SceneRendererProps) {
   return (
-    <Stage width={width} height={height}>
+    <Stage width={width} height={height} scaleX={zoom} scaleY={zoom} x={offset.x} y={offset.y}>
       <Layer listening={false}>
         <Rect width={scene.width} height={scene.height} fill={scene.background.color} />
       </Layer>
