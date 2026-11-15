@@ -1,6 +1,7 @@
 import { useT } from '@/i18n/language'
 import { GridToggles } from '@/features/map-editor/components/GridToggles'
 import { MapCanvas } from '@/features/map-editor/components/MapCanvas'
+import { ZoomControls } from '@/features/map-editor/components/ZoomControls'
 import { EditorLayout, Panel, Sidebar, Toolbar } from '@/shared/components/layout/Layout'
 
 // Edytor map (F-29). Panele są na razie puste: paleta (F-31), warstwy (F-35), właściwości (F-36).
@@ -13,6 +14,7 @@ export default function MapEditorPage() {
       toolbar={
         <Toolbar label={t('editor.toolbar')}>
           <GridToggles />
+          <ZoomControls />
         </Toolbar>
       }
       left={
