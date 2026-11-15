@@ -73,6 +73,15 @@ Canvas wypełnia komórkę `EditorLayout` (`position: absolute; inset: 0`). Jego
 
 Zastępcze grafiki (figury z literą) i `assets/manifest.json` są w katalogu `assets/` w głównym folderze repo, do czasu grafik Moniki. Backend czyta manifest tylko przy starcie, więc po zmianie manifestu trzeba go zrestartować.
 
+## Zaznaczanie
+
+Zaznaczenie to `selectedIds` w store (F-32), więc widzą je wszystkie panele. Po cofnięciu dodania obiekt sam wypada z zaznaczenia.
+
+- Store: `selectAt(punkt, toggle)` zaznacza najwyższy obiekt pod punktem sceny i zwraca jego id (albo `null`), `selectInRect(prostokąt, add)` zaznacza wszystko, czego prostokąt dotyka, a `select(ids)` ustawia zaznaczenie wprost. Obiekty z ukrytych warstw pomija silnik (`objectsInRect`).
+- Mysz i klawiatura: `features/map-editor/useSelectionControls.ts`. Klik w obiekt zaznacza tylko jego, klik w puste miejsce czyści zaznaczenie. Shift+klik dokłada obiekt albo go zdejmuje. Przeciągnięcie po pustym miejscu (od 3 px) rysuje prostokąt, z Shiftem dokłada do zaznaczenia. Esc czyści zaznaczenie.
+- `MapCanvas` woła najpierw `useViewControls`, potem `useSelectionControls`. Gdy kliknięcie zaczyna przesuwanie widoku (spacja, środkowy przycisk), widok woła `preventDefault`, a zaznaczanie je pomija.
+- Rysowanie: `shared/canvas/SelectionLayer.tsx` jako children `SceneRenderer`. Ramka ma położenie, obrót i skalę obiektu, czerwona linia leży na ciemnym obrysie. Ta sama warstwa rysuje prostokąt zaznaczania. Nie łapie kliknięć.
+
 ## Testy
 
-jsdom nie rysuje na `<canvas>`, więc `src/test/setup.ts` podmienia `getContext` na zaślepkę, która przyjmuje każde wywołanie. Testy sprawdzają węzły Konvy (pozycja, obrót, kolejność warstw), nie piksele. Stage bierzemy z `Konva.stages.at(-1)`. jsdom nie ma też `ResizeObserver`, więc `setup.ts` daje zaślepkę, która nic nie mierzy. Przeciąganie z palety testujemy przez `createEvent.drop` z ręcznie ustawionymi `clientX`/`clientY`, bo jsdom ich nie przekazuje.
+jsdom nie rysuje na `<canvas>`, więc `src/test/setup.ts` podmienia `getContext` na zaślepkę, która przyjmuje każde wywołanie. Testy sprawdzają węzły Konvy (pozycja, obrót, kolejność warstw), nie piksele. Stage bierzemy z `Konva.stages.at(-1)`. jsdom nie ma też `ResizeObserver`, więc `setup.ts` daje zaślepkę, która nic nie mierzy. Przeciąganie z palety testujemy przez `createEvent.drop` z ręcznie ustawionymi `clientX`/`clientY`, bo jsdom ich nie przekazuje. Tak samo testujemy klikanie i prostokąt (`createEvent.pointerDown` itd.), a `setup.ts` daje zaślepkę `setPointerCapture`.
