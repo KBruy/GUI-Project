@@ -1,11 +1,12 @@
 import { useT } from '@/i18n/language'
+import { AssetPalette } from '@/features/map-editor/components/AssetPalette'
 import { GridToggles } from '@/features/map-editor/components/GridToggles'
 import { MapCanvas } from '@/features/map-editor/components/MapCanvas'
 import { NewMapButton } from '@/features/map-editor/components/NewMapButton'
 import { ZoomControls } from '@/features/map-editor/components/ZoomControls'
 import { EditorLayout, Panel, Sidebar, Toolbar } from '@/shared/components/layout/Layout'
 
-// Edytor map (F-29). Panele są na razie puste: paleta (F-31), warstwy (F-35), właściwości (F-36).
+// Edytor map (F-29). Panele warstw (F-35) i właściwości (F-36) są jeszcze puste.
 export default function MapEditorPage() {
   const { t } = useT()
 
@@ -20,8 +21,10 @@ export default function MapEditorPage() {
         </Toolbar>
       }
       left={
-        <Sidebar side="left" width={240}>
-          <Panel title={t('editor.palette')} />
+        <Sidebar side="left" width={280}>
+          <Panel title={t('editor.palette')}>
+            <AssetPalette />
+          </Panel>
         </Sidebar>
       }
       right={

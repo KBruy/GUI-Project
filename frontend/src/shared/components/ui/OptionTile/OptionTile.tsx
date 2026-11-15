@@ -46,7 +46,9 @@ export function OptionTile({
       <span className={styles.preview}>
         {imageUrl ? (
           // alt="" bo nazwę kafelka daje już podpis pod spodem.
-          <img src={imageUrl} alt="" className={styles.image} />
+          // crossOrigin jak w canvasie (useAssetImage): inaczej przeglądarka zapamięta wersję
+          // bez nagłówków CORS i ten sam PNG nie narysuje się potem na mapie.
+          <img src={imageUrl} alt="" crossOrigin="anonymous" className={styles.image} />
         ) : (
           (children ?? <Icon name="Close" size={size === 'sm' ? 16 : 32} />)
         )}

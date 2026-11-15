@@ -156,10 +156,20 @@ describe('editor store', () => {
       expect(store().scene!.layers[1].objects[0]).toMatchObject({ x: 624, y: 16 })
     })
 
-    it('refuses to add on top of another object on the same layer', () => {
-      store().addAsset(ROCK)
-      expect(store().addAsset(ROCK)).toMatchObject({ ok: false })
+    it('refuses to add on top of another object at a given point', () => {
+      store().addAsset(ROCK, { x: 100, y: 100 })
+      expect(store().addAsset(ROCK, { x: 100, y: 100 })).toMatchObject({ ok: false })
       expect(store().scene!.layers[1].objects).toHaveLength(1)
+    })
+
+    it('puts the next object in the nearest free spot around the middle', () => {
+      store().addAsset(ROCK)
+      expect(store().addAsset(ROCK)).toEqual({ ok: true })
+      const [first, second] = store().scene!.layers[1].objects
+      expect(second.x !== first.x || second.y !== first.y).toBe(true)
+      // Sąsiednie pole siatki, nie dalej.
+      expect(Math.abs(second.x - first.x)).toBeLessThanOrEqual(32)
+      expect(Math.abs(second.y - first.y)).toBeLessThanOrEqual(32)
     })
   })
 })

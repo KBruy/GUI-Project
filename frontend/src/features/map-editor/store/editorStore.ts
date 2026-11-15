@@ -36,6 +36,8 @@ interface EditorState {
   // Biblioteka assetów mapy z backendu (F-31) i klucz błędu, gdy nie udało się jej pobrać.
   assets: Asset[]
   assetsError: TranslationKey | null
+  // idle: jeszcze nie pobieraliśmy, done: pobrane albo błąd.
+  assetsStatus: 'idle' | 'loading' | 'done'
 
   loadScene: (scene: Scene) => void
   execute: (command: Command) => PlaceResult
@@ -52,9 +54,13 @@ interface EditorState {
   setGridVisible: (visible: boolean) => void
   setGridSnap: (snap: boolean) => void
   loadAssets: () => Promise<void>
-  // Dodaje asset na aktywną warstwę: w punkcie sceny `at` albo na środku widoku.
+  // Dodaje asset na aktywną warstwę w punkcie sceny `at`. Bez punktu: w wolnym miejscu
+  // najbliżej środka widoku, żeby kolejne kliknięcia w paletę nie trafiały w zajęte pole.
   addAsset: (asset: Asset, at?: Point) => PlaceResult
 }
+
+// Ile pierścieni pól wokół środka widoku sprawdzamy przy szukaniu wolnego miejsca.
+const FREE_SPOT_RINGS = 8
 
 // Środek nowego obiektu: z przyciąganiem lewy górny róg trafia w siatkę,
 // a cały obiekt zostaje w granicach mapy (backend odrzuca obiekty poza nią).
@@ -87,6 +93,7 @@ export const useEditorStore = create<EditorState>()((set, get) => ({
   gridSnap: true,
   assets: [],
   assetsError: null,
+  assetsStatus: 'idle',
 
   loadScene(scene) {
     unsubscribe?.()
@@ -147,20 +154,37 @@ export const useEditorStore = create<EditorState>()((set, get) => ({
   setGridSnap: (gridSnap) => set({ gridSnap }),
 
   async loadAssets() {
+    set({ assetsStatus: 'loading' })
     try {
       const assets = await api.get<Asset[]>('/api/assets?module=map')
-      set({ assets, assetsError: null })
+      set({ assets, assetsError: null, assetsStatus: 'done' })
     } catch (err) {
-      set({ assetsError: err instanceof ApiError ? err.messageKey : 'errors.serverError' })
+      set({
+        assetsError: err instanceof ApiError ? err.messageKey : 'errors.serverError',
+        assetsStatus: 'done',
+      })
     }
   },
 
   addAsset(asset, at) {
     const { scene, activeLayerId, viewport, gridSnap } = get()
     if (!scene || !activeLayerId) throw new Error('No scene loaded')
-    const target = at ?? toScenePoint({ x: viewport.width / 2, y: viewport.height / 2 }, get())
-    return get().execute(
-      addObject(activeLayerId, asset, placeAsset(target, asset, scene, gridSnap))
-    )
+    const place = (target: Point) =>
+      get().execute(addObject(activeLayerId, asset, placeAsset(target, asset, scene, gridSnap)))
+    if (at) return place(at)
+
+    const center = toScenePoint({ x: viewport.width / 2, y: viewport.height / 2 }, get())
+    const step = scene.gridSize
+    // Sprawdzamy kolejne „pierścienie” pól siatki wokół środka, aż któreś będzie wolne.
+    let result = place(center)
+    for (let ring = 1; !result.ok && ring <= FREE_SPOT_RINGS; ring++) {
+      for (let dx = -ring; dx <= ring && !result.ok; dx++) {
+        for (let dy = -ring; dy <= ring && !result.ok; dy++) {
+          if (Math.max(Math.abs(dx), Math.abs(dy)) !== ring) continue
+          result = place({ x: center.x + dx * step, y: center.y + dy * step })
+        }
+      }
+    }
+    return result
   },
 }))
