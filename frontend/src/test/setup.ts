@@ -33,3 +33,10 @@ if (!HTMLDialogElement.prototype.showModal) {
     this.open = false
   }
 }
+
+// jsdom nie rysuje na <canvas> (getContext zwraca null), a Konva (F-26) potrzebuje kontekstu 2D.
+// Zaślepka przyjmuje każde wywołanie i nic nie rysuje. Testy sprawdzają węzły Konvy, nie piksele.
+const noop: object = new Proxy(function () {}, { get: () => noop, apply: () => noop })
+HTMLCanvasElement.prototype.getContext = function () {
+  return noop
+} as typeof HTMLCanvasElement.prototype.getContext
