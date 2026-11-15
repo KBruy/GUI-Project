@@ -1,0 +1,5 @@
+/* Zajmuje całą komórkę rodzica (EditorLayout), niezależnie od rozmiaru sceny. */
+.canvas {
+  position: absolute;
+  inset: 0;
+}

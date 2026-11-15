@@ -40,3 +40,11 @@ const noop: object = new Proxy(function () {}, { get: () => noop, apply: () => n
 HTMLCanvasElement.prototype.getContext = function () {
   return noop
 } as typeof HTMLCanvasElement.prototype.getContext
+
+// jsdom nie ma ResizeObserver (używa go useElementSize). Zaślepka nic nie mierzy,
+// więc w testach stron rozmiar canvasu zostaje 0. Test hooka podmienia ją na własną.
+globalThis.ResizeObserver ??= class {
+  observe() {}
+  unobserve() {}
+  disconnect() {}
+}
