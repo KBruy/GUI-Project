@@ -47,7 +47,8 @@ interface EditorState {
   select: (ids: string[]) => void
   // Kliknięcie w punkt sceny: zaznacza najwyższy obiekt pod nim, a w puste miejsce czyści zaznaczenie.
   // toggle (Shift): dodaje obiekt do zaznaczenia albo go z niego zdejmuje, pustego miejsca nie liczy.
-  selectAt: (point: Point, toggle: boolean) => void
+  // Zwraca id trafionego obiektu albo null, gdy kliknięto w puste miejsce.
+  selectAt: (point: Point, toggle: boolean) => string | null
   // Prostokąt zaznaczenia w punktach sceny. add (Shift): dokłada do obecnego zaznaczenia.
   selectInRect: (rect: Rect, add: boolean) => void
   setTool: (tool: Tool) => void
@@ -130,10 +131,10 @@ export const useEditorStore = create<EditorState>()((set, get) => ({
   select: (ids) => set({ selectedIds: ids }),
   selectAt(point, toggle) {
     const { editor, selectedIds } = get()
-    if (!editor) return
+    if (!editor) return null
     // Silnik zwraca obiekty od najniższego, więc ostatni jest na wierzchu.
     // Ukryte warstwy silnik pomija sam.
-    const hit = editor.objectsInRect({ ...point, width: 0, height: 0 }).at(-1)
+    const hit = editor.objectsInRect({ ...point, width: 0, height: 0 }).at(-1) ?? null
     if (!toggle) {
       set({ selectedIds: hit ? [hit] : [] })
     } else if (hit) {
@@ -142,6 +143,7 @@ export const useEditorStore = create<EditorState>()((set, get) => ({
         selectedIds: selected ? selectedIds.filter((id) => id !== hit) : [...selectedIds, hit],
       })
     }
+    return hit
   },
   selectInRect(rect, add) {
     const { editor, selectedIds } = get()

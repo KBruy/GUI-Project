@@ -48,3 +48,7 @@ globalThis.ResizeObserver ??= class {
   unobserve() {}
   disconnect() {}
 }
+
+// jsdom nie ma przechwytywania wskaźnika (używają go przesuwanie widoku i zaznaczanie prostokątem).
+Element.prototype.setPointerCapture ??= () => {}
+Element.prototype.releasePointerCapture ??= () => {}

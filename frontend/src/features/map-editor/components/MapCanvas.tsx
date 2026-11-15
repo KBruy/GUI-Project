@@ -2,10 +2,12 @@
 import { useEffect, useMemo, type DragEvent } from 'react'
 import { GridLayer } from '@/shared/canvas/GridLayer'
 import { SceneRenderer } from '@/shared/canvas/SceneRenderer'
+import { SelectionLayer } from '@/shared/canvas/SelectionLayer'
 import { toast } from '@/shared/components/ui/Toast/toast'
 import { useElementSize } from '@/shared/hooks/useElementSize'
 import { assetUrl } from '@/shared/lib/assets'
 import { useEditorStore } from '../store/editorStore'
+import { useSelectionControls } from '../useSelectionControls'
 import { useViewControls } from '../useViewControls'
 import { toScenePoint } from '../view'
 import { ASSET_DRAG_TYPE } from './AssetPalette'
@@ -19,10 +21,21 @@ export function MapCanvas() {
   const setViewport = useEditorStore((s) => s.setViewport)
   const assets = useEditorStore((s) => s.assets)
   const addAsset = useEditorStore((s) => s.addAsset)
+  const selectedIds = useEditorStore((s) => s.selectedIds)
   // assetId → adres PNG. Obiekt, którego assetu nie ma w bibliotece, rysuje się jako czerwony prostokąt.
   const urls = useMemo(() => new Map(assets.map((a) => [a.id, assetUrl(a.file)])), [assets])
+  // Obiekty do ramek zaznaczenia. Zaznaczenie z ukrytej warstwy się nie rysuje.
+  const selected = useMemo(
+    () =>
+      (scene?.layers ?? [])
+        .filter((layer) => layer.visible)
+        .flatMap((layer) => layer.objects)
+        .filter((object) => selectedIds.includes(object.id)),
+    [scene, selectedIds]
+  )
   const { ref, width, height } = useElementSize<HTMLDivElement>()
-  const { cursor, handlers } = useViewControls(ref)
+  const view = useViewControls(ref)
+  const selection = useSelectionControls(ref)
 
   // Store potrzebuje rozmiaru canvasu do zoomu w środku i „Dopasuj do ekranu”.
   useEffect(() => {
@@ -51,10 +64,26 @@ export function MapCanvas() {
     <div
       ref={ref}
       className={styles.canvas}
-      style={{ cursor }}
+      style={{ cursor: view.cursor }}
       onDragOver={onDragOver}
       onDrop={onDrop}
-      {...handlers}
+      // Najpierw widok: gdy zacznie przesuwanie, zaznaczanie to pomija (defaultPrevented).
+      onPointerDown={(e) => {
+        view.handlers.onPointerDown(e)
+        selection.handlers.onPointerDown(e)
+      }}
+      onPointerMove={(e) => {
+        view.handlers.onPointerMove(e)
+        selection.handlers.onPointerMove(e)
+      }}
+      onPointerUp={() => {
+        view.handlers.onPointerUp()
+        selection.handlers.onPointerUp()
+      }}
+      onPointerCancel={() => {
+        view.handlers.onPointerCancel()
+        selection.handlers.onPointerCancel()
+      }}
     >
       {/* Przed pierwszym pomiarem rozmiar to 0, a Konva nie przyjmuje pustego canvasu. */}
       {scene && width > 0 && height > 0 && (
@@ -69,6 +98,7 @@ export function MapCanvas() {
           {gridVisible && (
             <GridLayer width={scene.width} height={scene.height} size={scene.gridSize} />
           )}
+          <SelectionLayer objects={selected} marquee={selection.marquee} />
         </SceneRenderer>
       )}
     </div>

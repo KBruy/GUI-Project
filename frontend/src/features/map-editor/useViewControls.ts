@@ -8,8 +8,8 @@ import { useEditorStore } from './store/editorStore'
 // Jeden krok zoomu (kółko albo klawisz) to 25%.
 export const ZOOM_STEP = 1.25
 
-// Spacja i + / − nie mogą działać, gdy ktoś pisze w polu formularza.
-function isTyping(target: EventTarget | null): boolean {
+// Skróty klawiszowe edytora nie mogą działać, gdy ktoś pisze w polu formularza.
+export function isTyping(target: EventTarget | null): boolean {
   return (
     target instanceof HTMLElement &&
     (target.isContentEditable || ['INPUT', 'TEXTAREA', 'SELECT'].includes(target.tagName))
