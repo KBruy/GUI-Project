@@ -2,7 +2,6 @@
 // Każdy task dopisuje tu sekcję ze swoimi komponentami we wszystkich wariantach.
 import { useState } from 'react'
 import { useT } from '@/i18n/language'
-import { useTheme } from '@/shared/theme/theme'
 import { Button } from '@/shared/components/ui/Button/Button'
 import type { ButtonVariant, ButtonSize } from '@/shared/components/ui/Button/Button'
 import { IconButton } from '@/shared/components/ui/IconButton/IconButton'
@@ -56,8 +55,7 @@ const SAMPLE_TILES = [
 ]
 
 export default function DevUiPage() {
-  const { t, language, setLanguage } = useT()
-  const { theme, setTheme } = useTheme()
+  const { t } = useT()
   const [pressed, setPressed] = useState(false)
   const [tab, setTab] = useState<'projekty' | 'mapy' | 'postacie'>('projekty')
   const [tool, setTool] = useState<'pencil' | 'eraser' | 'bucket'>('pencil')
@@ -67,17 +65,6 @@ export default function DevUiPage() {
   const [scale, setScale] = useState(2)
   const [modalOpen, setModalOpen] = useState(false)
   const [tile, setTile] = useState('grass')
-
-  const themeOptions = [
-    { value: 'dark' as const, label: t('theme.dark') },
-    { value: 'light' as const, label: t('theme.light') },
-    { value: 'contrast' as const, label: t('theme.contrast') },
-  ]
-
-  const langOptions = [
-    { value: 'pl' as const, label: t('lang.pl') },
-    { value: 'en' as const, label: t('lang.en') },
-  ]
 
   const mapSizeOptions = [
     { value: 'small' as const, label: 'Mała (16 × 16)' },
@@ -94,22 +81,8 @@ export default function DevUiPage() {
   return (
     <Container>
       <Stack direction="column" gap={5}>
+        {/* Motyw i język przełącza się w nagłówku (AppLayout). */}
         <h1>{t('dev.ui.title')}</h1>
-
-        <Stack direction="row" gap={2} wrap>
-          <SegmentedControl
-            options={themeOptions}
-            value={theme}
-            onChange={setTheme}
-            label={t('theme.label')}
-          />
-          <SegmentedControl
-            options={langOptions}
-            value={language}
-            onChange={setLanguage}
-            label={t('lang.label')}
-          />
-        </Stack>
 
         <Panel title="Button / IconButton">
           <Stack direction="column" gap={4}>
