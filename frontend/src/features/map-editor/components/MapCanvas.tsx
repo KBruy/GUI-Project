@@ -7,6 +7,7 @@ import { toast } from '@/shared/components/ui/Toast/toast'
 import { useElementSize } from '@/shared/hooks/useElementSize'
 import { assetUrl } from '@/shared/lib/assets'
 import { useEditorStore } from '../store/editorStore'
+import { useEditorShortcuts } from '../useEditorShortcuts'
 import { useSelectionControls } from '../useSelectionControls'
 import { useViewControls } from '../useViewControls'
 import { toScenePoint } from '../view'
@@ -36,6 +37,7 @@ export function MapCanvas() {
   const { ref, width, height } = useElementSize<HTMLDivElement>()
   const view = useViewControls(ref)
   const selection = useSelectionControls(ref)
+  useEditorShortcuts()
 
   // Store potrzebuje rozmiaru canvasu do zoomu w środku i „Dopasuj do ekranu”.
   useEffect(() => {

@@ -1,0 +1,70 @@
+// Skróty klawiszowe edytora map (F-33):
+// - strzałki: przesuwają zaznaczone obiekty o 1 px, z Shiftem o jedno pole siatki (32 px),
+//   a przy włączonym przyciąganiu zawsze do następnej linii siatki,
+// - Ctrl+Z (na Macu Cmd+Z): cofnij, Ctrl+Shift+Z albo Ctrl+Y: ponów.
+import { useEffect } from 'react'
+import { toast } from '@/shared/components/ui/Toast/toast'
+import { useEditorStore } from './store/editorStore'
+import { isTyping } from './useViewControls'
+
+const ARROWS: Record<string, { x: number; y: number }> = {
+  ArrowLeft: { x: -1, y: 0 },
+  ArrowRight: { x: 1, y: 0 },
+  ArrowUp: { x: 0, y: -1 },
+  ArrowDown: { x: 0, y: 1 },
+}
+
+// Ile trzeba przesunąć krawędź `edge`, żeby trafiła na następną linię siatki w kierunku `direction`.
+// Krawędź już na linii przeskakuje o całe pole, a krawędź między liniami dociąga do najbliższej.
+function toNextGridLine(edge: number, direction: number, size: number): number {
+  if (direction === 0) return 0
+  const line =
+    direction > 0 ? (Math.floor(edge / size) + 1) * size : (Math.ceil(edge / size) - 1) * size
+  return line - edge
+}
+
+export function useEditorShortcuts() {
+  useEffect(() => {
+    function onKeyDown(event: KeyboardEvent) {
+      // Skróty nie działają w polach formularza ani przy otwartym oknie (np. „Nowa mapa”).
+      if (isTyping(event.target) || document.querySelector('dialog[open]')) return
+      const { scene, selectedIds, gridSnap, moveSelected, undo, redo } = useEditorStore.getState()
+      if (!scene) return
+
+      const key = event.key.toLowerCase()
+      if (event.ctrlKey || event.metaKey) {
+        if (key === 'z' && !event.shiftKey) undo()
+        else if ((key === 'z' && event.shiftKey) || key === 'y') redo()
+        else return
+        event.preventDefault()
+        return
+      }
+
+      const direction = ARROWS[event.key]
+      if (!direction || selectedIds.length === 0) return
+      // Bez tego strzałki przewijają stronę.
+      event.preventDefault()
+      let delta: { x: number; y: number }
+      if (gridSnap) {
+        // Lewy górny róg pierwszego zaznaczonego obiektu trafia na siatkę, tak jak przy dodawaniu z palety.
+        const first = scene.layers
+          .flatMap((layer) => layer.objects)
+          .find((object) => object.id === selectedIds[0])!
+        const left = first.x - (first.width * first.scaleX) / 2
+        const top = first.y - (first.height * first.scaleY) / 2
+        delta = {
+          x: toNextGridLine(left, direction.x, scene.gridSize),
+          y: toNextGridLine(top, direction.y, scene.gridSize),
+        }
+      } else {
+        const step = event.shiftKey ? scene.gridSize : 1
+        delta = { x: direction.x * step, y: direction.y * step }
+      }
+      const result = moveSelected(delta)
+      // Przytrzymana strzałka powtarza zdarzenie, a wystarczy jeden komunikat.
+      if (!result.ok && !event.repeat) toast.error('errors.collision')
+    }
+    window.addEventListener('keydown', onKeyDown)
+    return () => window.removeEventListener('keydown', onKeyDown)
+  }, [])
+}

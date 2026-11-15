@@ -227,4 +227,55 @@ describe('editor store', () => {
       expect(Math.abs(second.y - first.y)).toBeLessThanOrEqual(32)
     })
   })
+  describe('moveSelected', () => {
+    // Dwa drzewa 64×64 na górnej warstwie: A w (100, 100) i B w (300, 100).
+    beforeEach(() => {
+      store().execute(addObject('top', TREE, { x: 100, y: 100 }))
+      store().execute(addObject('top', TREE, { x: 300, y: 100 }))
+    })
+    const objects = () => store().scene!.layers[1].objects
+
+    it('moves all selected objects in one undo step', () => {
+      store().select(objects().map((o) => o.id))
+
+      expect(store().moveSelected({ x: 10, y: 32 })).toEqual({ ok: true })
+      expect(objects()).toMatchObject([
+        { x: 110, y: 132 },
+        { x: 310, y: 132 },
+      ])
+
+      store().undo()
+      expect(objects()).toMatchObject([
+        { x: 100, y: 100 },
+        { x: 300, y: 100 },
+      ])
+    })
+
+    it('stops the group at the map edge', () => {
+      store().select(objects().map((o) => o.id))
+      store().moveSelected({ x: -500, y: 1000 })
+
+      // Lewa krawędź A (68) dochodzi do 0, a dolna krawędź obu do 480.
+      expect(objects()).toMatchObject([
+        { x: 32, y: 448 },
+        { x: 232, y: 448 },
+      ])
+    })
+
+    it('does not move into another object on the same layer', () => {
+      const [a] = objects()
+      store().select([a.id])
+
+      expect(store().moveSelected({ x: 150, y: 0 })).toMatchObject({ ok: false })
+      expect(objects()[0]).toMatchObject({ x: 100, y: 100 })
+    })
+
+    it('lets objects on different layers overlap', () => {
+      store().execute(addObject('ground', TREE, { x: 200, y: 300 }))
+      const [a] = objects()
+      store().select([a.id])
+
+      expect(store().moveSelected({ x: 100, y: 200 })).toEqual({ ok: true })
+    })
+  })
 })

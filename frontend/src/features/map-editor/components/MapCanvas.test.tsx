@@ -49,7 +49,7 @@ const objects = () => useEditorStore.getState().scene!.layers.flatMap((l) => l.o
 beforeEach(() => {
   useEditorStore.getState().loadScene(createMapScene('Test', MAP_SIZES[0], 'Warstwa 1'))
   // Zoom 2 i przesunięcie (100, 50): punkt ekranu (164, 114) to punkt sceny (32, 32).
-  useEditorStore.setState({ assets: [ROCK], zoom: 2, offset: { x: 100, y: 50 } })
+  useEditorStore.setState({ assets: [ROCK], zoom: 2, offset: { x: 100, y: 50 }, gridSnap: true })
 })
 
 describe('MapCanvas', () => {
@@ -127,6 +127,52 @@ describe('MapCanvas', () => {
 
       fireEvent.keyDown(window, { key: 'Escape' })
       expect(selected()).toEqual([])
+    })
+  })
+  describe('keyboard', () => {
+    function setup() {
+      const { container } = render(<MapCanvas />)
+      dropRock(container.firstElementChild!, 164, 114)
+      const [rock] = objects()
+      useEditorStore.getState().select([rock.id])
+    }
+
+    it('moves the selection with arrows by 1 px, or by one grid cell with shift', () => {
+      setup()
+      useEditorStore.setState({ gridSnap: false })
+
+      fireEvent.keyDown(window, { key: 'ArrowRight' })
+      expect(objects()[0]).toMatchObject({ x: 49, y: 48 })
+
+      fireEvent.keyDown(window, { key: 'ArrowDown', shiftKey: true })
+      expect(objects()[0]).toMatchObject({ x: 49, y: 80 })
+    })
+
+    it('moves to the next grid line with snapping on', () => {
+      setup()
+      useEditorStore.setState({ gridSnap: false })
+      fireEvent.keyDown(window, { key: 'ArrowRight' })
+      useEditorStore.setState({ gridSnap: true })
+
+      // Lewa krawędź 33 → następna linia 64, czyli środek 80.
+      fireEvent.keyDown(window, { key: 'ArrowRight' })
+      expect(objects()[0]).toMatchObject({ x: 80, y: 48 })
+
+      // Krawędź na linii przeskakuje o całe pole.
+      fireEvent.keyDown(window, { key: 'ArrowUp' })
+      expect(objects()[0]).toMatchObject({ x: 80, y: 16 })
+    })
+
+    it('undoes and redoes with ctrl+z and ctrl+shift+z', () => {
+      setup()
+      useEditorStore.setState({ gridSnap: false })
+      fireEvent.keyDown(window, { key: 'ArrowRight' })
+
+      fireEvent.keyDown(window, { key: 'z', ctrlKey: true })
+      expect(objects()[0]).toMatchObject({ x: 48, y: 48 })
+
+      fireEvent.keyDown(window, { key: 'Z', ctrlKey: true, shiftKey: true })
+      expect(objects()[0]).toMatchObject({ x: 49, y: 48 })
     })
   })
 })
