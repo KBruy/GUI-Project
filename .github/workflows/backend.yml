@@ -15,6 +15,24 @@ jobs:
   test:
     name: Pytest
     runs-on: ubuntu-latest
+    # PostgreSQL dla testów bazy (test_db.py, test_migrations.py); bez niego te testy są pomijane.
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_USER: worldsmith
+          POSTGRES_PASSWORD: worldsmith
+          POSTGRES_DB: worldsmith
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U worldsmith"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+
+    env:
+      DATABASE_URL: postgresql+psycopg://worldsmith:worldsmith@localhost:5432/worldsmith
 
     defaults:
       run:
@@ -33,6 +51,9 @@ jobs:
 
       - name: Install dependencies
         run: pip install -r requirements-dev.txt
+
+      - name: Migracje zgodne z modelami
+        run: alembic upgrade head && alembic check
 
       - name: Test
         run: pytest
