@@ -17,10 +17,10 @@ const TREE: SceneObject = {
   scaleY: 1,
 }
 
-function renderLayer(objects: SceneObject[], marquee?: SelectionRect) {
+function renderLayer(objects: SceneObject[], marquee?: SelectionRect, collisions?: SceneObject[]) {
   render(
     <Stage width={640} height={480}>
-      <SelectionLayer objects={objects} marquee={marquee} />
+      <SelectionLayer objects={objects} marquee={marquee} collisions={collisions} />
     </Stage>
   )
   return Konva.stages.at(-1)!
@@ -48,6 +48,14 @@ describe('SelectionLayer', () => {
       '.selection-marquee'
     )
     expect(marquee?.attrs).toMatchObject({ x: 10, y: 20, width: 30, height: 40 })
+  })
+
+  it('turns every frame amber when there are collisions', () => {
+    const rock = { ...TREE, id: 'obj-2', x: 300 }
+    expect(renderLayer([TREE]).findOne('.selection-frame')?.attrs.stroke).toBe('#ff1f4b')
+
+    const frames = renderLayer([TREE], undefined, [rock]).find('.selection-frame')
+    expect(frames.map((frame) => frame.attrs.stroke)).toEqual(['#ffc21f', '#ffc21f'])
   })
 
   it('does not catch clicks', () => {

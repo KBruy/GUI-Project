@@ -50,6 +50,8 @@ interface EditorState {
   // toggle (Shift): dodaje obiekt do zaznaczenia albo go z niego zdejmuje, pustego miejsca nie liczy.
   // Zwraca id trafionego obiektu albo null, gdy kliknięto w puste miejsce.
   selectAt: (point: Point, toggle: boolean) => string | null
+  // Id najwyższego obiektu z widocznych warstw pod punktem sceny, bez zmiany zaznaczenia.
+  objectAt: (point: Point) => string | null
   // Prostokąt zaznaczenia w punktach sceny. add (Shift): dokłada do obecnego zaznaczenia.
   selectInRect: (rect: Rect, add: boolean) => void
   setTool: (tool: Tool) => void
@@ -68,6 +70,9 @@ interface EditorState {
   // Przesuwa zaznaczone obiekty o wektor w punktach sceny, jednym krokiem cofania.
   // Wektor jest przycinany tak, żeby cała grupa została w granicach mapy.
   moveSelected: (delta: Point) => PlaceResult
+  // Podgląd przeciągania zaznaczonych obiektów, bez zmiany sceny. Zwraca wektor po przyciąganiu
+  // (lewy górny róg obiektu `anchorId` trafia na siatkę) i przycięciu do mapy oraz wynik kolizji.
+  planMove: (delta: Point, anchorId: string) => { delta: Point; result: PlaceResult }
 }
 
 // Ile pierścieni pól wokół środka widoku sprawdzamy przy szukaniu wolnego miejsca.
@@ -169,11 +174,8 @@ export const useEditorStore = create<EditorState>()((set, get) => ({
 
   select: (ids) => set({ selectedIds: ids }),
   selectAt(point, toggle) {
-    const { editor, selectedIds } = get()
-    if (!editor) return null
-    // Silnik zwraca obiekty od najniższego, więc ostatni jest na wierzchu.
-    // Ukryte warstwy silnik pomija sam.
-    const hit = editor.objectsInRect({ ...point, width: 0, height: 0 }).at(-1) ?? null
+    const { selectedIds } = get()
+    const hit = get().objectAt(point)
     if (!toggle) {
       set({ selectedIds: hit ? [hit] : [] })
     } else if (hit) {
@@ -183,6 +185,15 @@ export const useEditorStore = create<EditorState>()((set, get) => ({
       })
     }
     return hit
+  },
+  objectAt(point) {
+    // Silnik zwraca obiekty od najniższego, więc ostatni jest na wierzchu.
+    // Ukryte warstwy silnik pomija sam.
+    return (
+      get()
+        .editor?.objectsInRect({ ...point, width: 0, height: 0 })
+        .at(-1) ?? null
+    )
   },
   selectInRect(rect, add) {
     const { editor, selectedIds } = get()
@@ -263,5 +274,22 @@ export const useEditorStore = create<EditorState>()((set, get) => ({
     // Grupa już stoi przy krawędzi: nie zapisujemy pustego kroku w historii cofania.
     if (move.x === 0 && move.y === 0) return { ok: true }
     return get().execute(moveObjects(selectedIds, move))
+  },
+
+  planMove(delta, anchorId) {
+    const { scene, editor, selectedIds, gridSnap } = get()
+    if (!scene || !editor) return { delta: { x: 0, y: 0 }, result: { ok: true } }
+    let move = delta
+    const anchor = scene.layers.flatMap((layer) => layer.objects).find((o) => o.id === anchorId)
+    if (gridSnap && anchor) {
+      const snap = (start: number, value: number) =>
+        Math.round((start + value) / scene.gridSize) * scene.gridSize - start
+      move = {
+        x: snap(anchor.x - (anchor.width * anchor.scaleX) / 2, delta.x),
+        y: snap(anchor.y - (anchor.height * anchor.scaleY) / 2, delta.y),
+      }
+    }
+    move = clampMove(scene, selectedIds, move)
+    return { delta: move, result: editor.canExecute(moveObjects(selectedIds, move)) }
   },
 }))

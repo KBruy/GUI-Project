@@ -175,4 +175,68 @@ describe('MapCanvas', () => {
       expect(objects()[0]).toMatchObject({ x: 49, y: 48 })
     })
   })
+  describe('dragging objects', () => {
+    // Te same dwa kamienie co przy zaznaczaniu: A w (48, 48), B w (112, 48), 1 px sceny = 2 px ekranu.
+    function setup() {
+      const { container } = render(<MapCanvas />)
+      const canvas = container.firstElementChild!
+      dropRock(canvas, 164, 114)
+      dropRock(canvas, 324, 146)
+      const [a, b] = objects().map((o) => o.id)
+      return { canvas, a, b }
+    }
+    function dragFrom(
+      canvas: Element,
+      x: number,
+      y: number,
+      dx: number,
+      dy: number,
+      shift = false
+    ) {
+      pointer(canvas, 'pointerDown', x, y, shift)
+      pointer(canvas, 'pointerMove', x + dx, y + dy, shift)
+      pointer(canvas, 'pointerUp', x + dx, y + dy, shift)
+    }
+    const position = (id: string) => objects().find((o) => o.id === id)!
+
+    it('moves a grabbed object and snaps it to the grid', () => {
+      const { canvas, a } = setup()
+
+      // +50 px sceny: lewy górny róg 82 → najbliższa linia 96, czyli środek 112.
+      dragFrom(canvas, 196, 146, 100, 100)
+
+      expect(position(a)).toMatchObject({ x: 112, y: 112 })
+      expect(useEditorStore.getState().selectedIds).toEqual([a])
+    })
+
+    it('leaves the object in place when dropped on another one', () => {
+      const { canvas, a } = setup()
+
+      dragFrom(canvas, 196, 146, 128, 0)
+
+      expect(position(a)).toMatchObject({ x: 48, y: 48 })
+    })
+
+    it('moves every selected object together', () => {
+      const { canvas, a, b } = setup()
+      click(canvas, 196, 146)
+      click(canvas, 324, 146, true)
+
+      dragFrom(canvas, 196, 146, 0, 128)
+
+      expect(position(a)).toMatchObject({ x: 48, y: 112 })
+      expect(position(b)).toMatchObject({ x: 112, y: 112 })
+    })
+
+    it('keeps only the clicked object selected after a click without dragging', () => {
+      const { canvas, a, b } = setup()
+      click(canvas, 196, 146)
+      click(canvas, 324, 146, true)
+
+      click(canvas, 324, 146)
+
+      expect(useEditorStore.getState().selectedIds).toEqual([b])
+      expect(position(a)).toMatchObject({ x: 48, y: 48 })
+    })
+  })
 })

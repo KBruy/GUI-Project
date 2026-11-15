@@ -278,4 +278,38 @@ describe('editor store', () => {
       expect(store().moveSelected({ x: 100, y: 200 })).toEqual({ ok: true })
     })
   })
+  describe('planMove', () => {
+    // Drzewo 64×64 w (100, 100), lewy górny róg w (68, 68), i drugie w (300, 100).
+    beforeEach(() => {
+      store().execute(addObject('top', TREE, { x: 100, y: 100 }))
+      store().execute(addObject('top', TREE, { x: 300, y: 100 }))
+      store().select([store().scene!.layers[1].objects[0].id])
+      store().setGridSnap(true)
+    })
+    const first = () => store().scene!.layers[1].objects[0]
+
+    it('snaps the anchor corner to the grid without changing the scene', () => {
+      const before = store().scene
+
+      // Róg 68 + 10 = 78 → najbliższa linia 64, więc wektor −4.
+      expect(store().planMove({ x: 10, y: 10 }, first().id)).toEqual({
+        delta: { x: -4, y: -4 },
+        result: { ok: true },
+      })
+      expect(store().scene).toBe(before)
+    })
+
+    it('keeps the exact vector with snapping off', () => {
+      store().setGridSnap(false)
+      expect(store().planMove({ x: 10, y: 10 }, first().id).delta).toEqual({ x: 10, y: 10 })
+    })
+
+    it('reports a collision with an object on the same layer', () => {
+      const other = store().scene!.layers[1].objects[1]
+      expect(store().planMove({ x: 190, y: 0 }, first().id).result).toEqual({
+        ok: false,
+        collidesWith: [other.id],
+      })
+    })
+  })
 })

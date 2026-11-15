@@ -8,6 +8,8 @@ import type { SceneObject } from '@worldsmith/engine'
 const FRAME_COLOR = '#ff1f4b'
 const FRAME_SHADOW = '#0a0a0b'
 const MARQUEE_FILL = 'rgba(255, 31, 75, 0.15)'
+// Kolizja przy przeciąganiu: bursztyn z --color-danger.
+const COLLISION_COLOR = '#ffc21f'
 
 // Prostokąt w punktach sceny, od lewego górnego rogu.
 export interface SelectionRect {
@@ -19,15 +21,18 @@ export interface SelectionRect {
 
 interface SelectionLayerProps {
   objects: SceneObject[]
+  // Obiekty, z którymi koliduje przeciągane zaznaczenie. Gdy są, wszystkie ramki są bursztynowe.
+  collisions?: SceneObject[]
   // Prostokąt zaznaczania myszą. Bez niego rysują się tylko ramki.
   marquee?: SelectionRect | null
 }
 
-export function SelectionLayer({ objects, marquee }: SelectionLayerProps) {
+export function SelectionLayer({ objects, collisions = [], marquee }: SelectionLayerProps) {
+  const color = collisions.length > 0 ? COLLISION_COLOR : FRAME_COLOR
   return (
     // Zaznaczenie nie łapie kliknięć, tak jak siatka.
     <Layer listening={false}>
-      {objects.map((object) => {
+      {[...objects, ...collisions].map((object) => {
         // To samo położenie, obrót i skala co obiekt w SceneRenderer, więc ramka obraca się razem z nim.
         const shape = {
           x: object.x,
@@ -44,13 +49,7 @@ export function SelectionLayer({ objects, marquee }: SelectionLayerProps) {
         }
         return [
           <Rect key={`${object.id}-shadow`} {...shape} stroke={FRAME_SHADOW} strokeWidth={4} />,
-          <Rect
-            key={object.id}
-            name="selection-frame"
-            {...shape}
-            stroke={FRAME_COLOR}
-            strokeWidth={2}
-          />,
+          <Rect key={object.id} name="selection-frame" {...shape} stroke={color} strokeWidth={2} />,
         ]
       })}
       {marquee && (

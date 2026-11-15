@@ -6,6 +6,7 @@ import { SelectionLayer } from '@/shared/canvas/SelectionLayer'
 import { toast } from '@/shared/components/ui/Toast/toast'
 import { useElementSize } from '@/shared/hooks/useElementSize'
 import { assetUrl } from '@/shared/lib/assets'
+import type { Point, Scene } from '../engine/engine'
 import { useEditorStore } from '../store/editorStore'
 import { useEditorShortcuts } from '../useEditorShortcuts'
 import { useSelectionControls } from '../useSelectionControls'
@@ -13,6 +14,19 @@ import { useViewControls } from '../useViewControls'
 import { toScenePoint } from '../view'
 import { ASSET_DRAG_TYPE } from './AssetPalette'
 import styles from './MapCanvas.module.css'
+
+// Kopia sceny z obiektami ids przesuniętymi o wektor (tylko do podglądu przeciągania).
+function moveInScene(scene: Scene, ids: string[], delta: Point): Scene {
+  return {
+    ...scene,
+    layers: scene.layers.map((layer) => ({
+      ...layer,
+      objects: layer.objects.map((o) =>
+        ids.includes(o.id) ? { ...o, x: o.x + delta.x, y: o.y + delta.y } : o
+      ),
+    })),
+  }
+}
 
 export function MapCanvas() {
   const scene = useEditorStore((s) => s.scene)
@@ -25,19 +39,28 @@ export function MapCanvas() {
   const selectedIds = useEditorStore((s) => s.selectedIds)
   // assetId → adres PNG. Obiekt, którego assetu nie ma w bibliotece, rysuje się jako czerwony prostokąt.
   const urls = useMemo(() => new Map(assets.map((a) => [a.id, assetUrl(a.file)])), [assets])
-  // Obiekty do ramek zaznaczenia. Zaznaczenie z ukrytej warstwy się nie rysuje.
-  const selected = useMemo(
-    () =>
-      (scene?.layers ?? [])
-        .filter((layer) => layer.visible)
-        .flatMap((layer) => layer.objects)
-        .filter((object) => selectedIds.includes(object.id)),
-    [scene, selectedIds]
-  )
   const { ref, width, height } = useElementSize<HTMLDivElement>()
   const view = useViewControls(ref)
   const selection = useSelectionControls(ref)
+  const { drag } = selection
   useEditorShortcuts()
+
+  // Podczas przeciągania rysujemy zaznaczone obiekty w nowym miejscu.
+  // Scena w store (i w silniku) zmienia się dopiero po upuszczeniu.
+  const shownScene = useMemo(
+    () => (scene && drag ? moveInScene(scene, selectedIds, drag.delta) : scene),
+    [scene, selectedIds, drag]
+  )
+  // Ramki: zaznaczone obiekty i te, z którymi przeciągane by kolidowały. Ukryte warstwy pomijamy.
+  const { selected, collisions } = useMemo(() => {
+    const objects = (shownScene?.layers ?? [])
+      .filter((layer) => layer.visible)
+      .flatMap((layer) => layer.objects)
+    return {
+      selected: objects.filter((o) => selectedIds.includes(o.id)),
+      collisions: objects.filter((o) => drag?.collidesWith.includes(o.id)),
+    }
+  }, [shownScene, selectedIds, drag])
 
   // Store potrzebuje rozmiaru canvasu do zoomu w środku i „Dopasuj do ekranu”.
   useEffect(() => {
@@ -66,7 +89,7 @@ export function MapCanvas() {
     <div
       ref={ref}
       className={styles.canvas}
-      style={{ cursor: view.cursor }}
+      style={{ cursor: view.cursor ?? (drag ? 'move' : undefined) }}
       onDragOver={onDragOver}
       onDrop={onDrop}
       // Najpierw widok: gdy zacznie przesuwanie, zaznaczanie to pomija (defaultPrevented).
@@ -88,9 +111,9 @@ export function MapCanvas() {
       }}
     >
       {/* Przed pierwszym pomiarem rozmiar to 0, a Konva nie przyjmuje pustego canvasu. */}
-      {scene && width > 0 && height > 0 && (
+      {shownScene && width > 0 && height > 0 && (
         <SceneRenderer
-          scene={scene}
+          scene={shownScene}
           width={width}
           height={height}
           zoom={zoom}
@@ -98,9 +121,13 @@ export function MapCanvas() {
           getAssetUrl={(id) => urls.get(id)}
         >
           {gridVisible && (
-            <GridLayer width={scene.width} height={scene.height} size={scene.gridSize} />
+            <GridLayer
+              width={shownScene.width}
+              height={shownScene.height}
+              size={shownScene.gridSize}
+            />
           )}
-          <SelectionLayer objects={selected} marquee={selection.marquee} />
+          <SelectionLayer objects={selected} collisions={collisions} marquee={selection.marquee} />
         </SceneRenderer>
       )}
     </div>
