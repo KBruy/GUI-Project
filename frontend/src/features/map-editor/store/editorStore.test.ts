@@ -43,6 +43,61 @@ describe('editor store', () => {
     expect(store().scene?.layers[1].objects).toHaveLength(1)
   })
 
+  describe('selection', () => {
+    // Drzewo 64×64 na dolnej warstwie, nad nim drugie na górnej i trzecie obok.
+    beforeEach(() => {
+      store().execute(addObject('ground', TREE, { x: 100, y: 100 }))
+      store().execute(addObject('top', TREE, { x: 100, y: 100 }))
+      store().execute(addObject('top', TREE, { x: 300, y: 100 }))
+    })
+    const ids = () => store().scene!.layers.flatMap((layer) => layer.objects.map((o) => o.id))
+
+    it('selects the topmost object under the point', () => {
+      const [, top] = ids()
+      store().selectAt({ x: 110, y: 90 }, false)
+
+      expect(store().selectedIds).toEqual([top])
+    })
+
+    it('clears the selection on a click in an empty spot', () => {
+      store().select(ids())
+      store().selectAt({ x: 500, y: 400 }, false)
+
+      expect(store().selectedIds).toEqual([])
+    })
+
+    it('toggles objects with shift and ignores empty spots', () => {
+      const [, a, b] = ids()
+      store().selectAt({ x: 100, y: 100 }, false)
+      store().selectAt({ x: 300, y: 100 }, true)
+      expect(store().selectedIds).toEqual([a, b])
+
+      store().selectAt({ x: 500, y: 400 }, true)
+      store().selectAt({ x: 100, y: 100 }, true)
+      expect(store().selectedIds).toEqual([b])
+    })
+
+    it('selects every object touched by the rectangle', () => {
+      const [ground, a, b] = ids()
+      store().selectInRect({ x: 0, y: 0, width: 120, height: 120 }, false)
+      expect(store().selectedIds).toEqual([ground, a])
+
+      store().selectInRect({ x: 280, y: 80, width: 10, height: 10 }, true)
+      expect(store().selectedIds).toEqual([ground, a, b])
+    })
+
+    it('skips objects on hidden layers', () => {
+      const scene = store().scene!
+      store().loadScene({
+        ...scene,
+        layers: scene.layers.map((layer) => ({ ...layer, visible: layer.id === 'ground' })),
+      })
+      store().selectInRect({ x: 0, y: 0, width: 640, height: 480 }, false)
+
+      expect(store().selectedIds).toEqual([scene.layers[0].objects[0].id])
+    })
+  })
+
   it('drops removed objects from the selection on undo', () => {
     store().execute(addObject('top', TREE, { x: 100, y: 100 }))
     const id = store().scene!.layers[1].objects[0].id

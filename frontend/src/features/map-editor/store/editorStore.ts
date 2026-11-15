@@ -13,6 +13,7 @@ import {
   type Editor,
   type PlaceResult,
   type Point,
+  type Rect,
   type Scene,
 } from '../engine/engine'
 import { clampOffset, fitView, toScenePoint, zoomAt, type Size } from '../view'
@@ -44,6 +45,11 @@ interface EditorState {
   undo: () => void
   redo: () => void
   select: (ids: string[]) => void
+  // Kliknięcie w punkt sceny: zaznacza najwyższy obiekt pod nim, a w puste miejsce czyści zaznaczenie.
+  // toggle (Shift): dodaje obiekt do zaznaczenia albo go z niego zdejmuje, pustego miejsca nie liczy.
+  selectAt: (point: Point, toggle: boolean) => void
+  // Prostokąt zaznaczenia w punktach sceny. add (Shift): dokłada do obecnego zaznaczenia.
+  selectInRect: (rect: Rect, add: boolean) => void
   setTool: (tool: Tool) => void
   setActiveLayer: (layerId: string) => void
   setViewport: (viewport: Size) => void
@@ -122,6 +128,27 @@ export const useEditorStore = create<EditorState>()((set, get) => ({
   redo: () => get().editor?.redo(),
 
   select: (ids) => set({ selectedIds: ids }),
+  selectAt(point, toggle) {
+    const { editor, selectedIds } = get()
+    if (!editor) return
+    // Silnik zwraca obiekty od najniższego, więc ostatni jest na wierzchu.
+    // Ukryte warstwy silnik pomija sam.
+    const hit = editor.objectsInRect({ ...point, width: 0, height: 0 }).at(-1)
+    if (!toggle) {
+      set({ selectedIds: hit ? [hit] : [] })
+    } else if (hit) {
+      const selected = selectedIds.includes(hit)
+      set({
+        selectedIds: selected ? selectedIds.filter((id) => id !== hit) : [...selectedIds, hit],
+      })
+    }
+  },
+  selectInRect(rect, add) {
+    const { editor, selectedIds } = get()
+    if (!editor) return
+    const ids = editor.objectsInRect(rect)
+    set({ selectedIds: add ? [...new Set([...selectedIds, ...ids])] : ids })
+  },
   setTool: (tool) => set({ tool }),
   setActiveLayer: (layerId) => set({ activeLayerId: layerId }),
   setViewport(viewport) {
