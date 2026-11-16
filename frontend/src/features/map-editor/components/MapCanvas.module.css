@@ -25,3 +25,13 @@
     transition: none;
   }
 }
+
+/* Asset ciągnięty z palety, gdy kursor jest jeszcze poza canvasem. Środek pod kursorem. */
+.floating {
+  position: fixed;
+  z-index: 1;
+  pointer-events: none;
+  opacity: 0.7;
+  transform: translate(-50%, -50%);
+  image-rendering: pixelated;
+}

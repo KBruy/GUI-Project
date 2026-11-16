@@ -109,6 +109,36 @@ describe('MapCanvas', () => {
     expect(container).not.toHaveTextContent('48, 48')
   })
 
+  it('treats the empty canvas around the map as outside: no preview, no drop', () => {
+    const { container } = render(<MapCanvas />)
+    act(() => useEditorStore.getState().setPlacingAsset(ROCK))
+
+    // Ekran (60, 114) jest na canvasie, ale to punkt sceny (-20, 32), czyli obok mapy.
+    pointer(window, 'pointerMove', 60, 114)
+    expect(container.querySelector('img')).toHaveStyle({ left: '60px', top: '114px' })
+    expect(container).not.toHaveTextContent(',')
+
+    pointer(window, 'pointerUp', 60, 114)
+    expect(objects()).toHaveLength(0)
+  })
+
+  it('shows the asset image next to the cursor before it reaches the canvas', () => {
+    const { container } = render(<MapCanvas />)
+    act(() => useEditorStore.getState().setPlacingAsset(ROCK))
+
+    // Zoom 2: kamień 32×32 ma na ekranie 64×64, środek pod kursorem.
+    pointer(window, 'pointerMove', -20, 114)
+    expect(container.querySelector('img')).toHaveStyle({
+      left: '-20px',
+      top: '114px',
+      width: '64px',
+      height: '64px',
+    })
+
+    pointer(window, 'pointerMove', 164, 114)
+    expect(container.querySelector('img')).toBeNull()
+  })
+
   it('cancels dragging from the palette with Escape', () => {
     render(<MapCanvas />)
     act(() => useEditorStore.getState().setPlacingAsset(ROCK))

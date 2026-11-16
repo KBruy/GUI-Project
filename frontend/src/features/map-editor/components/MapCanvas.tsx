@@ -88,7 +88,7 @@ export function MapCanvas() {
   const view = useViewControls(ref)
   const selection = useSelectionControls(ref)
   const { drag } = selection
-  const ghost = usePalettePlacing(ref)
+  const { ghost, floating } = usePalettePlacing(ref)
   const nudgedId = useEditorShortcuts()
 
   // Podczas przeciągania rysujemy obiekty w nowym miejscu (albo podgląd assetu z palety).
@@ -184,6 +184,21 @@ export function MapCanvas() {
             shakeKey={selection.shakeKey}
           />
         </SceneRenderer>
+      )}
+      {/* Asset z palety przy kursorze, zanim dojedzie nad canvas (w rozmiarze po zoomie). */}
+      {floating && (
+        <img
+          src={assetUrl(floating.asset.file)}
+          alt=""
+          crossOrigin="anonymous"
+          className={styles.floating}
+          style={{
+            left: floating.at.x,
+            top: floating.at.y,
+            width: floating.asset.width * zoom,
+            height: floating.asset.height * zoom,
+          }}
+        />
       )}
       {anchor && labelAt && (
         <div
