@@ -15,6 +15,8 @@ import styles from './MapCanvas.module.css'
 
 // Odsunięcie etykiety ze współrzędnymi od kursora, żeby go nie zasłaniała.
 const LABEL_OFFSET = 16
+// Miejsce na etykietę, z zapasem na najdłuższe „2048, 1536”.
+const LABEL_SPACE = { x: 112, y: 40 }
 
 // Scena do pokazania podczas przeciągania: obiekty ids przesunięte o wektor, a podgląd assetu
 // z palety (ghost) dopisany na aktywną warstwę. Scena w store zmienia się dopiero po upuszczeniu.
@@ -35,6 +37,40 @@ function previewScene(
         : layer.objects
       return { ...layer, objects: ghost && layer.id === layerId ? [...objects, ghost] : objects }
     }),
+  }
+}
+
+// Prostokąt obiektu na ekranie, w px canvasu (bez obrotu).
+function screenRect(object: SceneObject, zoom: number, offset: Point) {
+  const halfWidth = (object.width * object.scaleX * zoom) / 2
+  const halfHeight = (object.height * object.scaleY * zoom) / 2
+  const x = offset.x + object.x * zoom
+  const y = offset.y + object.y * zoom
+  return { left: x - halfWidth, top: y - halfHeight, right: x + halfWidth, bottom: y + halfHeight }
+}
+
+// Gdzie stoi etykieta: przy kursorze, ale nie dalej niż krawędź obiektu. Gdy obiekt zatrzyma się
+// na brzegu mapy, a kursor pojedzie dalej, etykieta czeka przy obiekcie, aż kursor wróci.
+function labelPoint(pointer: Point, object: SceneObject, zoom: number, offset: Point): Point {
+  const rect = screenRect(object, zoom, offset)
+  return {
+    x: Math.min(Math.max(pointer.x, rect.left), rect.right),
+    y: Math.min(Math.max(pointer.y, rect.top), rect.bottom),
+  }
+}
+
+// Etykieta stoi na prawo i pod punktem `at`. Gdy przy prawej albo dolnej krawędzi canvasu brakuje
+// miejsca, przeskakuje na drugą stronę punktu, żeby nie schowała się pod panelem albo stopką.
+function labelStyle(at: Point, width: number, height: number) {
+  const x = Math.min(Math.max(at.x, 0), width)
+  const y = Math.min(Math.max(at.y, 0), height)
+  return {
+    ...(x + LABEL_OFFSET + LABEL_SPACE.x > width
+      ? { right: width - x + LABEL_OFFSET }
+      : { left: x + LABEL_OFFSET }),
+    ...(y + LABEL_OFFSET + LABEL_SPACE.y > height
+      ? { bottom: height - y + LABEL_OFFSET }
+      : { top: y + LABEL_OFFSET }),
   }
 }
 
@@ -87,6 +123,7 @@ export function MapCanvas() {
   // Etykieta przy kursorze: środek chwyconego obiektu (albo podglądu), tak jak x, y w panelu właściwości.
   const anchor = drag ? selected.find((o) => o.id === drag.anchorId) : ghost?.object
   const pointer = drag?.pointer ?? ghost?.pointer
+  const labelAt = anchor && pointer ? labelPoint(pointer, anchor, zoom, offset) : null
 
   // Store potrzebuje rozmiaru canvasu do zoomu w środku i „Dopasuj do ekranu”.
   useEffect(() => {
@@ -141,11 +178,8 @@ export function MapCanvas() {
           />
         </SceneRenderer>
       )}
-      {anchor && pointer && (
-        <div
-          className={styles.coords}
-          style={{ left: pointer.x + LABEL_OFFSET, top: pointer.y + LABEL_OFFSET }}
-        >
+      {anchor && labelAt && (
+        <div className={styles.coords} style={labelStyle(labelAt, width, height)}>
           {anchor.x}, {anchor.y}
         </div>
       )}

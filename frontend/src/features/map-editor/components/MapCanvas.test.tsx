@@ -1,4 +1,4 @@
-import { act, createEvent, fireEvent, render } from '@testing-library/react'
+import { act, createEvent, fireEvent, render, screen } from '@testing-library/react'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import type { Asset } from '@/shared/lib/assets'
 import { createMapScene, MAP_SIZES } from '../engine/engine'
@@ -47,6 +47,27 @@ function click(target: Element, x: number, y: number, shiftKey = false) {
   pointer(target, 'pointerUp', x, y, shiftKey)
 }
 
+// Canvas 1000×800 także dla useElementSize: zaślepka ResizeObserver z setup.ts nic nie mierzy.
+// Viewport w store jest ustawiony wcześniej, żeby pierwszy pomiar nie dopasował sceny do ekranu.
+function measureCanvas() {
+  useEditorStore.setState({ viewport: { width: 1000, height: 800 } })
+  vi.stubGlobal(
+    'ResizeObserver',
+    class {
+      callback: ResizeObserverCallback
+      constructor(callback: ResizeObserverCallback) {
+        this.callback = callback
+      }
+      observe() {
+        const entry = { contentRect: { width: 1000, height: 800 } } as ResizeObserverEntry
+        this.callback([entry], this as unknown as ResizeObserver)
+      }
+      unobserve() {}
+      disconnect() {}
+    }
+  )
+}
+
 const objects = () => useEditorStore.getState().scene!.layers.flatMap((l) => l.objects)
 
 beforeEach(() => {
@@ -60,6 +81,7 @@ beforeEach(() => {
 })
 
 afterEach(() => {
+  vi.unstubAllGlobals()
   vi.restoreAllMocks()
   useEditorStore.getState().setPlacingAsset(null)
 })
@@ -253,6 +275,29 @@ describe('MapCanvas', () => {
 
       pointer(canvas, 'pointerUp', 296, 246)
       expect(canvas).not.toHaveTextContent('112, 112')
+    })
+
+    it('keeps the label next to the object when the cursor leaves the map', () => {
+      measureCanvas()
+      const { canvas } = setup()
+
+      // Kamień A zatrzymuje się na lewym brzegu mapy (środek 16), a kursor jedzie dalej w lewo.
+      // Lewa krawędź A na ekranie to 100 (przesunięcie), więc etykieta stoi w 100 + 16.
+      pointer(canvas, 'pointerDown', 196, 146)
+      pointer(canvas, 'pointerMove', -400, 146)
+
+      expect(screen.getByText('16, 48')).toHaveStyle({ left: '116px', top: '162px' })
+    })
+
+    it('flips the label to the other side of the cursor near the canvas edge', () => {
+      measureCanvas()
+      const { canvas } = setup()
+
+      // Kursor 10 px od prawej i dolnej krawędzi canvasu 1000×800: etykieta staje po lewej i nad nim.
+      pointer(canvas, 'pointerDown', 196, 146)
+      pointer(canvas, 'pointerMove', 990, 790)
+
+      expect(screen.getByText('432, 368')).toHaveStyle({ right: '26px', bottom: '26px' })
     })
 
     it('leaves the object in place when dropped on another one', () => {
