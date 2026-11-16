@@ -1,4 +1,5 @@
 import { act, createEvent, fireEvent, render, screen } from '@testing-library/react'
+import Konva from 'konva'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import type { Asset } from '@/shared/lib/assets'
 import { createMapScene, MAP_SIZES } from '../engine/engine'
@@ -348,6 +349,8 @@ describe('MapCanvas', () => {
       const label = screen.getByText('16, 48')
       expect(label).toHaveStyle({ left: '100px', top: '146px' })
       expect(label.style.transform).toBe('translate(16px, 16px)')
+      // Kursor jest poza obiektem, więc znowu go widać.
+      expect(canvas).toHaveStyle({ cursor: 'move' })
     })
 
     it('flips the label to the other side of the cursor near the canvas edge', () => {
@@ -380,6 +383,39 @@ describe('MapCanvas', () => {
 
       expect(position(a)).toMatchObject({ x: 48, y: 112 })
       expect(position(b)).toMatchObject({ x: 112, y: 112 })
+    })
+
+    it('marks only the grabbed object with a dot, the one the label shows', () => {
+      measureCanvas()
+      const { canvas } = setup()
+      click(canvas, 196, 146)
+      click(canvas, 324, 146, true)
+
+      pointer(canvas, 'pointerDown', 196, 146)
+      pointer(canvas, 'pointerMove', 196, 274)
+      const dots = Konva.stages.at(-1)!.find('.selection-center')
+
+      expect(screen.getByText('48, 112')).toBeInTheDocument()
+      expect(canvas).toHaveStyle({ cursor: 'none' })
+      expect(dots).toHaveLength(1)
+      expect(dots[0].attrs).toMatchObject({ x: 48, y: 112 })
+
+      pointer(canvas, 'pointerUp', 196, 274)
+      expect(Konva.stages.at(-1)!.find('.selection-center')).toHaveLength(0)
+      expect(canvas).not.toHaveStyle({ cursor: 'none' })
+    })
+
+    it('keeps the cursor hidden when snapping leaves it just outside the object', () => {
+      measureCanvas()
+      const { canvas } = setup()
+
+      // Chwyt przy dolnej krawędzi kamienia A (y 62) i ruch o 78 px sceny: przyciąganie zostawia
+      // kamień w 112 (dół 128), a kursor jest w 140, czyli 12 px sceny pod nim (mniej niż pół pola).
+      pointer(canvas, 'pointerDown', 196, 174)
+      pointer(canvas, 'pointerMove', 196, 330)
+
+      expect(screen.getByText('48, 112')).toBeInTheDocument()
+      expect(canvas).toHaveStyle({ cursor: 'none' })
     })
 
     it('keeps only the clicked object selected after a click without dragging', () => {

@@ -52,6 +52,16 @@ function screenRect(object: SceneObject, zoom: number, offset: Point) {
   return { left: x - halfWidth, top: y - halfHeight, right: x + halfWidth, bottom: y + halfHeight }
 }
 
+// Czy punkt leży w prostokącie powiększonym z każdej strony o margin.
+function near(point: Point, rect: ReturnType<typeof screenRect>, margin: number) {
+  return (
+    point.x >= rect.left - margin &&
+    point.x <= rect.right + margin &&
+    point.y >= rect.top - margin &&
+    point.y <= rect.bottom + margin
+  )
+}
+
 // Gdzie stoi etykieta: przy kursorze, ale nie dalej niż krawędź obiektu. Gdy obiekt zatrzyma się
 // na brzegu mapy, a kursor pojedzie dalej, etykieta czeka przy obiekcie, aż kursor wróci.
 function labelPoint(pointer: Point, object: SceneObject, zoom: number, offset: Point): Point {
@@ -133,6 +143,15 @@ export function MapCanvas() {
       : nudgedRect
         ? { x: nudgedRect.right, y: nudgedRect.bottom }
         : null
+  // Przy przeciąganiu obiektu z mapy kursor nad nim znika, żeby nie zasłaniał kropki w środku.
+  // Gdy obiekt stanie na brzegu mapy, a kursor pojedzie dalej, kursor wraca. Margines pół pola:
+  // przy przyciąganiu obiekt odstaje od kursora najwyżej o tyle i kursor nie może wtedy mignąć.
+  const hideCursor =
+    drag &&
+    pointer &&
+    anchor &&
+    scene &&
+    near(pointer, screenRect(anchor, zoom, offset), (scene.gridSize / 2) * zoom)
 
   // Punkt mapy pod kursorem dla paska narzędzi (CursorPosition). Poza mapą: null.
   function trackCursor(event: PointerEvent<HTMLDivElement>) {
@@ -155,7 +174,7 @@ export function MapCanvas() {
     <div
       ref={ref}
       className={styles.canvas}
-      style={{ cursor: view.cursor ?? (drag ? 'move' : undefined) }}
+      style={{ cursor: view.cursor ?? (hideCursor ? 'none' : drag ? 'move' : undefined) }}
       // Najpierw widok: gdy zacznie przesuwanie, zaznaczanie to pomija (defaultPrevented).
       onPointerDown={(e) => {
         view.handlers.onPointerDown(e)
@@ -198,6 +217,9 @@ export function MapCanvas() {
             collisions={collisions}
             marquee={selection.marquee}
             shakeKey={selection.shakeKey}
+            // Kropka w środku obiektu, którego współrzędne pokazuje etykieta.
+            center={labelAt ? anchor : null}
+            zoom={zoom}
           />
         </SceneRenderer>
       )}

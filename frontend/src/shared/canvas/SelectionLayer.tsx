@@ -1,5 +1,5 @@
-// Zaznaczenie nad sceną (F-32): ramka wokół każdego zaznaczonego obiektu
-// i prostokąt, który rysuje się podczas zaznaczania myszą.
+// Zaznaczenie nad sceną (F-32): ramka wokół każdego zaznaczonego obiektu,
+// kropka w wybranym punkcie i prostokąt, który rysuje się podczas zaznaczania myszą.
 import type Konva from 'konva'
 import { useEffect, useRef } from 'react'
 import { Layer, Rect } from 'react-konva'
@@ -15,6 +15,8 @@ const COLLISION_COLOR = '#ffc21f'
 // Potrząśnięcie jak klasa .shake z shared/animations: 4 skoki w --duration-normal (160 ms), w px ekranu.
 const SHAKE_STEPS = [-4, 4, -2, 0]
 const SHAKE_STEP_MS = 40
+// Kropka w punkcie center, w px ekranu.
+const CENTER_SIZE = 8
 
 // Prostokąt w punktach sceny, od lewego górnego rogu.
 export interface SelectionRect {
@@ -32,6 +34,11 @@ interface SelectionLayerProps {
   marquee?: SelectionRect | null
   // Każda zmiana tej liczby potrząsa ramkami (np. upuszczenie na zajęte miejsce). 0 = bez potrząśnięcia.
   shakeKey?: number
+  // Punkt sceny oznaczony kropką, np. środek obiektu, którego współrzędne pokazuje etykieta.
+  // Bez niego kropki nie ma.
+  center?: { x: number; y: number } | null
+  // Zoom widoku, żeby kropka miała ten sam rozmiar na ekranie przy każdym powiększeniu.
+  zoom?: number
 }
 
 export function SelectionLayer({
@@ -39,6 +46,8 @@ export function SelectionLayer({
   collisions = [],
   marquee,
   shakeKey = 0,
+  center,
+  zoom = 1,
 }: SelectionLayerProps) {
   const color = collisions.length > 0 ? COLLISION_COLOR : FRAME_COLOR
   const layerRef = useRef<Konva.Layer>(null)
@@ -81,6 +90,21 @@ export function SelectionLayer({
           <Rect key={object.id} name="selection-frame" {...shape} stroke={color} strokeWidth={2} />,
         ]
       })}
+      {center && (
+        <Rect
+          name="selection-center"
+          x={center.x}
+          y={center.y}
+          width={CENTER_SIZE / zoom}
+          height={CENTER_SIZE / zoom}
+          offsetX={CENTER_SIZE / zoom / 2}
+          offsetY={CENTER_SIZE / zoom / 2}
+          fill={color}
+          stroke={FRAME_SHADOW}
+          strokeWidth={2}
+          strokeScaleEnabled={false}
+        />
+      )}
       {marquee && (
         <Rect
           name="selection-marquee"
