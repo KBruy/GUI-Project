@@ -6,8 +6,11 @@ Kategorie nie są w manifeście osobno, więc seed wyciąga je z assetów:
 name_key = "categories.<module>.<key>", sort_order = kolejność alfabetyczna po key, od 0.
 Brak pliku i pusty manifest nie są błędem, bo prawdziwych assetów jeszcze nie ma.
 TODO: gdy pojawią się prawdziwe assety, traktować brak pliku jako błąd.
+Przewidywane błędy (zły manifest, dane odrzucone przez bazę, brak połączenia) kończą skrypt
+kodem 1 i krótkim komunikatem; nieoczekiwane wyjątki zostawiają pełny traceback.
 """
-
+import sys
+from sqlalchemy.exc import IntegrityError, OperationalError
 from sqlalchemy import select
 from sqlalchemy.dialects.postgresql import insert
 from sqlalchemy.orm import Session
@@ -107,13 +110,22 @@ def main() -> None:
     if not manifest_path.exists():
         print(f"Brak pliku manifestu: {manifest_path}. Nic do wgrania.")
         return
-    assets = load_manifest(manifest_path)
-    if not assets:
-        print(f"Manifest {manifest_path} jest pusty. Nic do wgrania.")
-        return
 
-    with SessionLocal() as db, db.begin():
-        category_count, asset_count = seed(db, assets)
+    try:
+        assets = load_manifest(manifest_path)
+        if not assets:
+            print(f"Manifest {manifest_path} jest pusty. Nic do wgrania.")
+            return
+        with SessionLocal() as db, db.begin():
+            category_count, asset_count = seed(db, assets)
+    # ValidationError z Pydantic dziedziczy po ValueError, więc ten blok łapie też błędy walidacji manifestu.
+    except ValueError as error:
+        sys.exit(f"Błąd w manifeście {manifest_path}:\n{error}")
+    # error.orig to sam komunikat PostgreSQL; str(error) zawiera też całe zapytanie ze wszystkimi wierszami.
+    except IntegrityError as error:
+        sys.exit(f"Baza odrzuciła dane, nic nie zapisano:\n{error.orig}")
+    except OperationalError as error:
+        sys.exit(f"Brak połączenia z bazą (uruchom: docker compose up -d):\n{error.orig}")
 
     print(f"Gotowe: kategorie {category_count}, assety {asset_count} (z {manifest_path})")
 

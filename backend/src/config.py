@@ -12,6 +12,7 @@ from pathlib import Path
 # Domyślny adres serwera deweloperskiego Vite.
 DEFAULT_CLIENT_ORIGIN = "http://localhost:5173"
 DEFAULT_DATABASE_URL = "postgresql+psycopg://worldsmith:worldsmith@localhost:5432/worldsmith"
+DB_CONNECT_TIMEOUT_SECONDS = 5
 
 # Ścieżki liczone od położenia tego pliku, więc nie zależą od folderu, z którego startuje serwer.
 BACKEND_DIR = Path(__file__).resolve().parent.parent

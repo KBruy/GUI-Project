@@ -10,9 +10,10 @@ from sqlalchemy import URL, Engine, create_engine, make_url, text
 from sqlalchemy.exc import OperationalError
 from sqlalchemy.orm import Session
 
-from src.config import load_settings
+from src.config import DB_CONNECT_TIMEOUT_SECONDS, load_settings
 
 ALEMBIC_INI = Path(__file__).resolve().parent.parent / "alembic.ini"
+CONNECT_ARGS = {"connect_timeout": DB_CONNECT_TIMEOUT_SECONDS}
 
 
 @pytest.fixture
@@ -69,7 +70,7 @@ def test_db_url() -> Iterator[URL]:
     base_url = make_url(load_settings().database_url)
     test_url = base_url.set(database=f"{base_url.database}_test")
     # CREATE/DROP DATABASE nie działa w transakcji, stąd AUTOCOMMIT.
-    admin = create_engine(base_url, isolation_level="AUTOCOMMIT")
+    admin = create_engine(base_url, isolation_level="AUTOCOMMIT", connect_args=CONNECT_ARGS)
     try:
         with admin.connect() as connection:
             connection.execute(text(f'DROP DATABASE IF EXISTS "{test_url.database}"'))
@@ -96,7 +97,7 @@ def alembic_cfg(test_db_url: URL) -> Config:
 def engine(test_db_url: URL, alembic_cfg: Config) -> Iterator[Engine]:
     """Silnik bazy testowej z tabelami utworzonymi migracją (nie create_all), tak jak na produkcji."""
     command.upgrade(alembic_cfg, "head")
-    engine = create_engine(test_db_url)
+    engine = create_engine(test_db_url, connect_args=CONNECT_ARGS)
     yield engine
     engine.dispose()
 

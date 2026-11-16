@@ -99,7 +99,9 @@ python -m src.db.seed
 - Wszystko idzie w jednej transakcji: błąd w dowolnym wierszu cofa cały seed.
 - Ta sama kategoria w dwóch modułach to błąd, bo `key` jest unikalny w całej tabeli.
 - Brak pliku i pusty manifest nie są błędem (prawdziwych assetów jeszcze nie ma).
-- Seed **nie usuwa** z bazy assetów, których nie ma już w manifeście.
+- Przy złym manifeście, danych odrzuconych przez bazę lub braku połączenia kończy się kodem 1 i krótkim komunikatem.
+- Seed **nie usuwa** z bazy assetów ani kategorii, których nie ma już w manifeście. Kategoria, która zniknęła z manifestu, zachowuje stary `sort_order`, więc może się on powtórzyć z nową kategorią.
+- `id` kategorii mogą mieć dziury, bo `INSERT ... ON CONFLICT` pobiera numer z sekwencji także przy aktualizacji. To normalne: nic nie zakłada, że `id` są po kolei.
 
 ## Testy bazy
 
