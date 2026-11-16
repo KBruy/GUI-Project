@@ -16,4 +16,12 @@
   border: var(--pixel-border);
   box-shadow: var(--pixel-shadow);
   white-space: nowrap;
+  /* Przejście na drugą stronę kursora przy krawędzi canvasu (labelStyle w MapCanvas). */
+  transition: transform var(--duration-normal) ease-out;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .coords {
+    transition: none;
+  }
 }

@@ -282,11 +282,13 @@ describe('MapCanvas', () => {
       const { canvas } = setup()
 
       // Kamień A zatrzymuje się na lewym brzegu mapy (środek 16), a kursor jedzie dalej w lewo.
-      // Lewa krawędź A na ekranie to 100 (przesunięcie), więc etykieta stoi w 100 + 16.
+      // Lewa krawędź A na ekranie to 100 (przesunięcie), więc etykieta stoi w 100 (+16 px odstępu).
       pointer(canvas, 'pointerDown', 196, 146)
       pointer(canvas, 'pointerMove', -400, 146)
 
-      expect(screen.getByText('16, 48')).toHaveStyle({ left: '116px', top: '162px' })
+      const label = screen.getByText('16, 48')
+      expect(label).toHaveStyle({ left: '100px', top: '146px' })
+      expect(label.style.transform).toBe('translate(16px, 16px)')
     })
 
     it('flips the label to the other side of the cursor near the canvas edge', () => {
@@ -297,7 +299,9 @@ describe('MapCanvas', () => {
       pointer(canvas, 'pointerDown', 196, 146)
       pointer(canvas, 'pointerMove', 990, 790)
 
-      expect(screen.getByText('432, 368')).toHaveStyle({ right: '26px', bottom: '26px' })
+      const label = screen.getByText('432, 368')
+      expect(label).toHaveStyle({ left: '990px', top: '790px' })
+      expect(label.style.transform).toBe('translate(calc(-100% - 16px), calc(-100% - 16px))')
     })
 
     it('leaves the object in place when dropped on another one', () => {

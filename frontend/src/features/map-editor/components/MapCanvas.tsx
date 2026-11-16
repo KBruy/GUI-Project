@@ -60,18 +60,15 @@ function labelPoint(pointer: Point, object: SceneObject, zoom: number, offset: P
 }
 
 // Etykieta stoi na prawo i pod punktem `at`. Gdy przy prawej albo dolnej krawędzi canvasu brakuje
-// miejsca, przeskakuje na drugą stronę punktu, żeby nie schowała się pod panelem albo stopką.
+// miejsca, przechodzi na drugą stronę punktu, żeby nie schowała się pod panelem albo stopką.
+// Strona zmienia się przez transform, więc CSS robi z tego krótkie przesunięcie zamiast skoku.
 function labelStyle(at: Point, width: number, height: number) {
   const x = Math.min(Math.max(at.x, 0), width)
   const y = Math.min(Math.max(at.y, 0), height)
-  return {
-    ...(x + LABEL_OFFSET + LABEL_SPACE.x > width
-      ? { right: width - x + LABEL_OFFSET }
-      : { left: x + LABEL_OFFSET }),
-    ...(y + LABEL_OFFSET + LABEL_SPACE.y > height
-      ? { bottom: height - y + LABEL_OFFSET }
-      : { top: y + LABEL_OFFSET }),
-  }
+  const flipX = x + LABEL_OFFSET + LABEL_SPACE.x > width
+  const flipY = y + LABEL_OFFSET + LABEL_SPACE.y > height
+  const shift = (flip: boolean) => (flip ? `calc(-100% - ${LABEL_OFFSET}px)` : `${LABEL_OFFSET}px`)
+  return { left: x, top: y, transform: `translate(${shift(flipX)}, ${shift(flipY)})` }
 }
 
 export function MapCanvas() {
