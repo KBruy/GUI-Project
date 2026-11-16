@@ -3,6 +3,7 @@ import { useEffect, useMemo, type PointerEvent } from 'react'
 import { GridLayer } from '@/shared/canvas/GridLayer'
 import { SceneRenderer } from '@/shared/canvas/SceneRenderer'
 import { SelectionLayer } from '@/shared/canvas/SelectionLayer'
+import { SelectionTransformer } from '@/shared/canvas/SelectionTransformer'
 import { useElementSize } from '@/shared/hooks/useElementSize'
 import { assetUrl } from '@/shared/lib/assets'
 import type { Point, Scene, SceneObject } from '../engine/engine'
@@ -10,6 +11,7 @@ import { useEditorStore } from '../store/editorStore'
 import { useEditorShortcuts } from '../useEditorShortcuts'
 import { usePalettePlacing } from '../usePalettePlacing'
 import { useSelectionControls } from '../useSelectionControls'
+import { useTransformControls } from '../useTransformControls'
 import { useViewControls } from '../useViewControls'
 import { toScenePoint } from '../view'
 import styles from './MapCanvas.module.css'
@@ -28,16 +30,16 @@ function previewScene(
   ids: string[],
   delta: Point | null,
   ghost: SceneObject | null,
-  layerId: string | null
+  layerId: string | null,
+  transformed: SceneObject | null
 ): Scene {
   return {
     ...scene,
     layers: scene.layers.map((layer) => {
-      const objects = delta
-        ? layer.objects.map((o) =>
-            ids.includes(o.id) ? { ...o, x: o.x + delta.x, y: o.y + delta.y } : o
-          )
-        : layer.objects
+      const objects = layer.objects.map((o) => {
+        if (o.id === transformed?.id) return transformed
+        return delta && ids.includes(o.id) ? { ...o, x: o.x + delta.x, y: o.y + delta.y } : o
+      })
       return { ...layer, objects: ghost && layer.id === layerId ? [...objects, ghost] : objects }
     }),
   }
@@ -102,21 +104,33 @@ export function MapCanvas() {
   const { drag } = selection
   const { ghost, floating } = usePalettePlacing(ref)
   const nudgedId = useEditorShortcuts()
+  const transform = useTransformControls()
 
-  // Podczas przeciągania rysujemy obiekty w nowym miejscu (albo podgląd assetu z palety).
+  // Podczas przeciągania rysujemy obiekty w nowym miejscu (albo podgląd assetu z palety),
+  // a podczas obracania i skalowania obiekt po zmianie.
   const shownScene = useMemo(
     () =>
-      scene && (drag || ghost)
+      scene && (drag || ghost || transform.preview)
         ? previewScene(
             scene,
             selectedIds,
             drag?.delta ?? null,
             ghost?.object ?? null,
-            activeLayerId
+            activeLayerId,
+            transform.preview
           )
         : scene,
-    [scene, selectedIds, drag, ghost, activeLayerId]
+    [scene, selectedIds, drag, ghost, activeLayerId, transform.preview]
   )
+  // Uchwyty obrotu i skali: tylko przy jednym zaznaczonym obiekcie na widocznej warstwie
+  // i nie w trakcie przeciągania. Obiekt bierzemy ze sceny, bez podglądu.
+  const handled =
+    !drag && !ghost && selectedIds.length === 1
+      ? scene?.layers
+          .filter((layer) => layer.visible)
+          .flatMap((layer) => layer.objects)
+          .find((o) => o.id === selectedIds[0])
+      : undefined
   // Ramki: zaznaczone obiekty (albo podgląd z palety) i te, z którymi by kolidowały.
   // Ukryte warstwy pomijamy.
   const { selected, collisions } = useMemo(() => {
@@ -221,6 +235,14 @@ export function MapCanvas() {
             center={labelAt ? anchor : null}
             zoom={zoom}
           />
+          {handled && (
+            <SelectionTransformer
+              object={handled}
+              bounds={shownScene}
+              onTransform={(t) => transform.onTransform(handled.id, t)}
+              onTransformEnd={(t) => transform.onTransformEnd(handled.id, t)}
+            />
+          )}
         </SceneRenderer>
       )}
       {/* Asset z palety przy kursorze, zanim dojedzie nad canvas (w rozmiarze po zoomie). */}

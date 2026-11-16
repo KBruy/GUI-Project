@@ -418,6 +418,41 @@ describe('MapCanvas', () => {
       expect(canvas).toHaveStyle({ cursor: 'none' })
     })
 
+    it('shows rotate and scale handles only for a single selected object', () => {
+      measureCanvas()
+      const { canvas, a, b } = setup()
+      const transformer = () => Konva.stages.at(-1)!.findOne<Konva.Transformer>('Transformer')
+
+      expect(transformer()).toBeUndefined()
+      act(() => useEditorStore.getState().select([a]))
+      expect(transformer()?.nodes()).toHaveLength(1)
+
+      click(canvas, 324, 146, true)
+      expect(useEditorStore.getState().selectedIds).toEqual([a, b])
+      expect(transformer()).toBeUndefined()
+    })
+
+    it('saves a rotation from the handles in one undo step', () => {
+      measureCanvas()
+      const { a } = setup()
+      act(() => useEditorStore.getState().select([a]))
+      const transformer = Konva.stages.at(-1)!.findOne<Konva.Transformer>('Transformer')!
+
+      // Konva obraca niewidoczny prostokąt; obrót −90.4° trafia do sceny jako 270°.
+      act(() => {
+        transformer.nodes()[0].rotation(-90.4)
+        transformer.fire('transform')
+      })
+      expect(position(a).rotation).toBe(0)
+      act(() => {
+        transformer.fire('transformend')
+      })
+      expect(position(a).rotation).toBe(270)
+
+      act(() => useEditorStore.getState().undo())
+      expect(position(a).rotation).toBe(0)
+    })
+
     it('keeps only the clicked object selected after a click without dragging', () => {
       const { canvas, a, b } = setup()
       click(canvas, 196, 146)
