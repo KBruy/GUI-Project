@@ -67,6 +67,11 @@ interface EditorState {
   // Dodaje asset na aktywną warstwę w punkcie sceny `at`. Bez punktu: w wolnym miejscu
   // najbliżej środka widoku, żeby kolejne kliknięcia w paletę nie trafiały w zajęte pole.
   addAsset: (asset: Asset, at?: Point) => PlaceResult
+  // Podgląd dodania assetu w punkcie sceny, bez zmiany sceny: gdzie stanie jego środek i czy koliduje.
+  planAdd: (asset: Asset, at: Point) => { at: Point; result: PlaceResult }
+  // Asset przeciągany właśnie z palety na mapę. Upuszczenie obsługuje MapCanvas.
+  placingAsset: Asset | null
+  setPlacingAsset: (asset: Asset | null) => void
   // Przesuwa zaznaczone obiekty o wektor w punktach sceny, jednym krokiem cofania.
   // Wektor jest przycinany tak, żeby cała grupa została w granicach mapy.
   moveSelected: (delta: Point) => PlaceResult
@@ -82,7 +87,8 @@ const FREE_SPOT_RINGS = 8
 // a cały obiekt zostaje w granicach mapy (backend odrzuca obiekty poza nią).
 function placeAsset(target: Point, asset: Asset, scene: Scene, snap: boolean): Point {
   const axis = (value: number, size: number, max: number) => {
-    let start = value - size / 2
+    // Pixel art: lewy górny róg zawsze na całym pikselu, także przy zoomie bez przyciągania.
+    let start = Math.round(value - size / 2)
     if (snap) start = Math.round(start / scene.gridSize) * scene.gridSize
     start = Math.max(0, Math.min(max - size, start))
     return start + size / 2
@@ -145,6 +151,7 @@ export const useEditorStore = create<EditorState>()((set, get) => ({
   assets: [],
   assetsError: null,
   assetsStatus: 'idle',
+  placingAsset: null,
 
   loadScene(scene) {
     unsubscribe?.()
@@ -244,6 +251,14 @@ export const useEditorStore = create<EditorState>()((set, get) => ({
       })
     }
   },
+
+  planAdd(asset, at) {
+    const { scene, editor, activeLayerId, gridSnap } = get()
+    if (!scene || !editor || !activeLayerId) throw new Error('No scene loaded')
+    const center = placeAsset(at, asset, scene, gridSnap)
+    return { at: center, result: editor.canExecute(addObject(activeLayerId, asset, center)) }
+  },
+  setPlacingAsset: (placingAsset) => set({ placingAsset }),
 
   addAsset(asset, at) {
     const { scene, activeLayerId, viewport, gridSnap } = get()

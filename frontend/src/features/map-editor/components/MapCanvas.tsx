@@ -1,33 +1,40 @@
 // Canvas edytora map: rysuje scenę ze store'u i wypełnia całe miejsce, które dostanie od rodzica.
-import { useEffect, useMemo, type DragEvent } from 'react'
+import { useEffect, useMemo } from 'react'
 import { GridLayer } from '@/shared/canvas/GridLayer'
 import { SceneRenderer } from '@/shared/canvas/SceneRenderer'
 import { SelectionLayer } from '@/shared/canvas/SelectionLayer'
-import { toast } from '@/shared/components/ui/Toast/toast'
 import { useElementSize } from '@/shared/hooks/useElementSize'
 import { assetUrl } from '@/shared/lib/assets'
-import type { Point, Scene } from '../engine/engine'
+import type { Point, Scene, SceneObject } from '../engine/engine'
 import { useEditorStore } from '../store/editorStore'
 import { useEditorShortcuts } from '../useEditorShortcuts'
+import { usePalettePlacing } from '../usePalettePlacing'
 import { useSelectionControls } from '../useSelectionControls'
 import { useViewControls } from '../useViewControls'
-import { toScenePoint } from '../view'
-import { ASSET_DRAG_TYPE } from './AssetPalette'
 import styles from './MapCanvas.module.css'
 
 // Odsunięcie etykiety ze współrzędnymi od kursora, żeby go nie zasłaniała.
 const LABEL_OFFSET = 16
 
-// Kopia sceny z obiektami ids przesuniętymi o wektor (tylko do podglądu przeciągania).
-function moveInScene(scene: Scene, ids: string[], delta: Point): Scene {
+// Scena do pokazania podczas przeciągania: obiekty ids przesunięte o wektor, a podgląd assetu
+// z palety (ghost) dopisany na aktywną warstwę. Scena w store zmienia się dopiero po upuszczeniu.
+function previewScene(
+  scene: Scene,
+  ids: string[],
+  delta: Point | null,
+  ghost: SceneObject | null,
+  layerId: string | null
+): Scene {
   return {
     ...scene,
-    layers: scene.layers.map((layer) => ({
-      ...layer,
-      objects: layer.objects.map((o) =>
-        ids.includes(o.id) ? { ...o, x: o.x + delta.x, y: o.y + delta.y } : o
-      ),
-    })),
+    layers: scene.layers.map((layer) => {
+      const objects = delta
+        ? layer.objects.map((o) =>
+            ids.includes(o.id) ? { ...o, x: o.x + delta.x, y: o.y + delta.y } : o
+          )
+        : layer.objects
+      return { ...layer, objects: ghost && layer.id === layerId ? [...objects, ghost] : objects }
+    }),
   }
 }
 
@@ -38,7 +45,7 @@ export function MapCanvas() {
   const offset = useEditorStore((s) => s.offset)
   const setViewport = useEditorStore((s) => s.setViewport)
   const assets = useEditorStore((s) => s.assets)
-  const addAsset = useEditorStore((s) => s.addAsset)
+  const activeLayerId = useEditorStore((s) => s.activeLayerId)
   const selectedIds = useEditorStore((s) => s.selectedIds)
   // assetId → adres PNG. Obiekt, którego assetu nie ma w bibliotece, rysuje się jako czerwony prostokąt.
   const urls = useMemo(() => new Map(assets.map((a) => [a.id, assetUrl(a.file)])), [assets])
@@ -46,57 +53,51 @@ export function MapCanvas() {
   const view = useViewControls(ref)
   const selection = useSelectionControls(ref)
   const { drag } = selection
+  const ghost = usePalettePlacing(ref)
   useEditorShortcuts()
 
-  // Podczas przeciągania rysujemy zaznaczone obiekty w nowym miejscu.
-  // Scena w store (i w silniku) zmienia się dopiero po upuszczeniu.
+  // Podczas przeciągania rysujemy obiekty w nowym miejscu (albo podgląd assetu z palety).
   const shownScene = useMemo(
-    () => (scene && drag ? moveInScene(scene, selectedIds, drag.delta) : scene),
-    [scene, selectedIds, drag]
+    () =>
+      scene && (drag || ghost)
+        ? previewScene(
+            scene,
+            selectedIds,
+            drag?.delta ?? null,
+            ghost?.object ?? null,
+            activeLayerId
+          )
+        : scene,
+    [scene, selectedIds, drag, ghost, activeLayerId]
   )
-  // Ramki: zaznaczone obiekty i te, z którymi przeciągane by kolidowały. Ukryte warstwy pomijamy.
+  // Ramki: zaznaczone obiekty (albo podgląd z palety) i te, z którymi by kolidowały.
+  // Ukryte warstwy pomijamy.
   const { selected, collisions } = useMemo(() => {
     const objects = (shownScene?.layers ?? [])
       .filter((layer) => layer.visible)
       .flatMap((layer) => layer.objects)
+    const collidesWith = drag?.collidesWith ?? ghost?.collidesWith ?? []
     return {
-      selected: objects.filter((o) => selectedIds.includes(o.id)),
-      collisions: objects.filter((o) => drag?.collidesWith.includes(o.id)),
+      selected: ghost
+        ? objects.filter((o) => o.id === ghost.object.id)
+        : objects.filter((o) => selectedIds.includes(o.id)),
+      collisions: objects.filter((o) => collidesWith.includes(o.id)),
     }
-  }, [shownScene, selectedIds, drag])
-  // Etykieta przy kursorze: środek chwyconego obiektu, tak jak x, y w panelu właściwości.
-  const anchor = drag && selected.find((o) => o.id === drag.anchorId)
+  }, [shownScene, selectedIds, drag, ghost])
+  // Etykieta przy kursorze: środek chwyconego obiektu (albo podglądu), tak jak x, y w panelu właściwości.
+  const anchor = drag ? selected.find((o) => o.id === drag.anchorId) : ghost?.object
+  const pointer = drag?.pointer ?? ghost?.pointer
 
   // Store potrzebuje rozmiaru canvasu do zoomu w środku i „Dopasuj do ekranu”.
   useEffect(() => {
     if (width > 0 && height > 0) setViewport({ width, height })
   }, [width, height, setViewport])
 
-  // Bez preventDefault przeglądarka nie pozwoli upuścić kafelka z palety.
-  function onDragOver(e: DragEvent) {
-    if (scene && e.dataTransfer.types.includes(ASSET_DRAG_TYPE)) e.preventDefault()
-  }
-
-  // Obiekt staje tam, gdzie puszczono kursor (środek obiektu pod kursorem, potem przyciąganie).
-  function onDrop(e: DragEvent) {
-    const asset = assets.find((a) => a.id === e.dataTransfer.getData(ASSET_DRAG_TYPE))
-    if (!asset || !ref.current) return
-    e.preventDefault()
-    const rect = ref.current.getBoundingClientRect()
-    const point = toScenePoint(
-      { x: e.clientX - rect.left, y: e.clientY - rect.top },
-      { zoom, offset }
-    )
-    if (!addAsset(asset, point).ok) toast.error('errors.collision')
-  }
-
   return (
     <div
       ref={ref}
       className={styles.canvas}
       style={{ cursor: view.cursor ?? (drag ? 'move' : undefined) }}
-      onDragOver={onDragOver}
-      onDrop={onDrop}
       // Najpierw widok: gdy zacznie przesuwanie, zaznaczanie to pomija (defaultPrevented).
       onPointerDown={(e) => {
         view.handlers.onPointerDown(e)
@@ -140,10 +141,10 @@ export function MapCanvas() {
           />
         </SceneRenderer>
       )}
-      {drag && anchor && (
+      {anchor && pointer && (
         <div
           className={styles.coords}
-          style={{ left: drag.pointer.x + LABEL_OFFSET, top: drag.pointer.y + LABEL_OFFSET }}
+          style={{ left: pointer.x + LABEL_OFFSET, top: pointer.y + LABEL_OFFSET }}
         >
           {anchor.x}, {anchor.y}
         </div>

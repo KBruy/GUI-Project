@@ -1,9 +1,8 @@
-import { createEvent, fireEvent, render } from '@testing-library/react'
-import { beforeEach, describe, expect, it } from 'vitest'
+import { act, createEvent, fireEvent, render } from '@testing-library/react'
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import type { Asset } from '@/shared/lib/assets'
 import { createMapScene, MAP_SIZES } from '../engine/engine'
 import { useEditorStore } from '../store/editorStore'
-import { ASSET_DRAG_TYPE } from './AssetPalette'
 import { MapCanvas } from './MapCanvas'
 
 const ROCK: Asset = {
@@ -16,19 +15,15 @@ const ROCK: Asset = {
   height: 32,
 }
 
-// jsdom nie ma DataTransfer, więc podajemy tylko to, czego używa MapCanvas.
-function dropRock(target: Element, x: number, y: number) {
-  const dataTransfer = { types: [ASSET_DRAG_TYPE], getData: () => ROCK.id }
-  fireEvent.dragOver(target, { dataTransfer })
-  // jsdom nie ma też DragEvent, więc współrzędne kursora dopisujemy do zwykłego zdarzenia.
-  const drop = createEvent.drop(target, { dataTransfer })
-  Object.defineProperties(drop, { clientX: { value: x }, clientY: { value: y } })
-  fireEvent(target, drop)
-}
-
-// Tak samo jak przy upuszczaniu: jsdom nie przekazuje współrzędnych ani przycisku do zdarzeń wskaźnika.
+// jsdom nie przekazuje współrzędnych ani przycisku do zdarzeń wskaźnika, więc dopisujemy je ręcznie.
 type PointerType = 'pointerDown' | 'pointerMove' | 'pointerUp'
-function pointer(target: Element, type: PointerType, x: number, y: number, shiftKey = false) {
+function pointer(
+  target: Element | Window,
+  type: PointerType,
+  x: number,
+  y: number,
+  shiftKey = false
+) {
   const event = createEvent[type](target)
   Object.defineProperties(event, {
     clientX: { value: x },
@@ -39,6 +34,14 @@ function pointer(target: Element, type: PointerType, x: number, y: number, shift
   })
   fireEvent(target, event)
 }
+// Przeciągnięcie kamienia z palety: paleta ustawia placingAsset, a dalej kursor jedzie po oknie.
+// Pierwszy argument zostaje dla czytelności testów (upuszczamy „na canvas”).
+function dropRock(_canvas: Element, x: number, y: number) {
+  act(() => useEditorStore.getState().setPlacingAsset(ROCK))
+  pointer(window, 'pointerMove', x, y)
+  pointer(window, 'pointerUp', x, y)
+}
+
 function click(target: Element, x: number, y: number, shiftKey = false) {
   pointer(target, 'pointerDown', x, y, shiftKey)
   pointer(target, 'pointerUp', x, y, shiftKey)
@@ -47,9 +50,18 @@ function click(target: Element, x: number, y: number, shiftKey = false) {
 const objects = () => useEditorStore.getState().scene!.layers.flatMap((l) => l.objects)
 
 beforeEach(() => {
+  // jsdom nie liczy układu strony: canvas ma rozmiar 0, więc podajemy mu prostokąt 1000×800 od (0, 0).
+  vi.spyOn(HTMLElement.prototype, 'getBoundingClientRect').mockReturnValue(
+    DOMRect.fromRect({ x: 0, y: 0, width: 1000, height: 800 })
+  )
   useEditorStore.getState().loadScene(createMapScene('Test', MAP_SIZES[0], 'Warstwa 1'))
   // Zoom 2 i przesunięcie (100, 50): punkt ekranu (164, 114) to punkt sceny (32, 32).
   useEditorStore.setState({ assets: [ROCK], zoom: 2, offset: { x: 100, y: 50 }, gridSnap: true })
+})
+
+afterEach(() => {
+  vi.restoreAllMocks()
+  useEditorStore.getState().setPlacingAsset(null)
 })
 
 describe('MapCanvas', () => {
@@ -61,6 +73,29 @@ describe('MapCanvas', () => {
     // Środek pod kursorem (32, 32) → lewy górny róg (16, 16) → siatka (32, 32) → środek (48, 48).
     expect(objects()).toHaveLength(1)
     expect(objects()[0]).toMatchObject({ assetId: ROCK.id, x: 48, y: 48 })
+  })
+
+  it('shows a preview with coordinates while dragging from the palette, outside the canvas none', () => {
+    const { container } = render(<MapCanvas />)
+    act(() => useEditorStore.getState().setPlacingAsset(ROCK))
+
+    pointer(window, 'pointerMove', 164, 114)
+    expect(container).toHaveTextContent('48, 48')
+
+    pointer(window, 'pointerMove', -20, 114)
+    expect(container).not.toHaveTextContent('48, 48')
+  })
+
+  it('cancels dragging from the palette with Escape', () => {
+    render(<MapCanvas />)
+    act(() => useEditorStore.getState().setPlacingAsset(ROCK))
+    pointer(window, 'pointerMove', 164, 114)
+
+    fireEvent.keyDown(window, { key: 'Escape' })
+    pointer(window, 'pointerUp', 164, 114)
+
+    expect(objects()).toHaveLength(0)
+    expect(useEditorStore.getState().placingAsset).toBeNull()
   })
 
   it('does not drop on top of another object', () => {
