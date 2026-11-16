@@ -15,6 +15,8 @@ import styles from './MapCanvas.module.css'
 
 // Odsunięcie etykiety ze współrzędnymi od kursora, żeby go nie zasłaniała.
 const LABEL_OFFSET = 16
+// Po ruchu strzałkami kursora nie ma, więc etykieta przylega prawie do rogu obiektu (tuż za ramką).
+const NUDGE_LABEL_OFFSET = 4
 // Miejsce na etykietę, z zapasem na najdłuższe „2048, 1536”.
 const LABEL_SPACE = { x: 112, y: 40 }
 
@@ -62,12 +64,12 @@ function labelPoint(pointer: Point, object: SceneObject, zoom: number, offset: P
 // Etykieta stoi na prawo i pod punktem `at`. Gdy przy prawej albo dolnej krawędzi canvasu brakuje
 // miejsca, przechodzi na drugą stronę punktu, żeby nie schowała się pod panelem albo stopką.
 // Strona zmienia się przez transform, więc CSS robi z tego krótkie przesunięcie zamiast skoku.
-function labelStyle(at: Point, width: number, height: number) {
+function labelStyle(at: Point, width: number, height: number, gap = LABEL_OFFSET) {
   const x = Math.min(Math.max(at.x, 0), width)
   const y = Math.min(Math.max(at.y, 0), height)
-  const flipX = x + LABEL_OFFSET + LABEL_SPACE.x > width
-  const flipY = y + LABEL_OFFSET + LABEL_SPACE.y > height
-  const shift = (flip: boolean) => (flip ? `calc(-100% - ${LABEL_OFFSET}px)` : `${LABEL_OFFSET}px`)
+  const flipX = x + gap + LABEL_SPACE.x > width
+  const flipY = y + gap + LABEL_SPACE.y > height
+  const shift = (flip: boolean) => (flip ? `calc(-100% - ${gap}px)` : `${gap}px`)
   return { left: x, top: y, transform: `translate(${shift(flipX)}, ${shift(flipY)})` }
 }
 
@@ -87,7 +89,7 @@ export function MapCanvas() {
   const selection = useSelectionControls(ref)
   const { drag } = selection
   const ghost = usePalettePlacing(ref)
-  useEditorShortcuts()
+  const nudgedId = useEditorShortcuts()
 
   // Podczas przeciągania rysujemy obiekty w nowym miejscu (albo podgląd assetu z palety).
   const shownScene = useMemo(
@@ -118,9 +120,17 @@ export function MapCanvas() {
     }
   }, [shownScene, selectedIds, drag, ghost])
   // Etykieta przy kursorze: środek chwyconego obiektu (albo podglądu), tak jak x, y w panelu właściwości.
-  const anchor = drag ? selected.find((o) => o.id === drag.anchorId) : ghost?.object
+  // Po ruchu strzałkami etykieta stoi przez chwilę przy prawym dolnym rogu przesuniętego obiektu.
+  const nudged = !drag && !ghost && nudgedId ? selected.find((o) => o.id === nudgedId) : undefined
+  const anchor = drag ? selected.find((o) => o.id === drag.anchorId) : (ghost?.object ?? nudged)
   const pointer = drag?.pointer ?? ghost?.pointer
-  const labelAt = anchor && pointer ? labelPoint(pointer, anchor, zoom, offset) : null
+  const nudgedRect = nudged && screenRect(nudged, zoom, offset)
+  const labelAt =
+    anchor && pointer
+      ? labelPoint(pointer, anchor, zoom, offset)
+      : nudgedRect
+        ? { x: nudgedRect.right, y: nudgedRect.bottom }
+        : null
 
   // Store potrzebuje rozmiaru canvasu do zoomu w środku i „Dopasuj do ekranu”.
   useEffect(() => {
@@ -176,7 +186,10 @@ export function MapCanvas() {
         </SceneRenderer>
       )}
       {anchor && labelAt && (
-        <div className={styles.coords} style={labelStyle(labelAt, width, height)}>
+        <div
+          className={styles.coords}
+          style={labelStyle(labelAt, width, height, pointer ? LABEL_OFFSET : NUDGE_LABEL_OFFSET)}
+        >
           {anchor.x}, {anchor.y}
         </div>
       )}

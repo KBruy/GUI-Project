@@ -82,6 +82,7 @@ beforeEach(() => {
 
 afterEach(() => {
   vi.unstubAllGlobals()
+  vi.useRealTimers()
   vi.restoreAllMocks()
   useEditorStore.getState().setPlacingAsset(null)
 })
@@ -218,6 +219,22 @@ describe('MapCanvas', () => {
       // Krawędź na linii przeskakuje o całe pole.
       fireEvent.keyDown(window, { key: 'ArrowUp' })
       expect(objects()[0]).toMatchObject({ x: 80, y: 16 })
+    })
+
+    it('shows the moved object position for a moment after an arrow press', () => {
+      vi.useFakeTimers()
+      measureCanvas()
+      setup()
+      useEditorStore.setState({ gridSnap: false })
+
+      fireEvent.keyDown(window, { key: 'ArrowRight' })
+      // Tuż przy prawym dolnym rogu kamienia: (49 + 16) · 2 + 100 = 230, (48 + 16) · 2 + 50 = 178.
+      const label = screen.getByText('49, 48')
+      expect(label).toHaveStyle({ left: '230px', top: '178px' })
+      expect(label.style.transform).toBe('translate(4px, 4px)')
+
+      act(() => vi.advanceTimersByTime(1500))
+      expect(document.body).not.toHaveTextContent('49, 48')
     })
 
     it('undoes and redoes with ctrl+z and ctrl+shift+z', () => {
