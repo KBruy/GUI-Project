@@ -72,6 +72,9 @@ interface EditorState {
   // Asset przeciągany właśnie z palety na mapę. Upuszczenie obsługuje MapCanvas.
   placingAsset: Asset | null
   setPlacingAsset: (asset: Asset | null) => void
+  // Punkt mapy pod kursorem (całe piksele sceny) dla paska narzędzi. Null, gdy kursor jest poza mapą.
+  cursorPoint: Point | null
+  setCursorPoint: (point: Point | null) => void
   // Przesuwa zaznaczone obiekty o wektor w punktach sceny, jednym krokiem cofania.
   // Wektor jest przycinany tak, żeby cała grupa została w granicach mapy.
   moveSelected: (delta: Point) => PlaceResult
@@ -152,6 +155,7 @@ export const useEditorStore = create<EditorState>()((set, get) => ({
   assetsError: null,
   assetsStatus: 'idle',
   placingAsset: null,
+  cursorPoint: null,
 
   loadScene(scene) {
     unsubscribe?.()
@@ -259,6 +263,13 @@ export const useEditorStore = create<EditorState>()((set, get) => ({
     return { at: center, result: editor.canExecute(addObject(activeLayerId, asset, center)) }
   },
   setPlacingAsset: (placingAsset) => set({ placingAsset }),
+
+  setCursorPoint(point) {
+    const current = get().cursorPoint
+    // Ruch w obrębie tego samego piksela sceny niczego nie zmienia, więc nie odświeżamy paska.
+    if (current?.x === point?.x && current?.y === point?.y) return
+    set({ cursorPoint: point })
+  },
 
   addAsset(asset, at) {
     const { scene, activeLayerId, viewport, gridSnap } = get()

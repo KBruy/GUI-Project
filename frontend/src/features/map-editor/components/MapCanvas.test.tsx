@@ -139,6 +139,18 @@ describe('MapCanvas', () => {
     expect(container.querySelector('img')).toBeNull()
   })
 
+  it('tracks the map point under the cursor for the toolbar, outside the map null', () => {
+    const { container } = render(<MapCanvas />)
+    const canvas = container.firstElementChild!
+
+    // Zoom 2, przesunięcie (100, 50): ekran (164, 114) to punkt mapy (32, 32).
+    pointer(canvas, 'pointerMove', 164, 114)
+    expect(useEditorStore.getState().cursorPoint).toEqual({ x: 32, y: 32 })
+
+    pointer(canvas, 'pointerMove', 20, 114)
+    expect(useEditorStore.getState().cursorPoint).toBeNull()
+  })
+
   it('cancels dragging from the palette with Escape', () => {
     render(<MapCanvas />)
     act(() => useEditorStore.getState().setPlacingAsset(ROCK))

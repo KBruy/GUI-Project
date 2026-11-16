@@ -1,0 +1,14 @@
+/* Stała szerokość, żeby pasek nie skakał, gdy zmienia się liczba cyfr.
+   margin-left: auto dosuwa pozycję do prawego końca paska.
+   Ramka i wysokość jak w małym Button, ale bez cienia: to odczyt, nie coś do kliknięcia. */
+.position {
+  margin-left: auto;
+  text-align: center;
+  border: var(--pixel-border);
+  background: var(--color-surface);
+  font-size: var(--font-size-md);
+  padding: var(--space-1) var(--space-2);
+  min-width: 16ch;
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}

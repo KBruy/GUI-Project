@@ -1,5 +1,5 @@
 // Canvas edytora map: rysuje scenę ze store'u i wypełnia całe miejsce, które dostanie od rodzica.
-import { useEffect, useMemo } from 'react'
+import { useEffect, useMemo, type PointerEvent } from 'react'
 import { GridLayer } from '@/shared/canvas/GridLayer'
 import { SceneRenderer } from '@/shared/canvas/SceneRenderer'
 import { SelectionLayer } from '@/shared/canvas/SelectionLayer'
@@ -11,6 +11,7 @@ import { useEditorShortcuts } from '../useEditorShortcuts'
 import { usePalettePlacing } from '../usePalettePlacing'
 import { useSelectionControls } from '../useSelectionControls'
 import { useViewControls } from '../useViewControls'
+import { toScenePoint } from '../view'
 import styles from './MapCanvas.module.css'
 
 // Odsunięcie etykiety ze współrzędnymi od kursora, żeby go nie zasłaniała.
@@ -82,6 +83,7 @@ export function MapCanvas() {
   const assets = useEditorStore((s) => s.assets)
   const activeLayerId = useEditorStore((s) => s.activeLayerId)
   const selectedIds = useEditorStore((s) => s.selectedIds)
+  const setCursorPoint = useEditorStore((s) => s.setCursorPoint)
   // assetId → adres PNG. Obiekt, którego assetu nie ma w bibliotece, rysuje się jako czerwony prostokąt.
   const urls = useMemo(() => new Map(assets.map((a) => [a.id, assetUrl(a.file)])), [assets])
   const { ref, width, height } = useElementSize<HTMLDivElement>()
@@ -132,6 +134,18 @@ export function MapCanvas() {
         ? { x: nudgedRect.right, y: nudgedRect.bottom }
         : null
 
+  // Punkt mapy pod kursorem dla paska narzędzi (CursorPosition). Poza mapą: null.
+  function trackCursor(event: PointerEvent<HTMLDivElement>) {
+    const state = useEditorStore.getState()
+    const rect = event.currentTarget.getBoundingClientRect()
+    const p = toScenePoint({ x: event.clientX - rect.left, y: event.clientY - rect.top }, state)
+    const x = Math.floor(p.x)
+    const y = Math.floor(p.y)
+    const inside =
+      state.scene && x >= 0 && y >= 0 && x < state.scene.width && y < state.scene.height
+    setCursorPoint(inside ? { x, y } : null)
+  }
+
   // Store potrzebuje rozmiaru canvasu do zoomu w środku i „Dopasuj do ekranu”.
   useEffect(() => {
     if (width > 0 && height > 0) setViewport({ width, height })
@@ -150,7 +164,9 @@ export function MapCanvas() {
       onPointerMove={(e) => {
         view.handlers.onPointerMove(e)
         selection.handlers.onPointerMove(e)
+        trackCursor(e)
       }}
+      onPointerLeave={() => setCursorPoint(null)}
       onPointerUp={() => {
         view.handlers.onPointerUp()
         selection.handlers.onPointerUp()

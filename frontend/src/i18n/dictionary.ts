@@ -23,6 +23,7 @@ const dictionary = {
   'editor.zoomIn': { pl: 'Przybliż', en: 'Zoom in' },
   'editor.zoomOut': { pl: 'Oddal', en: 'Zoom out' },
   'editor.fit': { pl: 'Dopasuj', en: 'Fit' },
+  'editor.cursor': { pl: 'Pozycja kursora', en: 'Cursor position' },
   'newMap.open': { pl: 'Nowa mapa', en: 'New map' },
   'newMap.title': { pl: 'Nowa mapa', en: 'New map' },
   'newMap.name': { pl: 'Nazwa mapy', en: 'Map name' },
