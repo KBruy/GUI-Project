@@ -204,10 +204,20 @@ export const useEditorStore = create<EditorState>()((set, get) => ({
   setTool: (tool) => set({ tool }),
   setActiveLayer: (layerId) => set({ activeLayerId: layerId }),
   setViewport(viewport) {
-    const first = get().viewport.width === 0
+    const { viewport: old, scene, zoom, offset } = get()
     set({ viewport })
     // Pierwszy pomiar: dopiero teraz wiadomo, jak dopasować scenę do ekranu.
-    if (first) get().fitToScreen()
+    if (old.width === 0) {
+      get().fitToScreen()
+      return
+    }
+    // Zmiana rozmiaru (okno, pełny ekran): środek widoku zostaje na środku,
+    // a mapa nie może uciec poza ekran.
+    const centered = {
+      x: offset.x + (viewport.width - old.width) / 2,
+      y: offset.y + (viewport.height - old.height) / 2,
+    }
+    set({ offset: scene ? clampOffset(centered, zoom, scene, viewport) : centered })
   },
 
   zoomTo(zoom, anchor) {
