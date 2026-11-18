@@ -1,0 +1,128 @@
+[
+  {
+    "id": "map_terrain_grass_01",
+    "module": "map",
+    "category": "terrain",
+    "nameKey": "assets.map.terrain_grass",
+    "file": "map/terrain/map_terrain_grass_01.png",
+    "width": 32,
+    "height": 32
+  },
+  {
+    "id": "map_terrain_dirt_01",
+    "module": "map",
+    "category": "terrain",
+    "nameKey": "assets.map.terrain_dirt",
+    "file": "map/terrain/map_terrain_dirt_01.png",
+    "width": 32,
+    "height": 32
+  },
+  {
+    "id": "map_terrain_sand_01",
+    "module": "map",
+    "category": "terrain",
+    "nameKey": "assets.map.terrain_sand",
+    "file": "map/terrain/map_terrain_sand_01.png",
+    "width": 32,
+    "height": 32
+  },
+  {
+    "id": "map_terrain_path_01",
+    "module": "map",
+    "category": "terrain",
+    "nameKey": "assets.map.terrain_path",
+    "file": "map/terrain/map_terrain_path_01.png",
+    "width": 32,
+    "height": 32
+  },
+  {
+    "id": "map_terrain_water_01",
+    "module": "map",
+    "category": "terrain",
+    "nameKey": "assets.map.terrain_water",
+    "file": "map/terrain/map_terrain_water_01.png",
+    "width": 32,
+    "height": 32
+  },
+  {
+    "id": "map_nature_stone_01",
+    "module": "map",
+    "category": "nature",
+    "nameKey": "assets.map.nature_stone",
+    "file": "map/nature/map_nature_stone_01.png",
+    "width": 32,
+    "height": 32
+  },
+  {
+    "id": "map_nature_bush_01",
+    "module": "map",
+    "category": "nature",
+    "nameKey": "assets.map.nature_bush",
+    "file": "map/nature/map_nature_bush_01.png",
+    "width": 64,
+    "height": 64
+  },
+  {
+    "id": "map_nature_log_01",
+    "module": "map",
+    "category": "nature",
+    "nameKey": "assets.map.nature_log",
+    "file": "map/nature/map_nature_log_01.png",
+    "width": 96,
+    "height": 32
+  },
+  {
+    "id": "map_tree_oak_01",
+    "module": "map",
+    "category": "trees",
+    "nameKey": "assets.map.tree_oak",
+    "file": "map/trees/map_tree_oak_01.png",
+    "width": 64,
+    "height": 96
+  },
+  {
+    "id": "map_building_stairs_01",
+    "module": "map",
+    "category": "buildings",
+    "nameKey": "assets.map.building_stairs",
+    "file": "map/buildings/map_building_stairs_01.png",
+    "width": 64,
+    "height": 64
+  },
+  {
+    "id": "map_building_fence_01",
+    "module": "map",
+    "category": "buildings",
+    "nameKey": "assets.map.building_fence",
+    "file": "map/buildings/map_building_fence_01.png",
+    "width": 96,
+    "height": 32
+  },
+  {
+    "id": "map_building_wall_01",
+    "module": "map",
+    "category": "buildings",
+    "nameKey": "assets.map.building_wall",
+    "file": "map/buildings/map_building_wall_01.png",
+    "width": 128,
+    "height": 128
+  },
+  {
+    "id": "map_building_roof_01",
+    "module": "map",
+    "category": "buildings",
+    "nameKey": "assets.map.building_roof",
+    "file": "map/buildings/map_building_roof_01.png",
+    "width": 128,
+    "height": 64
+  },
+  {
+    "id": "map_building_door_01",
+    "module": "map",
+    "category": "buildings",
+    "nameKey": "assets.map.building_door",
+    "file": "map/buildings/map_building_door_01.png",
+    "width": 32,
+    "height": 64
+  }
+]
