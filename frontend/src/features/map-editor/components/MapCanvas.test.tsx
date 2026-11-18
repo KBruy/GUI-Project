@@ -6,19 +6,19 @@ import { useEditorStore } from '../store/editorStore'
 import { ASSET_DRAG_TYPE } from './AssetPalette'
 import { MapCanvas } from './MapCanvas'
 
-const ROCK: Asset = {
-  id: 'map_objects_rock_01',
+const STONE: Asset = {
+  id: 'map_nature_stone_01',
   module: 'map',
-  category: 'objects',
-  nameKey: 'assets.map.rock',
-  file: 'map/objects/map_objects_rock_01.png',
+  category: 'nature',
+  nameKey: 'assets.map.nature_stone',
+  file: 'map/nature/map_nature_stone_01.png',
   width: 32,
   height: 32,
 }
 
 // jsdom nie ma DataTransfer, więc podajemy tylko to, czego używa MapCanvas.
-function dropRock(target: Element, x: number, y: number) {
-  const dataTransfer = { types: [ASSET_DRAG_TYPE], getData: () => ROCK.id }
+function dropStone(target: Element, x: number, y: number) {
+  const dataTransfer = { types: [ASSET_DRAG_TYPE], getData: () => STONE.id }
   fireEvent.dragOver(target, { dataTransfer })
   // jsdom nie ma też DragEvent, więc współrzędne kursora dopisujemy do zwykłego zdarzenia.
   const drop = createEvent.drop(target, { dataTransfer })
@@ -49,25 +49,25 @@ const objects = () => useEditorStore.getState().scene!.layers.flatMap((l) => l.o
 beforeEach(() => {
   useEditorStore.getState().loadScene(createMapScene('Test', MAP_SIZES[0], 'Warstwa 1'))
   // Zoom 2 i przesunięcie (100, 50): punkt ekranu (164, 114) to punkt sceny (32, 32).
-  useEditorStore.setState({ assets: [ROCK], zoom: 2, offset: { x: 100, y: 50 }, gridSnap: true })
+  useEditorStore.setState({ assets: [STONE], zoom: 2, offset: { x: 100, y: 50 }, gridSnap: true })
 })
 
 describe('MapCanvas', () => {
   it('adds a dragged palette asset where it was dropped', () => {
     const { container } = render(<MapCanvas />)
 
-    dropRock(container.firstElementChild!, 164, 114)
+    dropStone(container.firstElementChild!, 164, 114)
 
     // Środek pod kursorem (32, 32) → lewy górny róg (16, 16) → siatka (32, 32) → środek (48, 48).
     expect(objects()).toHaveLength(1)
-    expect(objects()[0]).toMatchObject({ assetId: ROCK.id, x: 48, y: 48 })
+    expect(objects()[0]).toMatchObject({ assetId: STONE.id, x: 48, y: 48 })
   })
 
   it('does not drop on top of another object', () => {
     const { container } = render(<MapCanvas />)
 
-    dropRock(container.firstElementChild!, 164, 114)
-    dropRock(container.firstElementChild!, 164, 114)
+    dropStone(container.firstElementChild!, 164, 114)
+    dropStone(container.firstElementChild!, 164, 114)
 
     expect(objects()).toHaveLength(1)
   })
@@ -78,8 +78,8 @@ describe('MapCanvas', () => {
     function setup() {
       const { container } = render(<MapCanvas />)
       const canvas = container.firstElementChild!
-      dropRock(canvas, 164, 114)
-      dropRock(canvas, 324, 146)
+      dropStone(canvas, 164, 114)
+      dropStone(canvas, 324, 146)
       const [a, b] = objects().map((o) => o.id)
       return { canvas, a, b }
     }
@@ -132,7 +132,7 @@ describe('MapCanvas', () => {
   describe('keyboard', () => {
     function setup() {
       const { container } = render(<MapCanvas />)
-      dropRock(container.firstElementChild!, 164, 114)
+      dropStone(container.firstElementChild!, 164, 114)
       const [rock] = objects()
       useEditorStore.getState().select([rock.id])
     }
@@ -180,8 +180,8 @@ describe('MapCanvas', () => {
     function setup() {
       const { container } = render(<MapCanvas />)
       const canvas = container.firstElementChild!
-      dropRock(canvas, 164, 114)
-      dropRock(canvas, 324, 146)
+      dropStone(canvas, 164, 114)
+      dropStone(canvas, 324, 146)
       const [a, b] = objects().map((o) => o.id)
       return { canvas, a, b }
     }
