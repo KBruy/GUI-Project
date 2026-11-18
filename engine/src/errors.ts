@@ -3,7 +3,7 @@
  * więc frontend ma już do nich tłumaczenia (errors.layerLimit, errors.invalidSceneSize).
  */
 export type EngineErrorCode =
-  'LAYER_LIMIT' | 'LAYER_NOT_FOUND' | 'INVALID_SCENE_SIZE' | 'OBJECT_NOT_FOUND'
+  'LAYER_LIMIT' | 'LAYER_NOT_FOUND' | 'INVALID_SCENE_SIZE' | 'OBJECT_NOT_FOUND' | 'LAYER_LOCKED'
 
 /** Błąd rzucany przez silnik. Frontend łapie go i pokazuje komunikat po kodzie. */
 export class EngineError extends Error {
