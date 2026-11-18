@@ -69,7 +69,7 @@ describe('SelectionTransformer', () => {
     expect(shape.attrs).toMatchObject({ rotation: 0, scaleX: 1 })
   })
 
-  it('keeps the previous box when the new one would leave the map', () => {
+  it('stops the box at the map edge, even after a fast jump past it', () => {
     const { transformer } = setup()
     const limit = transformer.boundBoxFunc()!
     const old = { x: 256, y: 224, width: 128, height: 32, rotation: 0 }
@@ -77,23 +77,38 @@ describe('SelectionTransformer', () => {
     // Obrót o 90° na środku mapy mieści się w niej.
     const turned = { x: 336, y: 176, width: 128, height: 32, rotation: Math.PI / 2 }
     expect(limit(old, turned)).toBe(turned)
-    // Rozciągnięcie do x = 700 wychodzi za prawą krawędź (640).
-    const tooWide = { ...old, width: 444 }
-    expect(limit(old, tooWide)).toBe(old)
+    // Rozciągnięcie do x = 700 wychodzi za prawą krawędź (640): pudełko dochodzi do krawędzi,
+    // a lewy bok zostaje na miejscu.
+    const stopped = limit(old, { ...old, width: 444 })
+    expect(stopped.x).toBe(256)
+    expect(stopped.x + stopped.width).toBeGreaterThan(639.5)
+    expect(stopped.x + stopped.width).toBeLessThanOrEqual(640.5)
   })
 
-  it('stops the handles at the scale limits', () => {
+  it('stops the box at the scale limits', () => {
     const { transformer } = setup()
     const limit = transformer.boundBoxFunc()!
     const old = { x: 256, y: 224, width: 128, height: 32, rotation: 0 }
 
-    // Kłoda ma 128 px szerokości, a limit to 4×, czyli 512 px. Oba pudełka mieszczą się w mapie.
-    const atMax = { x: 128, y: 224, width: 512, height: 32, rotation: 0 }
+    // Kłoda ma 32 px wysokości, a limit to 4×, czyli 128 px.
+    const atMax = { ...old, height: 128 }
     expect(limit(old, atMax)).toBe(atMax)
-    const overMax = { x: 64, y: 224, width: 576, height: 32, rotation: 0 }
-    expect(limit(old, overMax)).toBe(old)
-    // 0,1 z 32 px wysokości to 3,2 px, więc 2 px jest już za mało.
-    const tooThin = { ...old, height: 2 }
-    expect(limit(old, tooThin)).toBe(old)
+    expect(limit(old, { ...old, height: 200 }).height).toBeCloseTo(128, 0)
+    // 0,1 z 32 px to 3,2 px, więc 2 px jest już za mało.
+    expect(limit(old, { ...old, height: 2 }).height).toBeCloseTo(3.2, 0)
+  })
+
+  it('keeps following the cursor on one axis when the other is at its limit', () => {
+    const { transformer } = setup()
+    const limit = transformer.boundBoxFunc()!
+    const old = { x: 256, y: 224, width: 128, height: 32, rotation: 0 }
+
+    // Prawy górny róg w górę i w prawo: wysokość 156 px to ponad 4×, a dolny bok (256) stoi.
+    const box = limit(old, { x: 256, y: 100, width: 200, height: 156, rotation: 0 })
+    // Szerokość idzie za kursorem, wysokość staje na 128 px, a lewy i dolny bok zostają.
+    expect(box.width).toBeCloseTo(200)
+    expect(box.height).toBeCloseTo(128)
+    expect(box.x).toBeCloseTo(256)
+    expect(box.y + box.height).toBeCloseTo(256)
   })
 })
