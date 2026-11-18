@@ -95,7 +95,8 @@ interface EditorState {
 const FREE_SPOT_RINGS = 8
 
 // Środek nowego obiektu: z przyciąganiem lewy górny róg trafia w siatkę,
-// a cały obiekt zostaje w granicach mapy (backend odrzuca obiekty poza nią).
+// a cały obiekt zostaje w granicach mapy. To decyzja frontendu: backend sprawdza tylko
+// środek obiektu (rozdz. 5.5), więc przyjąłby też obiekt, który częściowo wystaje.
 function placeAsset(target: Point, asset: Asset, scene: Scene, snap: boolean): Point {
   const axis = (value: number, size: number, max: number) => {
     // Pixel art: lewy górny róg zawsze na całym pikselu, także przy zoomie bez przyciągania.
@@ -110,8 +111,9 @@ function placeAsset(target: Point, asset: Asset, scene: Scene, snap: boolean): P
   }
 }
 
-// Przycina wektor przesunięcia tak, żeby obiekty ids nie wyszły poza mapę (backend je odrzuca).
-// Obrócony obiekt zajmuje prostokąt otaczający jego obrócone narożniki.
+// Przycina wektor przesunięcia tak, żeby obiekty ids nie wyszły poza mapę. Tak jak w placeAsset
+// to decyzja frontendu (backend sprawdza tylko środek). Obrócony obiekt zajmuje prostokąt
+// otaczający jego obrócone narożniki.
 function clampMove(scene: Scene, ids: string[], delta: Point): Point {
   const boxes = scene.layers
     .flatMap((layer) => layer.objects)
@@ -130,6 +132,9 @@ function clampMove(scene: Scene, ids: string[], delta: Point): Point {
       }
     })
   if (boxes.length === 0) return { x: 0, y: 0 }
+  // Zakłada, że obiekty już są w całości na mapie: edytor nie pozwala postawić ich inaczej.
+  // Sceny z backendu (wczytanie, import) mogą mieć obiekty wystające, bo backend sprawdza
+  // tylko środek. Dosuwamy je do mapy przy wczytaniu sceny (F-38).
   const clamp = (value: number, min: number, max: number) => Math.max(min, Math.min(max, value))
   return {
     x: clamp(
@@ -248,10 +253,20 @@ export const useEditorStore = create<EditorState>()((set, get) => ({
   setTool: (tool) => set({ tool }),
   setActiveLayer: (layerId) => set({ activeLayerId: layerId }),
   setViewport(viewport) {
-    const first = get().viewport.width === 0
+    const { viewport: old, scene, zoom, offset } = get()
     set({ viewport })
     // Pierwszy pomiar: dopiero teraz wiadomo, jak dopasować scenę do ekranu.
-    if (first) get().fitToScreen()
+    if (old.width === 0) {
+      get().fitToScreen()
+      return
+    }
+    // Zmiana rozmiaru (okno, pełny ekran): środek widoku zostaje na środku,
+    // a mapa nie może uciec poza ekran.
+    const centered = {
+      x: offset.x + (viewport.width - old.width) / 2,
+      y: offset.y + (viewport.height - old.height) / 2,
+    }
+    set({ offset: scene ? clampOffset(centered, zoom, scene, viewport) : centered })
   },
 
   zoomTo(zoom, anchor) {
