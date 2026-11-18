@@ -1,5 +1,6 @@
 import type { SceneObject } from '../types'
 import type { Command } from './types'
+import { EngineError } from '../errors'
 
 /** Usunięty obiekt razem z miejscem, z którego zniknął (do cofnięcia). */
 interface Removed {
@@ -23,6 +24,9 @@ export function removeObjects(ids: readonly string[]): Command {
       for (const layer of scene.layers) {
         layer.objects.forEach((object, index) => {
           if (ids.includes(object.id)) {
+            if (layer.locked) {
+              throw new EngineError('LAYER_LOCKED')
+            }
             removed.push({ layerId: layer.id, index, object })
           }
         })
