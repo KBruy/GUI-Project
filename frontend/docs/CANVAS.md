@@ -101,6 +101,7 @@ Gdy zaznaczony jest dokładnie jeden obiekt na widocznej warstwie, a nic nie jes
 <SelectionTransformer
   object={object}
   bounds={{ width: scene.width, height: scene.height }}
+  scaleLimits={{ min: MIN_SCALE, max: MAX_SCALE }}
   onTransform={(t) => transform.onTransform(object.id, t)}
   onTransformEnd={(t) => transform.onTransformEnd(object.id, t)}
 />
@@ -108,7 +109,7 @@ Gdy zaznaczony jest dokładnie jeden obiekt na widocznej warstwie, a nic nie jes
 
 - Konva `Transformer` zmienia niewidoczny prostokąt o kształcie obiektu, a nie scenę. Komponent tylko podaje `{ x, y, rotation, scaleX, scaleY }` w trakcie i na końcu, a po końcu wraca do obiektu z propsów.
 - Uchwyty to kwadraty 10 px w kolorach ramki, ramkę dalej rysuje `SelectionLayer`. Shift przy obrocie skacze co 15°, Shift przy skali trzyma proporcje (oba wbudowane w Konvę). Bez odbicia lustrzanego (`flipEnabled={false}`), bo backend nie przyjmuje ujemnej skali.
-- `boundBoxFunc` nie puszcza pudełka, którego obrócony narożnik wyszedłby poza mapę (pół piksela zapasu na zaokrąglenia).
+- `boundBoxFunc` nie puszcza pudełka, którego obrócony narożnik wyszedłby poza mapę (pół piksela zapasu na zaokrąglenia), ani pudełka ze skalą spoza `scaleLimits` (0,1–10, `MIN_SCALE` i `MAX_SCALE` ze store'u). Bez tego uchwyty rosłyby dalej, a obiekt stałby na limicie.
 - Store: `planTransform` (podgląd) i `transformObject` (zapis jednym krokiem cofania). Oba zaokrąglają tak samo: `x`, `y` do 0,5 px, obrót do całych stopni w zakresie 0–359, skala do całych pikseli rozmiaru i w zakresie 0,1–10 (jak w backendzie).
 - `features/map-editor/useTransformControls.ts` trzyma podgląd i kolizje. W trakcie ramki kolidujących obiektów są bursztynowe, a przy kolizji na końcu obiekt wraca, jest toast i drżenie ramek, tak jak przy przeciąganiu.
 - Kolizje w zaślepce silnika liczą się z prostokąta otaczającego obrócony obiekt, do czasu SAT z #122.

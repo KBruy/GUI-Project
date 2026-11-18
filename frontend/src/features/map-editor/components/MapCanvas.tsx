@@ -7,7 +7,7 @@ import { SelectionTransformer } from '@/shared/canvas/SelectionTransformer'
 import { useElementSize } from '@/shared/hooks/useElementSize'
 import { assetUrl } from '@/shared/lib/assets'
 import type { Point, Scene, SceneObject } from '../engine/engine'
-import { useEditorStore } from '../store/editorStore'
+import { MAX_SCALE, MIN_SCALE, useEditorStore } from '../store/editorStore'
 import { useEditorShortcuts } from '../useEditorShortcuts'
 import { usePalettePlacing } from '../usePalettePlacing'
 import { useSelectionControls } from '../useSelectionControls'
@@ -20,6 +20,8 @@ import styles from './MapCanvas.module.css'
 const LABEL_OFFSET = 16
 // Po ruchu strzałkami kursora nie ma, więc etykieta przylega prawie do rogu obiektu (tuż za ramką).
 const NUDGE_LABEL_OFFSET = 4
+// Granice skali przy uchwytach, te same co przy zapisie (backend).
+const SCALE_LIMITS = { min: MIN_SCALE, max: MAX_SCALE }
 // Miejsce na etykietę, z zapasem na najdłuższe „2048, 1536”.
 const LABEL_SPACE = { x: 112, y: 40 }
 
@@ -241,6 +243,7 @@ export function MapCanvas() {
             <SelectionTransformer
               object={handled}
               bounds={shownScene}
+              scaleLimits={SCALE_LIMITS}
               onTransform={(t) => transform.onTransform(handled.id, t)}
               onTransformEnd={(t) => transform.onTransformEnd(handled.id, t)}
             />

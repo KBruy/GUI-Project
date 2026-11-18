@@ -26,6 +26,7 @@ function setup() {
       <SelectionTransformer
         object={LOG}
         bounds={{ width: 640, height: 480 }}
+        scaleLimits={{ min: 0.1, max: 4 }}
         onTransform={onTransform}
         onTransformEnd={onTransformEnd}
       />
@@ -79,5 +80,20 @@ describe('SelectionTransformer', () => {
     // Rozciągnięcie do x = 700 wychodzi za prawą krawędź (640).
     const tooWide = { ...old, width: 444 }
     expect(limit(old, tooWide)).toBe(old)
+  })
+
+  it('stops the handles at the scale limits', () => {
+    const { transformer } = setup()
+    const limit = transformer.boundBoxFunc()!
+    const old = { x: 256, y: 224, width: 128, height: 32, rotation: 0 }
+
+    // Kłoda ma 128 px szerokości, a limit to 4×, czyli 512 px. Oba pudełka mieszczą się w mapie.
+    const atMax = { x: 128, y: 224, width: 512, height: 32, rotation: 0 }
+    expect(limit(old, atMax)).toBe(atMax)
+    const overMax = { x: 64, y: 224, width: 576, height: 32, rotation: 0 }
+    expect(limit(old, overMax)).toBe(old)
+    // 0,1 z 32 px wysokości to 3,2 px, więc 2 px jest już za mało.
+    const tooThin = { ...old, height: 2 }
+    expect(limit(old, tooThin)).toBe(old)
   })
 })

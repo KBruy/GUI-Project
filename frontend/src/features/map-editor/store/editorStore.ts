@@ -154,8 +154,8 @@ function clampMove(scene: Scene, ids: string[], delta: Point): Point {
 }
 
 // Granice skali z walidacji backendu (backend/src/config.py). Obrót backend przyjmuje od 0 do 360.
-const MIN_SCALE = 0.1
-const MAX_SCALE = 10
+export const MIN_SCALE = 0.1
+export const MAX_SCALE = 10
 
 // Zaokrągla obrót i skalę tak, żeby backend je przyjął, a obiekt został pixel artem.
 function normalizeTransform(object: SceneObject, transform: Transform): Transform {

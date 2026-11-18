@@ -21,6 +21,8 @@ interface SelectionTransformerProps {
   object: SceneObject
   // Rozmiar sceny: obrócony i przeskalowany obiekt nie może z niej wyjść.
   bounds: { width: number; height: number }
+  // Najmniejsza i największa skala obiektu. Uchwyty zatrzymują się na nich razem z obiektem.
+  scaleLimits: { min: number; max: number }
   onTransform: (transform: ObjectTransform) => void
   onTransformEnd: (transform: ObjectTransform) => void
 }
@@ -53,6 +55,7 @@ function transformOf(node: Konva.Node): ObjectTransform {
 export function SelectionTransformer({
   object,
   bounds,
+  scaleLimits,
   onTransform,
   onTransformEnd,
 }: SelectionTransformerProps) {
@@ -64,11 +67,19 @@ export function SelectionTransformer({
     if (shapeRef.current) transformerRef.current?.nodes([shapeRef.current])
   }, [object])
 
-  // Nowe pudełko z Konvy (w px canvasu, obrót w radianach) jest dobre, gdy wszystkie
-  // jego obrócone narożniki leżą na mapie. Inaczej zostaje poprzednie.
-  function insideMap(oldBox: Box, newBox: Box): Box {
+  // Nowe pudełko z Konvy (w px canvasu, obrót w radianach) jest dobre, gdy skala mieści się
+  // w scaleLimits, a wszystkie obrócone narożniki leżą na mapie. Inaczej zostaje poprzednie.
+  function allowedBox(oldBox: Box, newBox: Box): Box {
     const layer = transformerRef.current?.getLayer()
     if (!layer) return newBox
+    // Bez tego Konva rozciąga uchwyty dalej, a obiekt stoi na limicie i ramka się od niego odkleja.
+    const zoom = layer.getAbsoluteScale().x
+    const scales = [newBox.width / (object.width * zoom), newBox.height / (object.height * zoom)]
+    // Zapas na zaokrąglenia, tak jak przy krawędzi mapy.
+    const tolerance = 0.01
+    if (scales.some((s) => s < scaleLimits.min - tolerance || s > scaleLimits.max + tolerance)) {
+      return oldBox
+    }
     const toScreen = layer.getAbsoluteTransform()
     const min = toScreen.point({ x: 0, y: 0 })
     const max = toScreen.point({ x: bounds.width, y: bounds.height })
@@ -109,7 +120,7 @@ export function SelectionTransformer({
         keepRatio={false}
         // Backend nie przyjmuje ujemnej skali, więc bez odbicia lustrzanego.
         flipEnabled={false}
-        boundBoxFunc={insideMap}
+        boundBoxFunc={allowedBox}
         onTransform={() => shapeRef.current && onTransform(transformOf(shapeRef.current))}
         onTransformEnd={() => {
           const shape = shapeRef.current
