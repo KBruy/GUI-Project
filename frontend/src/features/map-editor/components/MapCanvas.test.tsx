@@ -4,6 +4,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import type { Asset } from '@/shared/lib/assets'
 import { createMapScene, MAP_SIZES } from '../engine/engine'
 import { useEditorStore } from '../store/editorStore'
+import { toast } from '@/shared/components/ui/Toast/toast'
 import { MapCanvas } from './MapCanvas'
 
 const STONE: Asset = {
@@ -416,6 +417,65 @@ describe('MapCanvas', () => {
 
       expect(screen.getByText('48, 112')).toBeInTheDocument()
       expect(canvas).toHaveStyle({ cursor: 'none' })
+    })
+
+    it('shows rotate and scale handles only for a single selected object', () => {
+      measureCanvas()
+      const { canvas, a, b } = setup()
+      const transformer = () => Konva.stages.at(-1)!.findOne<Konva.Transformer>('Transformer')
+
+      expect(transformer()).toBeUndefined()
+      act(() => useEditorStore.getState().select([a]))
+      expect(transformer()?.nodes()).toHaveLength(1)
+
+      click(canvas, 324, 146, true)
+      expect(useEditorStore.getState().selectedIds).toEqual([a, b])
+      expect(transformer()).toBeUndefined()
+    })
+
+    it('saves a rotation from the handles in one undo step', () => {
+      measureCanvas()
+      const { a } = setup()
+      act(() => useEditorStore.getState().select([a]))
+      const transformer = Konva.stages.at(-1)!.findOne<Konva.Transformer>('Transformer')!
+
+      // Konva obraca niewidoczny prostokąt; obrót −90.4° trafia do sceny jako 270°.
+      act(() => {
+        transformer.nodes()[0].rotation(-90.4)
+        transformer.fire('transform')
+      })
+      expect(position(a).rotation).toBe(0)
+      act(() => {
+        transformer.fire('transformend')
+      })
+      expect(position(a).rotation).toBe(270)
+
+      act(() => useEditorStore.getState().undo())
+      expect(position(a).rotation).toBe(0)
+    })
+
+    it('turns frames amber while scaling into another object and leaves it on release', () => {
+      measureCanvas()
+      const { a, b } = setup()
+      const error = vi.spyOn(toast, 'error')
+      act(() => useEditorStore.getState().select([a]))
+      const stage = Konva.stages.at(-1)!
+      const transformer = stage.findOne<Konva.Transformer>('Transformer')!
+
+      // A rozciągnięty w prawo do szerokości 96 (od 8 do 104) wchodzi na B (od 96).
+      act(() => {
+        transformer.nodes()[0].setAttrs({ x: 56, scaleX: 3 })
+        transformer.fire('transform')
+      })
+      const frames = stage.find('.selection-frame')
+      expect(frames.map((f) => f.attrs.stroke)).toEqual(['#ffc21f', '#ffc21f'])
+
+      act(() => {
+        transformer.fire('transformend')
+      })
+      expect(position(a)).toMatchObject({ x: 48, scaleX: 1 })
+      expect(position(b)).toMatchObject({ x: 112 })
+      expect(error).toHaveBeenCalledWith('errors.collision')
     })
 
     it('keeps only the clicked object selected after a click without dragging', () => {

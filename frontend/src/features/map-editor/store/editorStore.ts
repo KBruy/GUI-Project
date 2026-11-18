@@ -10,12 +10,15 @@ import {
   addObject,
   createEditor,
   moveObjects,
+  transformObjects,
   type Command,
   type Editor,
   type PlaceResult,
   type Point,
   type Rect,
   type Scene,
+  type SceneObject,
+  type Transform,
 } from '../engine/engine'
 import { clampOffset, fitView, toScenePoint, zoomAt, type Size } from '../view'
 
@@ -81,6 +84,11 @@ interface EditorState {
   // Podgląd przeciągania zaznaczonych obiektów, bez zmiany sceny. Zwraca wektor po przyciąganiu
   // (lewy górny róg obiektu `anchorId` trafia na siatkę) i przycięciu do mapy oraz wynik kolizji.
   planMove: (delta: Point, anchorId: string) => { delta: Point; result: PlaceResult }
+  // Podgląd obrotu i skali jednego obiektu, bez zmiany sceny. Zwraca wartości gotowe do zapisu
+  // (obrót 0–359 w pełnych stopniach, rozmiar po skali w pełnych pikselach) i wynik kolizji.
+  planTransform: (id: string, transform: Transform) => { transform: Transform; result: PlaceResult }
+  // Zapisuje obrót i skalę jednego obiektu jednym krokiem cofania (te same zaokrąglenia).
+  transformObject: (id: string, transform: Transform) => PlaceResult
 }
 
 // Ile pierścieni pól wokół środka widoku sprawdzamy przy szukaniu wolnego miejsca.
@@ -127,7 +135,10 @@ function clampMove(scene: Scene, ids: string[], delta: Point): Point {
   // Zakłada, że obiekty już są w całości na mapie: edytor nie pozwala postawić ich inaczej.
   // Sceny z backendu (wczytanie, import) mogą mieć obiekty wystające, bo backend sprawdza
   // tylko środek. Dosuwamy je do mapy przy wczytaniu sceny (F-38).
-  const clamp = (value: number, min: number, max: number) => Math.max(min, Math.min(max, value))
+  // Granice obróconego obiektu wychodzą z sinusa, np. 45,2548… Zaokrąglamy je do pół piksela
+  // w stronę środka mapy, żeby x i y zostały na pół pikselu, tak jak po normalizeTransform.
+  const clamp = (value: number, min: number, max: number) =>
+    Math.max(Math.ceil(min * 2) / 2, Math.min(Math.floor(max * 2) / 2, value))
   return {
     x: clamp(
       delta.x,
@@ -139,6 +150,31 @@ function clampMove(scene: Scene, ids: string[], delta: Point): Point {
       -Math.min(...boxes.map((b) => b.y)),
       scene.height - Math.max(...boxes.map((b) => b.bottom))
     ),
+  }
+}
+
+// Granice skali z walidacji backendu (backend/src/config.py). Obrót backend przyjmuje od 0 do 360.
+export const MIN_SCALE = 0.1
+export const MAX_SCALE = 10
+
+// Zaokrągla obrót i skalę tak, żeby backend je przyjął, a obiekt został pixel artem.
+function normalizeTransform(object: SceneObject, transform: Transform): Transform {
+  // Rozmiar po skali w pełnych pikselach, w granicach backendu.
+  const scale = (value: number, size: number) => {
+    const pixels = Math.min(
+      Math.max(Math.round(value * size), Math.ceil(MIN_SCALE * size)),
+      Math.floor(MAX_SCALE * size)
+    )
+    return pixels / size
+  }
+  return {
+    // Środek na pełnym albo pół piksela, bo przy nieparzystym rozmiarze róg i tak jest na pełnym.
+    x: Math.round(transform.x * 2) / 2,
+    y: Math.round(transform.y * 2) / 2,
+    // Konva podaje obrót od −180 do 180, a backend chce 0–360.
+    rotation: ((Math.round(transform.rotation) % 360) + 360) % 360,
+    scaleX: scale(transform.scaleX, object.width),
+    scaleY: scale(transform.scaleY, object.height),
   }
 }
 
@@ -333,5 +369,19 @@ export const useEditorStore = create<EditorState>()((set, get) => ({
     }
     move = clampMove(scene, selectedIds, move)
     return { delta: move, result: editor.canExecute(moveObjects(selectedIds, move)) }
+  },
+
+  planTransform(id, transform) {
+    const { scene, editor } = get()
+    const object = scene?.layers.flatMap((layer) => layer.objects).find((o) => o.id === id)
+    if (!editor || !object) return { transform, result: { ok: true } }
+    const next = normalizeTransform(object, transform)
+    return { transform: next, result: editor.canPlace(id, next) }
+  },
+
+  transformObject(id, transform) {
+    // execute sam sprawdza kolizję i przy niej niczego nie zmienia.
+    const { transform: next } = get().planTransform(id, transform)
+    return get().execute(transformObjects([id], next))
   },
 }))

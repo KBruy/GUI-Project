@@ -35,7 +35,7 @@ Scenę rysujemy biblioteką Konva przez `react-konva`. Kod wspólny dla edytora 
 - Jeden `Shape` z własnym `sceneFunc` zamiast setek `Line`, więc duża mapa nie spowalnia przeciągania.
 - `strokeScaleEnabled={false}`: linia ma zawsze 1 px na ekranie, także po zoomie.
 - `listening={false}`: siatka nie łapie kliknięć.
-- Przełączniki „Siatka” i „Przyciąganie” są w pasku narzędzi (`features/map-editor/components/GridToggles.tsx`), a ich stan w store (`gridVisible`, `gridSnap`). Przyciąganie działa przy dodawaniu z palety (F-31), a użyjemy go też przy przeciąganiu (F-33).
+- Przełączniki „Siatka” i „Przyciąganie” są w pasku narzędzi (`features/map-editor/components/GridToggles.tsx`), a ich stan w store (`gridVisible`, `gridSnap`). Przyciąganie działa przy dodawaniu z palety (F-31), przy przeciąganiu i przy strzałkach (F-33).
 
 ## Zoom i przesuwanie widoku
 
@@ -67,7 +67,7 @@ Canvas wypełnia komórkę `EditorLayout` (`position: absolute; inset: 0`). Jego
 - Kategorie (zakładki `SegmentedControl`) są w kolejności z manifestu. Etykieta to klucz `categories.<module>.<category>`, nazwa assetu to jego `nameKey`. Brak klucza w słowniku = pokazujemy surowy tekst, więc nowy asset od Moniki nie psuje widoku.
 - Kafelek (`OptionTile`) ma obrazek z `assetUrl(file)` (`shared/lib/assets.ts`) i dymek „nazwa · szer.×wys.”. Bez sceny kafelki są wyłączone.
 - Kliknięcie: `addAsset(asset)` stawia obiekt w środku widoku. Jeśli tam coś stoi, szuka najbliższego wolnego miejsca w kolejnych pierścieniach komórek siatki (do 8). Brak miejsca = toast `errors.collision`.
-- Przeciągnięcie na canvas: kafelek wysyła id w `dataTransfer` (typ `ASSET_DRAG_TYPE`), `MapCanvas` przelicza punkt upuszczenia na współrzędne sceny (`toScenePoint` z `view.ts`) i woła `addAsset(asset, punkt)`. Tu nie szukamy innego miejsca: kolizja = toast.
+- Przeciągnięcie na mapę: bez systemowego drag&drop. Paleta ustawia `placingAsset` w store, a `features/map-editor/usePalettePlacing.ts` śledzi kursor w całym oknie. Poza mapą przy kursorze jedzie obrazek assetu, nad mapą podgląd obiektu z przyciąganiem, bursztynową ramką przy kolizji i etykietą (x, y). Puszczenie nad mapą woła `addAsset(asset, punkt)`, a puszczenie poza mapą (także na pustym pasie canvasu) albo Esc anuluje. Tu nie szukamy innego miejsca: kolizja = toast.
 - Zasady stawiania (`placeAsset` w store): przy włączonym przyciąganiu lewy górny róg trafia na siatkę, obiekt zawsze mieści się w mapie, a `x`, `y` obiektu to jego środek.
 - `<img>` w `OptionTile` ma `crossOrigin="anonymous"` tak jak `useAssetImage`. Bez tego przeglądarka zapamiętuje obrazek bez nagłówków CORS i canvas nie może go potem wczytać (zamiast grafiki widać czerwone prostokąty).
 
@@ -82,6 +82,38 @@ Zaznaczenie to `selectedIds` w store (F-32), więc widzą je wszystkie panele. P
 - `MapCanvas` woła najpierw `useViewControls`, potem `useSelectionControls`. Gdy kliknięcie zaczyna przesuwanie widoku (spacja, środkowy przycisk), widok woła `preventDefault`, a zaznaczanie je pomija.
 - Rysowanie: `shared/canvas/SelectionLayer.tsx` jako children `SceneRenderer`. Ramka ma położenie, obrót i skalę obiektu, czerwona linia leży na ciemnym obrysie. Ta sama warstwa rysuje prostokąt zaznaczania. Nie łapie kliknięć.
 
+## Przesuwanie obiektów
+
+Przeciąganie zaznaczonego obiektu przesuwa całe zaznaczenie (F-33), jednym krokiem cofania.
+
+- Logika: `useSelectionControls.ts`. W trakcie store liczy `planMove(wektor, idChwyconego)`: przy przyciąganiu lewy górny róg chwyconego obiektu trafia na siatkę, a wektor jest przycinany tak, żeby cała grupa została w mapie. Silnik sprawdza kolizje bez zmiany sceny (`canExecute`).
+- Kolizja w trakcie: ramki obiektów, z którymi grupa by się zderzyła, robią się bursztynowe. Puszczenie na zajęte miejsce zostawia obiekty, pokazuje toast `errors.collision` i potrząsa ramkami (`shakeKey`).
+- Strzałki (`useEditorShortcuts.ts`): 1 px, z Shiftem 32 px, a przy przyciąganiu zawsze do następnej linii siatki (`moveSelected`). Tu też Ctrl+Z / Cmd+Z cofa, a Ctrl+Shift+Z albo Ctrl+Y ponawia.
+- Etykieta (x, y) pokazuje środek obiektu, tak jak dane sceny. Przy przeciąganiu jedzie za kursorem, ale nie wychodzi poza obiekt, a przy prawej i dolnej krawędzi canvasu przechodzi na drugą stronę. Po strzałkach widać ją 1,5 s przy prawym dolnym rogu. Obiekt z etykietą ma w środku kropkę 8 px (`center` w `SelectionLayer`), a kursor nad przeciąganym obiektem znika (`cursor: none`).
+- Punkt mapy pod kursorem jest w store (`cursorPoint`) i pokazuje go `CursorPosition` na końcu paska narzędzi. Ruch myszy nie przerysowuje sceny.
+- Granice mapy to decyzja frontendu: backend sprawdza tylko środek obiektu. Obiekty wystające za mapę ze scen z backendu dosuwamy przy wczytaniu (F-38).
+
+## Obracanie i skalowanie
+
+Gdy zaznaczony jest dokładnie jeden obiekt na widocznej warstwie, a nic nie jest przeciągane, `MapCanvas` rysuje uchwyty z `shared/canvas/SelectionTransformer.tsx` (F-34).
+
+```tsx
+<SelectionTransformer
+  object={object}
+  bounds={{ width: scene.width, height: scene.height }}
+  scaleLimits={{ min: MIN_SCALE, max: MAX_SCALE }}
+  onTransform={(t) => transform.onTransform(object.id, t)}
+  onTransformEnd={(t) => transform.onTransformEnd(object.id, t)}
+/>
+```
+
+- Konva `Transformer` zmienia niewidoczny prostokąt o kształcie obiektu, a nie scenę. Komponent tylko podaje `{ x, y, rotation, scaleX, scaleY }` w trakcie i na końcu, a po końcu wraca do obiektu z propsów.
+- Uchwyty to kwadraty 10 px w kolorach ramki, ramkę dalej rysuje `SelectionLayer`. Shift przy obrocie skacze co 15°, Shift przy skali trzyma proporcje (oba wbudowane w Konvę). Bez odbicia lustrzanego (`flipEnabled={false}`), bo backend nie przyjmuje ujemnej skali.
+- `boundBoxFunc` pilnuje, żeby obrócone narożniki zostały na mapie (pół piksela zapasu na zaokrąglenia), a skala w `scaleLimits` (0,1–10, `MIN_SCALE` i `MAX_SCALE` ze store'u). Pudełko za granicą jest dociągane do niej osobno dla szerokości i wysokości: obiekt na limicie wysokości dalej rośnie w poziomie, a przy szybkim ruchu myszy dochodzi do krawędzi albo limitu, zamiast zatrzymać się przed nią. Uchwyty zostają na ramce.
+- Store: `planTransform` (podgląd) i `transformObject` (zapis jednym krokiem cofania). Oba zaokrąglają tak samo: `x`, `y` do 0,5 px, obrót do całych stopni w zakresie 0–359, skala do całych pikseli rozmiaru i w zakresie 0,1–10 (jak w backendzie).
+- `features/map-editor/useTransformControls.ts` trzyma podgląd i kolizje. W trakcie ramki kolidujących obiektów są bursztynowe, a przy kolizji na końcu obiekt wraca, jest toast i drżenie ramek, tak jak przy przeciąganiu.
+- Kolizje w zaślepce silnika liczą się z prostokąta otaczającego obrócony obiekt, do czasu SAT z #122.
+
 ## Testy
 
-jsdom nie rysuje na `<canvas>`, więc `src/test/setup.ts` podmienia `getContext` na zaślepkę, która przyjmuje każde wywołanie. Testy sprawdzają węzły Konvy (pozycja, obrót, kolejność warstw), nie piksele. Stage bierzemy z `Konva.stages.at(-1)`. jsdom nie ma też `ResizeObserver`, więc `setup.ts` daje zaślepkę, która nic nie mierzy. Przeciąganie z palety testujemy przez `createEvent.drop` z ręcznie ustawionymi `clientX`/`clientY`, bo jsdom ich nie przekazuje. Tak samo testujemy klikanie i prostokąt (`createEvent.pointerDown` itd.), a `setup.ts` daje zaślepkę `setPointerCapture`.
+jsdom nie rysuje na `<canvas>`, więc `src/test/setup.ts` podmienia `getContext` na zaślepkę, która przyjmuje każde wywołanie. Testy sprawdzają węzły Konvy (pozycja, obrót, kolejność warstw), nie piksele. Stage bierzemy z `Konva.stages.at(-1)`. jsdom nie ma też `ResizeObserver`, więc `setup.ts` daje zaślepkę, która nic nie mierzy. Klikanie, prostokąt, przeciąganie obiektów i z palety testujemy przez `createEvent.pointerDown` itd. z ręcznie ustawionymi `clientX`/`clientY`, bo jsdom ich nie przekazuje, a `setup.ts` daje zaślepkę `setPointerCapture`. Uchwytów Transformera nie da się złapać myszą w jsdom: test zmienia prostokąt sam i wysyła zdarzenia `transform` i `transformend`.

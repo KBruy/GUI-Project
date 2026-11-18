@@ -1,6 +1,7 @@
 // Tymczasowa zaślepka silnika Kuby (F-24). API jak w rozdziale 6.3 dokumentu technicznego,
 // ale w środku uproszczona:
-// - kolizja to zwykłe prostokąty bez obrotu (prawdziwy silnik liczy SAT),
+// - kolizja to prostokąty otaczające obiekty, przy obrocie trochę za duże (prawdziwy silnik
+//   liczy SAT, PR #122),
 // - cofnij/ponów pamięta kopie całej sceny zamiast poleceń z metodą undo.
 import type { Scene, SceneObject, Layer } from '@worldsmith/engine'
 
@@ -53,9 +54,15 @@ export interface Editor {
 }
 
 // Prostokąt zajmowany przez obiekt. x, y obiektu to jego środek.
+// Obrócony obiekt zajmuje prostokąt otaczający jego obrócone narożniki.
 function bounds(object: SceneObject): Rect {
-  const width = object.width * object.scaleX
-  const height = object.height * object.scaleY
+  const angle = (object.rotation * Math.PI) / 180
+  const w = object.width * object.scaleX
+  const h = object.height * object.scaleY
+  // Zaokrąglenie usuwa resztki z cos(90°) ≈ 6e-17, żeby stykanie się krawędziami nie było kolizją.
+  const round = (value: number) => Math.round(value * 1e6) / 1e6
+  const width = round(Math.abs(w * Math.cos(angle)) + Math.abs(h * Math.sin(angle)))
+  const height = round(Math.abs(w * Math.sin(angle)) + Math.abs(h * Math.cos(angle)))
   return { x: object.x - width / 2, y: object.y - height / 2, width, height }
 }
 

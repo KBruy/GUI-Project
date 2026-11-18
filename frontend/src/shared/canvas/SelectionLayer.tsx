@@ -7,8 +7,8 @@ import type { SceneObject } from '@worldsmith/engine'
 
 // Canvas nie czyta zmiennych CSS: czerwień z palety i czarny cień pikseli.
 // Ciemny obrys pod czerwoną linią sprawia, że ramkę widać na każdym tle.
-const FRAME_COLOR = '#ff1f4b'
-const FRAME_SHADOW = '#0a0a0b'
+export const FRAME_COLOR = '#ff1f4b'
+export const FRAME_SHADOW = '#0a0a0b'
 const MARQUEE_FILL = 'rgba(255, 31, 75, 0.15)'
 // Kolizja przy przeciąganiu: bursztyn z --color-danger.
 const COLLISION_COLOR = '#ffc21f'

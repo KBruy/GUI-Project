@@ -77,6 +77,20 @@ describe('mock editor', () => {
     expect(editor.getScene().layers[0].objects[1].x).toBe(300)
   })
 
+  it('checks collisions of a rotated object by its rotated bounds', () => {
+    const editor = createEditor(makeScene())
+    // Kłoda 128×32 pod 'a' (y 164–196). Po obrocie o 90° sięga od y 116, czyli nachodzi na 'a' (do 132).
+    editor.execute(addObject('ground', { id: 'log', width: 128, height: 32 }, { x: 100, y: 180 }))
+    const log = editor.getScene().layers[0].objects[1]
+
+    expect(editor.execute(transformObjects([log.id], { rotation: 90 }))).toEqual({
+      ok: false,
+      collidesWith: ['a'],
+    })
+    // Obrót o 180° to ten sam prostokąt co bez obrotu.
+    expect(editor.execute(transformObjects([log.id], { rotation: 180 }))).toEqual({ ok: true })
+  })
+
   it('undoes and redoes a move', () => {
     const editor = createEditor(makeScene())
     editor.execute(transformObjects(['a'], { x: 320, y: 128 }))

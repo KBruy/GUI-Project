@@ -329,4 +329,63 @@ describe('editor store', () => {
       })
     })
   })
+
+  describe('transform', () => {
+    // Drzewo 64×64 w (100, 100) i drugie w (300, 100), oba na górnej warstwie.
+    beforeEach(() => {
+      store().execute(addObject('top', TREE, { x: 100, y: 100 }))
+      store().execute(addObject('top', TREE, { x: 300, y: 100 }))
+    })
+    const tree = (i: number) => store().scene!.layers[1].objects[i]
+    const turn = { x: 100, y: 100, rotation: 0, scaleX: 1, scaleY: 1 }
+
+    it('rounds the transform for the backend without changing the scene', () => {
+      const before = store().scene
+      const { transform } = store().planTransform(tree(0).id, {
+        x: 100.3,
+        y: 100.2,
+        rotation: -90.4,
+        scaleX: 1.51,
+        scaleY: 0.05,
+      })
+
+      // Obrót 0–359, rozmiar w pełnych pikselach (97 i 7 z 64), skala nie mniejsza niż 0,1.
+      expect(transform).toEqual({
+        x: 100.5,
+        y: 100,
+        rotation: 270,
+        scaleX: 97 / 64,
+        scaleY: 7 / 64,
+      })
+      expect(store().scene).toBe(before)
+    })
+
+    it('reports a collision after scaling into another object', () => {
+      // Szerokość 64 · 6 = 384, czyli do x 292: nachodzi na drugie drzewo (od 268).
+      const { result } = store().planTransform(tree(0).id, { ...turn, scaleX: 6 })
+
+      expect(result).toEqual({ ok: false, collidesWith: [tree(1).id] })
+    })
+
+    it('saves rotation and scale in one undo step', () => {
+      const id = tree(0).id
+      expect(store().transformObject(id, { ...turn, rotation: 45, scaleX: 2 })).toEqual({
+        ok: true,
+      })
+      expect(tree(0)).toMatchObject({ rotation: 45, scaleX: 2 })
+
+      store().undo()
+      expect(tree(0)).toMatchObject({ rotation: 0, scaleX: 1 })
+    })
+
+    it('keeps a turned object on half pixels when it stops at the map edge', () => {
+      const id = tree(0).id
+      store().transformObject(id, { ...turn, rotation: 45 })
+      store().select([id])
+      store().moveSelected({ x: -1000, y: 0 })
+
+      // Obrócony o 45° kwadrat 64 px ma pół szerokości 45,25…, więc staje w 45,5, a nie w 45,2548….
+      expect(tree(0).x).toBe(45.5)
+    })
+  })
 })

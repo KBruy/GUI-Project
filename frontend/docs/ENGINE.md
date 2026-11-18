@@ -31,7 +31,7 @@ editor.objectsInRect({ x, y, width, height })         // id obiektów z widoczny
 
 ## Uproszczenia zaślepki
 
-- Kolizja to zwykłe prostokąty bez obrotu. Stykanie się krawędziami nie jest kolizją.
+- Kolizja to prostokąty otaczające obiekty. Przy obrocie prostokąt otacza obrócone narożniki, więc jest trochę za duży (prawdziwy silnik liczy SAT, PR #122). Stykanie się krawędziami nie jest kolizją.
 - Nie sprawdza reguł z rozdz. 5.5 (granice sceny, zakres skali, zablokowane warstwy).
 - Cofnij/ponów pamięta kopie całej sceny.
 
