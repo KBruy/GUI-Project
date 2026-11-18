@@ -24,6 +24,8 @@ const dictionary = {
   'editor.zoomOut': { pl: 'Oddal', en: 'Zoom out' },
   'editor.fit': { pl: 'Dopasuj', en: 'Fit' },
   'editor.cursor': { pl: 'Pozycja kursora', en: 'Cursor position' },
+  'editor.save': { pl: 'Zapisz', en: 'Save' },
+  'editor.unsaved': { pl: 'Niezapisane zmiany', en: 'Unsaved changes' },
   'newMap.open': { pl: 'Nowa mapa', en: 'New map' },
   'newMap.title': { pl: 'Nowa mapa', en: 'New map' },
   'newMap.name': { pl: 'Nazwa mapy', en: 'Map name' },

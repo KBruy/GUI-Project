@@ -4,6 +4,7 @@ import { CursorPosition } from '@/features/map-editor/components/CursorPosition'
 import { GridToggles } from '@/features/map-editor/components/GridToggles'
 import { MapCanvas } from '@/features/map-editor/components/MapCanvas'
 import { NewMapButton } from '@/features/map-editor/components/NewMapButton'
+import { SaveButton } from '@/features/map-editor/components/SaveButton'
 import { ZoomControls } from '@/features/map-editor/components/ZoomControls'
 import { EditorLayout, Panel, Sidebar, Toolbar } from '@/shared/components/layout/Layout'
 
@@ -17,6 +18,7 @@ export default function MapEditorPage() {
       toolbar={
         <Toolbar label={t('editor.toolbar')}>
           <NewMapButton />
+          <SaveButton />
           <GridToggles />
           <ZoomControls />
           <CursorPosition />
