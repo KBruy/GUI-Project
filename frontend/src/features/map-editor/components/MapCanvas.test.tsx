@@ -4,6 +4,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import type { Asset } from '@/shared/lib/assets'
 import { createMapScene, MAP_SIZES } from '../engine/engine'
 import { useEditorStore } from '../store/editorStore'
+import { toast } from '@/shared/components/ui/Toast/toast'
 import { MapCanvas } from './MapCanvas'
 
 const ROCK: Asset = {
@@ -451,6 +452,30 @@ describe('MapCanvas', () => {
 
       act(() => useEditorStore.getState().undo())
       expect(position(a).rotation).toBe(0)
+    })
+
+    it('turns frames amber while scaling into another object and leaves it on release', () => {
+      measureCanvas()
+      const { a, b } = setup()
+      const error = vi.spyOn(toast, 'error')
+      act(() => useEditorStore.getState().select([a]))
+      const stage = Konva.stages.at(-1)!
+      const transformer = stage.findOne<Konva.Transformer>('Transformer')!
+
+      // A rozciągnięty w prawo do szerokości 96 (od 8 do 104) wchodzi na B (od 96).
+      act(() => {
+        transformer.nodes()[0].setAttrs({ x: 56, scaleX: 3 })
+        transformer.fire('transform')
+      })
+      const frames = stage.find('.selection-frame')
+      expect(frames.map((f) => f.attrs.stroke)).toEqual(['#ffc21f', '#ffc21f'])
+
+      act(() => {
+        transformer.fire('transformend')
+      })
+      expect(position(a)).toMatchObject({ x: 48, scaleX: 1 })
+      expect(position(b)).toMatchObject({ x: 112 })
+      expect(error).toHaveBeenCalledWith('errors.collision')
     })
 
     it('keeps only the clicked object selected after a click without dragging', () => {

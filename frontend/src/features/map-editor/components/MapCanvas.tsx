@@ -117,7 +117,7 @@ export function MapCanvas() {
             drag?.delta ?? null,
             ghost?.object ?? null,
             activeLayerId,
-            transform.preview
+            transform.preview?.object ?? null
           )
         : scene,
     [scene, selectedIds, drag, ghost, activeLayerId, transform.preview]
@@ -137,14 +137,15 @@ export function MapCanvas() {
     const objects = (shownScene?.layers ?? [])
       .filter((layer) => layer.visible)
       .flatMap((layer) => layer.objects)
-    const collidesWith = drag?.collidesWith ?? ghost?.collidesWith ?? []
+    const collidesWith =
+      drag?.collidesWith ?? ghost?.collidesWith ?? transform.preview?.collidesWith ?? []
     return {
       selected: ghost
         ? objects.filter((o) => o.id === ghost.object.id)
         : objects.filter((o) => selectedIds.includes(o.id)),
       collisions: objects.filter((o) => collidesWith.includes(o.id)),
     }
-  }, [shownScene, selectedIds, drag, ghost])
+  }, [shownScene, selectedIds, drag, ghost, transform.preview])
   // Etykieta przy kursorze: środek chwyconego obiektu (albo podglądu), tak jak x, y w panelu właściwości.
   // Po ruchu strzałkami etykieta stoi przez chwilę przy prawym dolnym rogu przesuniętego obiektu.
   const nudged = !drag && !ghost && nudgedId ? selected.find((o) => o.id === nudgedId) : undefined
@@ -230,7 +231,8 @@ export function MapCanvas() {
             objects={selected}
             collisions={collisions}
             marquee={selection.marquee}
-            shakeKey={selection.shakeKey}
+            // Obie liczby tylko rosną, więc suma zmienia się przy każdym odrzuceniu.
+            shakeKey={selection.shakeKey + transform.shakeKey}
             // Kropka w środku obiektu, którego współrzędne pokazuje etykieta.
             center={labelAt ? anchor : null}
             zoom={zoom}
