@@ -79,7 +79,8 @@ interface EditorState {
 const FREE_SPOT_RINGS = 8
 
 // Środek nowego obiektu: z przyciąganiem lewy górny róg trafia w siatkę,
-// a cały obiekt zostaje w granicach mapy (backend odrzuca obiekty poza nią).
+// a cały obiekt zostaje w granicach mapy. To decyzja frontendu: backend sprawdza tylko
+// środek obiektu (rozdz. 5.5), więc przyjąłby też obiekt, który częściowo wystaje.
 function placeAsset(target: Point, asset: Asset, scene: Scene, snap: boolean): Point {
   const axis = (value: number, size: number, max: number) => {
     let start = value - size / 2
@@ -93,8 +94,9 @@ function placeAsset(target: Point, asset: Asset, scene: Scene, snap: boolean): P
   }
 }
 
-// Przycina wektor przesunięcia tak, żeby obiekty ids nie wyszły poza mapę (backend je odrzuca).
-// Obrócony obiekt zajmuje prostokąt otaczający jego obrócone narożniki.
+// Przycina wektor przesunięcia tak, żeby obiekty ids nie wyszły poza mapę. Tak jak w placeAsset
+// to decyzja frontendu (backend sprawdza tylko środek). Obrócony obiekt zajmuje prostokąt
+// otaczający jego obrócone narożniki.
 function clampMove(scene: Scene, ids: string[], delta: Point): Point {
   const boxes = scene.layers
     .flatMap((layer) => layer.objects)
@@ -113,6 +115,9 @@ function clampMove(scene: Scene, ids: string[], delta: Point): Point {
       }
     })
   if (boxes.length === 0) return { x: 0, y: 0 }
+  // Zakłada, że obiekty już są w całości na mapie: edytor nie pozwala postawić ich inaczej.
+  // Sceny z backendu (wczytanie, import) mogą mieć obiekty wystające, bo backend sprawdza
+  // tylko środek. Dosuwamy je do mapy przy wczytaniu sceny (F-38).
   const clamp = (value: number, min: number, max: number) => Math.max(min, Math.min(max, value))
   return {
     x: clamp(
