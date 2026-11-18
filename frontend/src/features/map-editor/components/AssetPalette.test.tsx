@@ -7,19 +7,19 @@ import { useEditorStore } from '../store/editorStore'
 import { AssetPalette } from './AssetPalette'
 
 const GRASS: Asset = {
-  id: 'map_ground_grass_01',
+  id: 'map_terrain_grass_01',
   module: 'map',
-  category: 'ground',
-  nameKey: 'assets.map.grass',
-  file: 'map/ground/map_ground_grass_01.png',
+  category: 'terrain',
+  nameKey: 'assets.map.terrain_grass',
+  file: 'map/terrain/map_terrain_grass_01.png',
   width: 32,
   height: 32,
 }
-const ROCK: Asset = {
+const STONE: Asset = {
   ...GRASS,
-  id: 'map_objects_rock_01',
-  category: 'objects',
-  nameKey: 'assets.map.rock',
+  id: 'map_nature_stone_01',
+  category: 'nature',
+  nameKey: 'assets.map.nature_stone',
 }
 
 function mockFetch(response: () => Promise<Response>) {
@@ -64,7 +64,7 @@ function pointer(target: Element | Window, type: 'pointerDown' | 'pointerMove', 
 
 describe('AssetPalette', () => {
   it('shows the assets of the first category and adds one to the map on click', async () => {
-    mockFetch(() => Promise.resolve(new Response(JSON.stringify([GRASS, ROCK]))))
+    mockFetch(() => Promise.resolve(new Response(JSON.stringify([GRASS, STONE]))))
     renderPalette()
 
     fireEvent.click(await screen.findByRole('button', { name: 'Trawa' }))
@@ -75,7 +75,7 @@ describe('AssetPalette', () => {
   })
 
   it('starts dragging a tile after a few pixels and then ignores the click', async () => {
-    mockFetch(() => Promise.resolve(new Response(JSON.stringify([GRASS, ROCK]))))
+    mockFetch(() => Promise.resolve(new Response(JSON.stringify([GRASS, STONE]))))
     renderPalette()
     const tile = await screen.findByRole('button', { name: 'Trawa' })
 
@@ -92,10 +92,10 @@ describe('AssetPalette', () => {
   })
 
   it('switches category with the tabs', async () => {
-    mockFetch(() => Promise.resolve(new Response(JSON.stringify([GRASS, ROCK]))))
+    mockFetch(() => Promise.resolve(new Response(JSON.stringify([GRASS, STONE]))))
     renderPalette()
 
-    fireEvent.click(await screen.findByRole('button', { name: 'Obiekty' }))
+    fireEvent.click(await screen.findByRole('button', { name: 'Natura' }))
 
     expect(screen.getByRole('button', { name: 'Kamień' })).toBeInTheDocument()
     expect(screen.queryByRole('button', { name: 'Trawa' })).not.toBeInTheDocument()

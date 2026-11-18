@@ -2,7 +2,8 @@
  * Kody błędów silnika. LAYER_LIMIT i INVALID_SCENE_SIZE mają te same kody co backend,
  * więc frontend ma już do nich tłumaczenia (errors.layerLimit, errors.invalidSceneSize).
  */
-export type EngineErrorCode = 'LAYER_LIMIT' | 'LAYER_NOT_FOUND' | 'INVALID_SCENE_SIZE'
+export type EngineErrorCode =
+  'LAYER_LIMIT' | 'LAYER_NOT_FOUND' | 'INVALID_SCENE_SIZE' | 'OBJECT_NOT_FOUND'
 
 /** Błąd rzucany przez silnik. Frontend łapie go i pokazuje komunikat po kodzie. */
 export class EngineError extends Error {
