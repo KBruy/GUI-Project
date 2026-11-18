@@ -43,8 +43,17 @@ interface EditorState {
   assetsError: TranslationKey | null
   // idle: jeszcze nie pobieraliśmy, done: pobrane albo błąd.
   assetsStatus: 'idle' | 'loading' | 'done'
+  // Zapis projektu. projectId: id projektu w backendzie, null dla mapy jeszcze niezapisanej.
+  projectId: string | null
+  // Scena z chwili ostatniego zapisu albo wczytania. Niezapisane zmiany: hasUnsavedChanges.
+  savedScene: Scene | null
+  saving: boolean
 
-  loadScene: (scene: Scene) => void
+  // projectId podajemy przy wczytaniu zapisanego projektu, nowa mapa go nie ma.
+  loadScene: (scene: Scene, projectId?: string | null) => void
+  // Pierwszy zapis tworzy projekt (POST), kolejne go nadpisują (PUT). Przy błędzie rzuca ApiError,
+  // więc wywołujący pokazuje toast.error(err.messageKey). W trakcie zapisu kolejne wywołania nic nie robią.
+  save: () => Promise<void>
   execute: (command: Command) => PlaceResult
   undo: () => void
   redo: () => void
@@ -178,6 +187,11 @@ function normalizeTransform(object: SceneObject, transform: Transform): Transfor
   }
 }
 
+// Czy scena zmieniła się od ostatniego zapisu albo wczytania. Silnik po każdej zmianie daje nowy
+// obiekt sceny, więc wystarczy porównać referencje. Cofnięcie do zapisanego stanu też liczy się
+// jako zmiana, bo to już inny obiekt.
+export const hasUnsavedChanges = (state: EditorState) => state.scene !== state.savedScene
+
 // Wypisuje store z poprzedniego silnika przy wczytaniu nowej sceny.
 let unsubscribe: (() => void) | null = null
 
@@ -197,8 +211,11 @@ export const useEditorStore = create<EditorState>()((set, get) => ({
   assetsStatus: 'idle',
   placingAsset: null,
   cursorPoint: null,
+  projectId: null,
+  savedScene: null,
+  saving: false,
 
-  loadScene(scene) {
+  loadScene(scene, projectId = null) {
     unsubscribe?.()
     const editor = createEditor(scene)
     unsubscribe = editor.subscribe((next) => {
@@ -209,6 +226,8 @@ export const useEditorStore = create<EditorState>()((set, get) => ({
     set({
       editor,
       scene: editor.getScene(),
+      savedScene: editor.getScene(),
+      projectId,
       selectedIds: [],
       // Nowe obiekty trafiają domyślnie na najwyższą warstwę.
       activeLayerId: scene.layers.at(-1)?.id ?? null,
@@ -304,6 +323,26 @@ export const useEditorStore = create<EditorState>()((set, get) => ({
         assetsError: err instanceof ApiError ? err.messageKey : 'errors.serverError',
         assetsStatus: 'done',
       })
+    }
+  },
+
+  async save() {
+    const { editor, scene, projectId, saving } = get()
+    if (!scene || saving) return
+    set({ saving: true })
+    try {
+      // Wysyłamy całą scenę. Backend przy POST nadaje nowe id i daty, ale sceny w edytorze
+      // nie podmieniamy odpowiedzią: id projektu trzymamy osobno, a w trakcie zapisu
+      // użytkownik mógł już coś zmienić.
+      const saved = projectId
+        ? await api.put<Scene>(`/api/projects/${projectId}`, scene)
+        : await api.post<Scene>('/api/projects', scene)
+      // W trakcie zapisu wczytano inną mapę: wynik dotyczy poprzedniej.
+      if (get().editor !== editor) return
+      // Zapisana jest wysłana scena. Zmiany zrobione w trakcie zapisu zostają niezapisane.
+      set({ projectId: saved.id, savedScene: scene })
+    } finally {
+      set({ saving: false })
     }
   },
 

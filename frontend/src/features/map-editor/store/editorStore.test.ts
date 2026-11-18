@@ -2,7 +2,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import type { Scene } from '@worldsmith/engine'
 import type { Asset } from '@/shared/lib/assets'
 import { addObject } from '../engine/engine'
-import { useEditorStore } from './editorStore'
+import { hasUnsavedChanges, useEditorStore } from './editorStore'
 
 const TREE = { id: 'map_tree_oak_01', width: 64, height: 64 }
 
@@ -386,6 +386,93 @@ describe('editor store', () => {
 
       // Obrócony o 45° kwadrat 64 px ma pół szerokości 45,25…, więc staje w 45,5, a nie w 45,2548….
       expect(tree(0).x).toBe(45.5)
+    })
+  })
+
+  describe('saving', () => {
+    const saved = (id: string) => ({ ...makeScene(), id })
+    // Odpowiada po kolei podanymi scenami i zapamiętuje wywołania.
+    const stubFetch = (...scenes: Scene[]) => {
+      const fetch = vi.fn()
+      for (const scene of scenes) {
+        fetch.mockResolvedValueOnce(new Response(JSON.stringify(scene), { status: 200 }))
+      }
+      vi.stubGlobal('fetch', fetch)
+      return fetch
+    }
+    // Każde kolejne drzewo stoi obok poprzedniego, żeby nie kolidowały.
+    const addTree = () => {
+      const count = store().scene!.layers[1].objects.length
+      expect(store().execute(addObject('top', TREE, { x: 100 + count * 64, y: 100 }))).toEqual({
+        ok: true,
+      })
+    }
+
+    afterEach(() => {
+      vi.unstubAllGlobals()
+    })
+
+    it('has no unsaved changes right after loading a scene', () => {
+      expect(store().projectId).toBeNull()
+      expect(hasUnsavedChanges(store())).toBe(false)
+      addTree()
+      expect(hasUnsavedChanges(store())).toBe(true)
+    })
+
+    it('creates the project on the first save and updates it later', async () => {
+      const fetch = stubFetch(saved('p-1'), saved('p-1'))
+      addTree()
+      await store().save()
+
+      expect(fetch.mock.calls[0][0]).toMatch(/\/api\/projects$/)
+      expect(fetch.mock.calls[0][1].method).toBe('POST')
+      expect(store().projectId).toBe('p-1')
+      expect(hasUnsavedChanges(store())).toBe(false)
+
+      addTree()
+      await store().save()
+      expect(fetch.mock.calls[1][0]).toMatch(/\/api\/projects\/p-1$/)
+      expect(fetch.mock.calls[1][1].method).toBe('PUT')
+      expect(JSON.parse(fetch.mock.calls[1][1].body).layers[1].objects).toHaveLength(2)
+    })
+
+    it('keeps changes made during the save as unsaved', async () => {
+      stubFetch(saved('p-1'))
+      const saving = store().save()
+      addTree()
+      await saving
+
+      expect(store().projectId).toBe('p-1')
+      expect(hasUnsavedChanges(store())).toBe(true)
+    })
+
+    it('sends only one request when saving twice in a row', async () => {
+      const fetch = stubFetch(saved('p-1'))
+      await Promise.all([store().save(), store().save()])
+
+      expect(fetch).toHaveBeenCalledTimes(1)
+      expect(store().saving).toBe(false)
+    })
+
+    it('throws the API error and keeps the changes unsaved', async () => {
+      vi.stubGlobal(
+        'fetch',
+        vi.fn(() => Promise.reject(new TypeError('Failed to fetch')))
+      )
+      addTree()
+
+      await expect(store().save()).rejects.toMatchObject({ messageKey: 'errors.network' })
+      expect(store().projectId).toBeNull()
+      expect(store().saving).toBe(false)
+      expect(hasUnsavedChanges(store())).toBe(true)
+    })
+
+    it('starts without a project id after loading a new scene', async () => {
+      stubFetch(saved('p-1'))
+      await store().save()
+      store().loadScene(makeScene())
+
+      expect(store().projectId).toBeNull()
     })
   })
 })
