@@ -7,12 +7,12 @@ import { useEditorStore } from '../store/editorStore'
 import { toast } from '@/shared/components/ui/Toast/toast'
 import { MapCanvas } from './MapCanvas'
 
-const ROCK: Asset = {
-  id: 'map_objects_rock_01',
+const STONE: Asset = {
+  id: 'map_nature_stone_01',
   module: 'map',
-  category: 'objects',
-  nameKey: 'assets.map.rock',
-  file: 'map/objects/map_objects_rock_01.png',
+  category: 'nature',
+  nameKey: 'assets.map.nature_stone',
+  file: 'map/nature/map_nature_stone_01.png',
   width: 32,
   height: 32,
 }
@@ -38,8 +38,8 @@ function pointer(
 }
 // Przeciągnięcie kamienia z palety: paleta ustawia placingAsset, a dalej kursor jedzie po oknie.
 // Pierwszy argument zostaje dla czytelności testów (upuszczamy „na canvas”).
-function dropRock(_canvas: Element, x: number, y: number) {
-  act(() => useEditorStore.getState().setPlacingAsset(ROCK))
+function dropStone(_canvas: Element, x: number, y: number) {
+  act(() => useEditorStore.getState().setPlacingAsset(STONE))
   pointer(window, 'pointerMove', x, y)
   pointer(window, 'pointerUp', x, y)
 }
@@ -79,7 +79,7 @@ beforeEach(() => {
   )
   useEditorStore.getState().loadScene(createMapScene('Test', MAP_SIZES[0], 'Warstwa 1'))
   // Zoom 2 i przesunięcie (100, 50): punkt ekranu (164, 114) to punkt sceny (32, 32).
-  useEditorStore.setState({ assets: [ROCK], zoom: 2, offset: { x: 100, y: 50 }, gridSnap: true })
+  useEditorStore.setState({ assets: [STONE], zoom: 2, offset: { x: 100, y: 50 }, gridSnap: true })
 })
 
 afterEach(() => {
@@ -93,16 +93,16 @@ describe('MapCanvas', () => {
   it('adds a dragged palette asset where it was dropped', () => {
     const { container } = render(<MapCanvas />)
 
-    dropRock(container.firstElementChild!, 164, 114)
+    dropStone(container.firstElementChild!, 164, 114)
 
     // Środek pod kursorem (32, 32) → lewy górny róg (16, 16) → siatka (32, 32) → środek (48, 48).
     expect(objects()).toHaveLength(1)
-    expect(objects()[0]).toMatchObject({ assetId: ROCK.id, x: 48, y: 48 })
+    expect(objects()[0]).toMatchObject({ assetId: STONE.id, x: 48, y: 48 })
   })
 
   it('shows a preview with coordinates while dragging from the palette, outside the canvas none', () => {
     const { container } = render(<MapCanvas />)
-    act(() => useEditorStore.getState().setPlacingAsset(ROCK))
+    act(() => useEditorStore.getState().setPlacingAsset(STONE))
 
     pointer(window, 'pointerMove', 164, 114)
     expect(container).toHaveTextContent('48, 48')
@@ -113,7 +113,7 @@ describe('MapCanvas', () => {
 
   it('treats the empty canvas around the map as outside: no preview, no drop', () => {
     const { container } = render(<MapCanvas />)
-    act(() => useEditorStore.getState().setPlacingAsset(ROCK))
+    act(() => useEditorStore.getState().setPlacingAsset(STONE))
 
     // Ekran (60, 114) jest na canvasie, ale to punkt sceny (-20, 32), czyli obok mapy.
     pointer(window, 'pointerMove', 60, 114)
@@ -126,7 +126,7 @@ describe('MapCanvas', () => {
 
   it('shows the asset image next to the cursor before it reaches the canvas', () => {
     const { container } = render(<MapCanvas />)
-    act(() => useEditorStore.getState().setPlacingAsset(ROCK))
+    act(() => useEditorStore.getState().setPlacingAsset(STONE))
 
     // Zoom 2: kamień 32×32 ma na ekranie 64×64, środek pod kursorem.
     pointer(window, 'pointerMove', -20, 114)
@@ -155,7 +155,7 @@ describe('MapCanvas', () => {
 
   it('cancels dragging from the palette with Escape', () => {
     render(<MapCanvas />)
-    act(() => useEditorStore.getState().setPlacingAsset(ROCK))
+    act(() => useEditorStore.getState().setPlacingAsset(STONE))
     pointer(window, 'pointerMove', 164, 114)
 
     fireEvent.keyDown(window, { key: 'Escape' })
@@ -168,8 +168,8 @@ describe('MapCanvas', () => {
   it('does not drop on top of another object', () => {
     const { container } = render(<MapCanvas />)
 
-    dropRock(container.firstElementChild!, 164, 114)
-    dropRock(container.firstElementChild!, 164, 114)
+    dropStone(container.firstElementChild!, 164, 114)
+    dropStone(container.firstElementChild!, 164, 114)
 
     expect(objects()).toHaveLength(1)
   })
@@ -180,8 +180,8 @@ describe('MapCanvas', () => {
     function setup() {
       const { container } = render(<MapCanvas />)
       const canvas = container.firstElementChild!
-      dropRock(canvas, 164, 114)
-      dropRock(canvas, 324, 146)
+      dropStone(canvas, 164, 114)
+      dropStone(canvas, 324, 146)
       const [a, b] = objects().map((o) => o.id)
       return { canvas, a, b }
     }
@@ -234,7 +234,7 @@ describe('MapCanvas', () => {
   describe('keyboard', () => {
     function setup() {
       const { container } = render(<MapCanvas />)
-      dropRock(container.firstElementChild!, 164, 114)
+      dropStone(container.firstElementChild!, 164, 114)
       const [rock] = objects()
       useEditorStore.getState().select([rock.id])
     }
@@ -298,8 +298,8 @@ describe('MapCanvas', () => {
     function setup() {
       const { container } = render(<MapCanvas />)
       const canvas = container.firstElementChild!
-      dropRock(canvas, 164, 114)
-      dropRock(canvas, 324, 146)
+      dropStone(canvas, 164, 114)
+      dropStone(canvas, 324, 146)
       const [a, b] = objects().map((o) => o.id)
       return { canvas, a, b }
     }
