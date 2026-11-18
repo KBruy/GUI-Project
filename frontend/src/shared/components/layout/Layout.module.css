@@ -67,6 +67,11 @@
   background: var(--color-surface);
 }
 
+/* W edytorze pasek zajmuje resztę miejsca, żeby dało się coś dosunąć do prawej. */
+.editorTop > .toolbar {
+  flex: 1;
+}
+
 .editorTitle {
   font-size: var(--font-size-md);
   margin: 0;

@@ -2,7 +2,8 @@
 // - strzałki: przesuwają zaznaczone obiekty o 1 px, z Shiftem o jedno pole siatki (32 px),
 //   a przy włączonym przyciąganiu zawsze do następnej linii siatki,
 // - Ctrl+Z (na Macu Cmd+Z): cofnij, Ctrl+Shift+Z albo Ctrl+Y: ponów.
-import { useEffect } from 'react'
+// Zwraca id obiektu przesuniętego strzałkami: canvas pokazuje przy nim przez chwilę jego (x, y).
+import { useEffect, useRef, useState } from 'react'
 import { toast } from '@/shared/components/ui/Toast/toast'
 import { useEditorStore } from './store/editorStore'
 import { isTyping } from './useViewControls'
@@ -13,6 +14,8 @@ const ARROWS: Record<string, { x: number; y: number }> = {
   ArrowUp: { x: 0, y: -1 },
   ArrowDown: { x: 0, y: 1 },
 }
+// Jak długo po ostatniej strzałce widać etykietę ze współrzędnymi.
+const NUDGE_LABEL_MS = 1500
 
 // Ile trzeba przesunąć krawędź `edge`, żeby trafiła na następną linię siatki w kierunku `direction`.
 // Krawędź już na linii przeskakuje o całe pole, a krawędź między liniami dociąga do najbliższej.
@@ -23,7 +26,10 @@ function toNextGridLine(edge: number, direction: number, size: number): number {
   return line - edge
 }
 
-export function useEditorShortcuts() {
+export function useEditorShortcuts(): string | null {
+  const [nudgedId, setNudgedId] = useState<string | null>(null)
+  const hideTimer = useRef<number | undefined>(undefined)
+
   useEffect(() => {
     function onKeyDown(event: KeyboardEvent) {
       // Skróty nie działają w polach formularza ani przy otwartym oknie (np. „Nowa mapa”).
@@ -63,8 +69,17 @@ export function useEditorShortcuts() {
       const result = moveSelected(delta)
       // Przytrzymana strzałka powtarza zdarzenie, a wystarczy jeden komunikat.
       if (!result.ok && !event.repeat) toast.error('errors.collision')
+      // Etykieta przy pierwszym zaznaczonym, także przy kolizji (widać, gdzie obiekt został).
+      setNudgedId(selectedIds[0])
+      window.clearTimeout(hideTimer.current)
+      hideTimer.current = window.setTimeout(() => setNudgedId(null), NUDGE_LABEL_MS)
     }
     window.addEventListener('keydown', onKeyDown)
-    return () => window.removeEventListener('keydown', onKeyDown)
+    return () => {
+      window.removeEventListener('keydown', onKeyDown)
+      window.clearTimeout(hideTimer.current)
+    }
   }, [])
+
+  return nudgedId
 }

@@ -67,6 +67,14 @@ interface EditorState {
   // Dodaje asset na aktywną warstwę w punkcie sceny `at`. Bez punktu: w wolnym miejscu
   // najbliżej środka widoku, żeby kolejne kliknięcia w paletę nie trafiały w zajęte pole.
   addAsset: (asset: Asset, at?: Point) => PlaceResult
+  // Podgląd dodania assetu w punkcie sceny, bez zmiany sceny: gdzie stanie jego środek i czy koliduje.
+  planAdd: (asset: Asset, at: Point) => { at: Point; result: PlaceResult }
+  // Asset przeciągany właśnie z palety na mapę. Upuszczenie obsługuje MapCanvas.
+  placingAsset: Asset | null
+  setPlacingAsset: (asset: Asset | null) => void
+  // Punkt mapy pod kursorem (całe piksele sceny) dla paska narzędzi. Null, gdy kursor jest poza mapą.
+  cursorPoint: Point | null
+  setCursorPoint: (point: Point | null) => void
   // Przesuwa zaznaczone obiekty o wektor w punktach sceny, jednym krokiem cofania.
   // Wektor jest przycinany tak, żeby cała grupa została w granicach mapy.
   moveSelected: (delta: Point) => PlaceResult
@@ -83,7 +91,8 @@ const FREE_SPOT_RINGS = 8
 // środek obiektu (rozdz. 5.5), więc przyjąłby też obiekt, który częściowo wystaje.
 function placeAsset(target: Point, asset: Asset, scene: Scene, snap: boolean): Point {
   const axis = (value: number, size: number, max: number) => {
-    let start = value - size / 2
+    // Pixel art: lewy górny róg zawsze na całym pikselu, także przy zoomie bez przyciągania.
+    let start = Math.round(value - size / 2)
     if (snap) start = Math.round(start / scene.gridSize) * scene.gridSize
     start = Math.max(0, Math.min(max - size, start))
     return start + size / 2
@@ -150,6 +159,8 @@ export const useEditorStore = create<EditorState>()((set, get) => ({
   assets: [],
   assetsError: null,
   assetsStatus: 'idle',
+  placingAsset: null,
+  cursorPoint: null,
 
   loadScene(scene) {
     unsubscribe?.()
@@ -258,6 +269,21 @@ export const useEditorStore = create<EditorState>()((set, get) => ({
         assetsStatus: 'done',
       })
     }
+  },
+
+  planAdd(asset, at) {
+    const { scene, editor, activeLayerId, gridSnap } = get()
+    if (!scene || !editor || !activeLayerId) throw new Error('No scene loaded')
+    const center = placeAsset(at, asset, scene, gridSnap)
+    return { at: center, result: editor.canExecute(addObject(activeLayerId, asset, center)) }
+  },
+  setPlacingAsset: (placingAsset) => set({ placingAsset }),
+
+  setCursorPoint(point) {
+    const current = get().cursorPoint
+    // Ruch w obrębie tego samego piksela sceny niczego nie zmienia, więc nie odświeżamy paska.
+    if (current?.x === point?.x && current?.y === point?.y) return
+    set({ cursorPoint: point })
   },
 
   addAsset(asset, at) {

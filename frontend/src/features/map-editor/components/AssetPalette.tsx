@@ -1,7 +1,9 @@
 // Paleta assetów mapy (F-31): zakładki kategorii i kafelki z miniaturami.
 // Kliknięcie kafelka stawia obiekt na środku widoku, na aktywnej warstwie.
-// Kafelek można też przeciągnąć na mapę: upuszczenie obsługuje MapCanvas.
-import { useEffect, useState } from 'react'
+// Kafelek można też przeciągnąć na mapę. Nie używamy systemowego przeciągania (drag and drop),
+// tylko zdarzeń wskaźnika: paleta ustawia placingAsset w store, a podgląd i upuszczenie
+// obsługuje MapCanvas, tak samo jak przy przeciąganiu obiektów po mapie.
+import { useEffect, useRef, useState, type PointerEvent } from 'react'
 import { dictionary, type TranslationKey } from '@/i18n/dictionary'
 import { useT } from '@/i18n/language'
 import { Button } from '@/shared/components/ui/Button/Button'
@@ -12,8 +14,8 @@ import { assetUrl, type Asset } from '@/shared/lib/assets'
 import { useEditorStore } from '../store/editorStore'
 import styles from './AssetPalette.module.css'
 
-// Typ danych przy przeciąganiu kafelka; w środku jest id assetu.
-export const ASSET_DRAG_TYPE = 'application/x-worldsmith-asset'
+// Od tylu pikseli ruchu wciśnięty kafelek zaczyna się przeciągać (krótszy ruch to kliknięcie).
+const DRAG_THRESHOLD = 3
 
 export function AssetPalette() {
   const { t } = useT()
@@ -23,7 +25,10 @@ export function AssetPalette() {
   const hasScene = useEditorStore((s) => s.scene !== null)
   const loadAssets = useEditorStore((s) => s.loadAssets)
   const addAsset = useEditorStore((s) => s.addAsset)
+  const setPlacingAsset = useEditorStore((s) => s.setPlacingAsset)
   const [picked, setPicked] = useState<string | null>(null)
+  // Po przeciągnięciu przeglądarka może jeszcze wysłać click na kafelek: wtedy go pomijamy.
+  const dragged = useRef(false)
 
   // Nazwy z manifestu to klucze słownika. Brak klucza (np. nowa grafika Moniki) → zapasowy tekst.
   const translate = (key: string, fallback: string) =>
@@ -35,8 +40,29 @@ export function AssetPalette() {
   }, [loadAssets])
 
   function add(asset: Asset) {
+    if (dragged.current) return
     const result = addAsset(asset)
     if (!result.ok) toast.error('errors.collision')
+  }
+
+  function startDrag(event: PointerEvent, asset: Asset) {
+    if (event.button !== 0 || !hasScene) return
+    // Bez tego przeglądarka zaznacza tekst podczas przeciągania.
+    event.preventDefault()
+    dragged.current = false
+    const start = { x: event.clientX, y: event.clientY }
+    function onMove(move: globalThis.PointerEvent) {
+      if (Math.hypot(move.clientX - start.x, move.clientY - start.y) < DRAG_THRESHOLD) return
+      dragged.current = true
+      setPlacingAsset(asset)
+      stop()
+    }
+    function stop() {
+      window.removeEventListener('pointermove', onMove)
+      window.removeEventListener('pointerup', stop)
+    }
+    window.addEventListener('pointermove', onMove)
+    window.addEventListener('pointerup', stop)
   }
 
   if (status !== 'done') return <p className={styles.message}>{t('palette.loading')}</p>
@@ -82,11 +108,9 @@ export function AssetPalette() {
                 imageUrl={assetUrl(asset.file)}
                 disabled={!hasScene}
                 onClick={() => add(asset)}
-                draggable={hasScene}
-                onDragStart={(e) => {
-                  e.dataTransfer.setData(ASSET_DRAG_TYPE, asset.id)
-                  e.dataTransfer.effectAllowed = 'copy'
-                }}
+                onPointerDown={(e) => startDrag(e, asset)}
+                // Obrazek w kafelku przeglądarka chce przeciągać po swojemu: blokujemy to.
+                onDragStart={(e) => e.preventDefault()}
               />
             )
           })}

@@ -41,6 +41,22 @@ describe('SelectionLayer', () => {
     })
   })
 
+  it('draws one dot of constant screen size at the given point, none without it', () => {
+    expect(renderLayer([TREE]).find('.selection-center')).toHaveLength(0)
+
+    render(
+      <Stage width={640} height={480}>
+        <SelectionLayer objects={[TREE, { ...TREE, id: 'obj-2', x: 300 }]} center={TREE} zoom={2} />
+      </Stage>
+    )
+    const dots = Konva.stages.at(-1)!.find('.selection-center')
+
+    // Jedna kropka, choć zaznaczone są dwa obiekty.
+    expect(dots).toHaveLength(1)
+    // 8 px na ekranie przy zoomie 2 to 4 punkty sceny, wyśrodkowane na podanym punkcie.
+    expect(dots[0].attrs).toMatchObject({ x: 100, y: 80, width: 4, height: 4, offsetX: 2 })
+  })
+
   it('draws the marquee rectangle only when given', () => {
     expect(renderLayer([]).find('.selection-marquee')).toHaveLength(0)
 
