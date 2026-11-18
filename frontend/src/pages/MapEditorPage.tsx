@@ -1,13 +1,35 @@
 import { useT } from '@/i18n/language'
-import { Container } from '@/shared/components/layout/Layout'
+import { GridToggles } from '@/features/map-editor/components/GridToggles'
+import { MapCanvas } from '@/features/map-editor/components/MapCanvas'
+import { ZoomControls } from '@/features/map-editor/components/ZoomControls'
+import { EditorLayout, Panel, Sidebar, Toolbar } from '@/shared/components/layout/Layout'
 
-// Na razie pusta podstrona; treść: Edytor map (F-29).
+// Edytor map (F-29). Panele są na razie puste: paleta (F-31), warstwy (F-35), właściwości (F-36).
 export default function MapEditorPage() {
   const { t } = useT()
 
   return (
-    <Container>
-      <h1>{t('nav.editor')}</h1>
-    </Container>
+    <EditorLayout
+      title={t('nav.editor')}
+      toolbar={
+        <Toolbar label={t('editor.toolbar')}>
+          <GridToggles />
+          <ZoomControls />
+        </Toolbar>
+      }
+      left={
+        <Sidebar side="left" width={240}>
+          <Panel title={t('editor.palette')} />
+        </Sidebar>
+      }
+      right={
+        <Sidebar side="right" width={280}>
+          <Panel title={t('editor.layers')} />
+          <Panel title={t('editor.properties')} />
+        </Sidebar>
+      }
+    >
+      <MapCanvas />
+    </EditorLayout>
   )
 }

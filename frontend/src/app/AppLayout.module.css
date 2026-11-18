@@ -62,5 +62,7 @@
 
 .main {
   flex: 1;
-  padding: var(--space-5) 0;
+  /* Kolumna, żeby edytor (EditorLayout) mógł wypełnić całą wysokość treści. */
+  display: flex;
+  flex-direction: column;
 }

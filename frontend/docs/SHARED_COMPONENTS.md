@@ -182,13 +182,37 @@ Klawiatura działa natywnie: strzałki w `Select` i `Slider`, Home i End w `Slid
 </Container>
 ```
 
-| Komponent   | Do czego                                             | Propsy                                                                          |
-| ----------- | ---------------------------------------------------- | ------------------------------------------------------------------------------- |
-| `Container` | wyśrodkowana treść strony, max 1280 px, z paddingiem | natywne `div`                                                                   |
-| `Stack`     | flex w kolumnie lub rzędzie                          | `direction` (`column`), `gap` 1–6 = `--space-N` (3), `align`, `justify`, `wrap` |
-| `Panel`     | ramka z tłem (`section`)                             | `title` → `h2`                                                                  |
-| `Toolbar`   | pasek przycisków                                     | `label` (wymagany, `aria-label`)                                                |
-| `Sidebar`   | boczny panel (`aside`)                               | `width`, `side` (`left`/`right` — ramka od strony treści)                       |
+| Komponent      | Do czego                                                                         | Propsy                                                                          |
+| -------------- | -------------------------------------------------------------------------------- | ------------------------------------------------------------------------------- |
+| `Container`    | wyśrodkowana treść strony, max 1280 px, z paddingiem                             | natywne `div`                                                                   |
+| `Stack`        | flex w kolumnie lub rzędzie                                                      | `direction` (`column`), `gap` 1–6 = `--space-N` (3), `align`, `justify`, `wrap` |
+| `Panel`        | ramka z tłem (`section`)                                                         | `title` → `h2`                                                                  |
+| `Toolbar`      | pasek przycisków                                                                 | `label` (wymagany, `aria-label`)                                                |
+| `Sidebar`      | boczny panel (`aside`), dzieci w kolumnie z odstępem                             | `width`, `side` (`left`/`right` — ramka od strony treści)                       |
+| `EditorLayout` | układ edytora na całą wysokość: pasek z `h1`, panele po bokach, canvas na środku | `title`, `toolbar`, `left`, `right`, `children` = canvas                        |
+
+`EditorLayout` (edytor map, później kreator postaci):
+
+```tsx
+<EditorLayout
+  title={t('nav.editor')}
+  toolbar={<Toolbar label={t('editor.toolbar')}>…</Toolbar>}
+  left={
+    <Sidebar side="left" width={240}>
+      …
+    </Sidebar>
+  }
+  right={
+    <Sidebar side="right" width={280}>
+      …
+    </Sidebar>
+  }
+>
+  <MapCanvas />
+</EditorLayout>
+```
+
+Komórka canvasu ma `position: relative` i ukrywa nadmiar, a jej rozmiar wynika tylko z siatki. Canvas w środku ustawiamy na `position: absolute; inset: 0` i mierzymy (`useElementSize`). Dlatego `main` w `AppLayout` jest kolumną flex bez paddingu (odstępy stron daje `Container`).
 
 ---
 
