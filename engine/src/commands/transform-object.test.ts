@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest'
 import { layer, sceneWith, square } from './test-scene'
 import { transformObjects } from './transform-object'
+import { EngineError } from '../errors'
 
 const scene = sceneWith([
   layer('grass', [square('a', 100, 100), square('b', 200, 100), square('c', 100, 200)]),
@@ -51,5 +52,17 @@ describe('transformObjects', () => {
     expect(a.x).toBe(100)
     expect(b.x).toBe(200)
     expect(a.y).toBe(100)
+  })
+
+  it('obiekt na zablokowanej warstwie: EngineError z kodem LAYER_LOCKED', () => {
+    const locked = sceneWith([layer('body', [square('a', 100, 100)], true)])
+    let caught: unknown
+    try {
+      transformObjects(['a'], { x: 300 }).apply(locked)
+    } catch (error) {
+      caught = error
+    }
+    expect(caught instanceof EngineError).toBe(true)
+    expect((caught as EngineError).code).toBe('LAYER_LOCKED')
   })
 })

@@ -2,6 +2,7 @@ import { findCollisions } from '../collision/collisions'
 import type { Transform } from '../collision/types'
 import type { SceneObject } from '../types'
 import type { Command } from './types'
+import { EngineError } from '../errors'
 
 /** Wyciąga z obiektu tylko pola przekształcenia. */
 function transformOf(object: SceneObject): Transform {
@@ -28,6 +29,9 @@ export function transformObjects(ids: readonly string[], transform: Partial<Tran
         const objects = layer.objects.map((object) => {
           if (!ids.includes(object.id)) {
             return object
+          }
+          if (layer.locked) {
+            throw new EngineError('LAYER_LOCKED')
           }
           before.set(object.id, transformOf(object))
           return { ...object, ...transform }
