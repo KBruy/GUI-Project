@@ -31,7 +31,7 @@ def list_assets(db: Session, module: None | str=None, category: None | str=None)
     jest None, nie filtruje po tym polu.Każdy asset ma od razu załadowaną kategorię (asset.category), więc odczyt asset.category.key 
     nie wysyła dodatkowych zapytań do bazy.
     """
-    stmt = select(Asset).join(Asset.category).options(contains_eager(Asset.category)).order_by(AssetCategory.sort_order, Asset.id)
+    stmt = select(Asset).join(Asset.category).options(contains_eager(Asset.category)).order_by(AssetCategory.module, AssetCategory.sort_order, AssetCategory.id, Asset.id)
     if module is not None:
         stmt = stmt.where(AssetCategory.module == module)
     if category is not None:
