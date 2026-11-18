@@ -4,7 +4,7 @@
 }
 
 /* Środkowe przyciski: brak prawej ramki żeby unikać podwójnej granicy między opcjami */
-.group > :not(:last-child) {
+.group:not(.wrap) > :not(:last-child) {
   border-right: none;
 }
 
@@ -13,4 +13,11 @@
 .group > button[aria-pressed='true'],
 .group > button:active:not(:disabled) {
   transform: none;
+}
+
+/* wrap: przy zawijaniu przycisk na końcu wiersza nie może stracić prawej ramki,
+   więc opcje stoją osobno, z odstępem, każda z pełną ramką. */
+.wrap {
+  flex-wrap: wrap;
+  gap: var(--space-2);
 }

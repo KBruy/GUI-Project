@@ -46,7 +46,6 @@
 }
 
 .sm .label {
-  max-width: var(--space-6);
   font-size: var(--font-size-sm);
 }
 
