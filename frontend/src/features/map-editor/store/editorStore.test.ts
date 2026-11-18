@@ -475,4 +475,75 @@ describe('editor store', () => {
       expect(store().projectId).toBeNull()
     })
   })
+
+  describe('opening a project', () => {
+    // Zapisany projekt: drzewo 64×64 wystaje 20 px za prawą krawędź mapy 640×480.
+    const savedProject = () => {
+      const scene = makeScene()
+      scene.layers[1].objects.push({
+        id: 'obj-1',
+        assetId: TREE.id,
+        x: 628,
+        y: 100,
+        width: 64,
+        height: 64,
+        rotation: 0,
+        scaleX: 1,
+        scaleY: 1,
+      })
+      return { ...scene, id: 'p-1' }
+    }
+
+    afterEach(() => {
+      vi.unstubAllGlobals()
+    })
+
+    it('loads the project and pushes sticking out objects into the map', async () => {
+      const fetch = vi.fn(() => Promise.resolve(new Response(JSON.stringify(savedProject()))))
+      vi.stubGlobal('fetch', fetch)
+      const opening = store().openProject('p-1')
+      expect(store().openingId).toBe('p-1')
+      await opening
+
+      expect(fetch).toHaveBeenCalledWith(expect.stringMatching(/\/api\/projects\/p-1$/), {
+        method: 'GET',
+      })
+      expect(store().projectId).toBe('p-1')
+      expect(store().openingId).toBeNull()
+      expect(store().scene!.layers[1].objects[0]).toMatchObject({ x: 608, y: 100 })
+      expect(hasUnsavedChanges(store())).toBe(false)
+    })
+
+    it('keeps the current scene when the project does not exist', async () => {
+      const error = { code: 'PROJECT_NOT_FOUND', messageKey: 'errors.projectNotFound' }
+      vi.stubGlobal(
+        'fetch',
+        vi.fn(() => Promise.resolve(new Response(JSON.stringify({ error }), { status: 404 })))
+      )
+      const scene = store().scene
+
+      await expect(store().openProject('nope')).rejects.toMatchObject({
+        messageKey: 'errors.projectNotFound',
+      })
+      expect(store().scene).toBe(scene)
+      expect(store().openingId).toBeNull()
+    })
+
+    it('ignores a project that arrives after another one was opened', async () => {
+      let answer: (response: Response) => void = () => {}
+      vi.stubGlobal(
+        'fetch',
+        vi.fn(() => new Promise<Response>((resolve) => (answer = resolve)))
+      )
+      const first = store().openProject('p-1')
+      const firstAnswer = answer
+      const second = store().openProject('p-2')
+      answer(new Response(JSON.stringify({ ...savedProject(), id: 'p-2' })))
+      await second
+      firstAnswer(new Response(JSON.stringify(savedProject())))
+      await first
+
+      expect(store().projectId).toBe('p-2')
+    })
+  })
 })
