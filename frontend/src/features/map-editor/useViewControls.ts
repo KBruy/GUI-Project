@@ -30,6 +30,8 @@ export function useViewControls(ref: RefObject<HTMLElement | null>) {
     if (!element) return
     function onWheel(event: WheelEvent) {
       event.preventDefault()
+      // Przewijanie w bok (touchpad, Shift + kółko) nie zmienia zoomu.
+      if (event.deltaY === 0) return
       const rect = element!.getBoundingClientRect()
       const zoom = useEditorStore.getState().zoom
       const factor = event.deltaY < 0 ? ZOOM_STEP : 1 / ZOOM_STEP
@@ -42,6 +44,8 @@ export function useViewControls(ref: RefObject<HTMLElement | null>) {
   useEffect(() => {
     function onKeyDown(event: KeyboardEvent) {
       if (isTyping(event.target)) return
+      // Ctrl/Cmd z + i − to zoom przeglądarki: nie zmieniamy przy nim jeszcze zoomu canvasu.
+      if (event.ctrlKey || event.metaKey) return
       const zoom = useEditorStore.getState().zoom
       if (event.code === 'Space') {
         // Bez tego spacja przewija stronę albo „klika” przycisk z fokusem.
@@ -56,11 +60,17 @@ export function useViewControls(ref: RefObject<HTMLElement | null>) {
     function onKeyUp(event: KeyboardEvent) {
       if (event.code === 'Space') setSpaceDown(false)
     }
+    // Po Alt+Tab z wciśniętą spacją keyup nie dochodzi do okna, więc spacja „zawisłaby”.
+    function onBlur() {
+      setSpaceDown(false)
+    }
     window.addEventListener('keydown', onKeyDown)
     window.addEventListener('keyup', onKeyUp)
+    window.addEventListener('blur', onBlur)
     return () => {
       window.removeEventListener('keydown', onKeyDown)
       window.removeEventListener('keyup', onKeyUp)
+      window.removeEventListener('blur', onBlur)
     }
   }, [zoomTo])
 

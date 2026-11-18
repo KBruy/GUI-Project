@@ -92,5 +92,22 @@ describe('editor store', () => {
 
       expect(store().offset.x).toBe(800 - 64)
     })
+
+    it('keeps the middle of the view in the middle after a resize', () => {
+      const { zoom, offset } = store()
+      store().setViewport({ width: 1000, height: 500 })
+
+      // Zoom się nie zmienia, a widok przesuwa się o połowę różnicy rozmiarów.
+      expect(store().zoom).toBe(zoom)
+      expect(store().offset).toEqual({ x: offset.x + 100, y: offset.y - 50 })
+    })
+
+    it('keeps the scene on the screen after the canvas shrinks', () => {
+      // Mapa przesunięta do prawej krawędzi, a potem canvas zwęża się do 300 px.
+      store().panBy(10_000, 0)
+      store().setViewport({ width: 300, height: 600 })
+
+      expect(store().offset.x).toBe(300 - 64)
+    })
   })
 })
