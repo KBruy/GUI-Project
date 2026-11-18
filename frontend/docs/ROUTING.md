@@ -8,10 +8,13 @@ Biblioteka: `react-router` (tryb biblioteki, bez generowania tras z plików).
 | ------------ | -------------------------- | ----------------------------- |
 | `/`          | `HomePage.tsx`             | strona startowa               |
 | `/map`       | `MapEditorPage.tsx`        | edytor map (F-29 i dalej)     |
+| `/map/<id>`  | `MapEditorPage.tsx`        | zapisany projekt mapy (F-38)  |
 | `/character` | `CharacterCreatorPage.tsx` | kreator postaci (F-42)        |
 | `/projects`  | `ProjectsPage.tsx`         | lista projektów (F-39)        |
 | `/dev/ui`    | `DevUiPage.tsx`            | katalog komponentów shared    |
 | `*`          | `NotFoundPage.tsx`         | 404 dla każdego innego adresu |
+
+`/map` i `/map/<id>` to jedna trasa `/map/:id?`, więc po pierwszym zapisie edytor nie montuje się od nowa (zob. `API.md`, „Zapis i wczytywanie mapy”).
 
 Wszystkie trasy są dziećmi `AppLayout`, więc każda strona ma ten sam nagłówek i stopkę. Strona `/dev/ui` nie jest w menu, wchodzi się na nią z paska adresu.
 
