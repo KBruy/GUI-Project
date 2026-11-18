@@ -135,7 +135,10 @@ function clampMove(scene: Scene, ids: string[], delta: Point): Point {
   // Zakłada, że obiekty już są w całości na mapie: edytor nie pozwala postawić ich inaczej.
   // Sceny z backendu (wczytanie, import) mogą mieć obiekty wystające, bo backend sprawdza
   // tylko środek. Dosuwamy je do mapy przy wczytaniu sceny (F-38).
-  const clamp = (value: number, min: number, max: number) => Math.max(min, Math.min(max, value))
+  // Granice obróconego obiektu wychodzą z sinusa, np. 45,2548… Zaokrąglamy je do pół piksela
+  // w stronę środka mapy, żeby x i y zostały na pół pikselu, tak jak po normalizeTransform.
+  const clamp = (value: number, min: number, max: number) =>
+    Math.max(Math.ceil(min * 2) / 2, Math.min(Math.floor(max * 2) / 2, value))
   return {
     x: clamp(
       delta.x,

@@ -377,5 +377,15 @@ describe('editor store', () => {
       store().undo()
       expect(tree(0)).toMatchObject({ rotation: 0, scaleX: 1 })
     })
+
+    it('keeps a turned object on half pixels when it stops at the map edge', () => {
+      const id = tree(0).id
+      store().transformObject(id, { ...turn, rotation: 45 })
+      store().select([id])
+      store().moveSelected({ x: -1000, y: 0 })
+
+      // Obrócony o 45° kwadrat 64 px ma pół szerokości 45,25…, więc staje w 45,5, a nie w 45,2548….
+      expect(tree(0).x).toBe(45.5)
+    })
   })
 })
