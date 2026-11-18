@@ -174,13 +174,13 @@ def test_list_assets_without_filters_returns_all_sorted(db: Session) -> None:
     assets = list_assets(db)
 
     assert _ids(assets) == [
-        # sort_order 10 (trees, bushes, hair), w środku po id assetu
+        # najpierw moduł character (alfabetycznie przed map): hair (10), eyes (20)
         "char_hair_short",
-        "map_bush_01",
+        "char_eyes_blue",
+        # potem map: trees (10, id 1), bushes (10, id 3), rocks (20)
         "map_tree_oak_01",
         "map_tree_pine_01",
-        # sort_order 20 (rocks, eyes)
-        "char_eyes_blue",
+        "map_bush_01",
         "map_rock_01",
     ]
 
@@ -189,7 +189,8 @@ def test_list_assets_without_filters_returns_all_sorted(db: Session) -> None:
 def test_list_assets_filters_by_module(db: Session) -> None:
     assets = list_assets(db, module="map")
 
-    assert _ids(assets) == ["map_bush_01", "map_tree_oak_01", "map_tree_pine_01", "map_rock_01"]
+    # trees i bushes mają sort_order 10, więc o kolejności decyduje id kategorii (1 przed 3).
+    assert _ids(assets) == ["map_tree_oak_01", "map_tree_pine_01", "map_bush_01", "map_rock_01"]
 
 
 @pytest.mark.usefixtures("sample_data")
@@ -233,7 +234,7 @@ def test_list_assets_loads_category_in_single_query(db: Session) -> None:
     finally:
         event.remove(engine, "before_cursor_execute", count_query)
 
-    assert keys == ["bushes", "trees", "trees", "rocks"]
+    assert keys == ["trees", "trees", "bushes", "rocks"]
     assert len(statements) == 1
 
 
