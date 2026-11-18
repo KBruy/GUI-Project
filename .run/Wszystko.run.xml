@@ -1,0 +1,8 @@
+<component name="ProjectRunConfigurationManager">
+  <configuration default="false" name="Wszystko" type="CompoundRunConfigurationType">
+    <toRun name="Baza (docker)" type="docker-deploy" />
+    <toRun name="Backend (uvicorn)" type="ShConfigurationType" />
+    <toRun name="Frontend (vite)" type="js.build_tools.npm" />
+    <method v="2" />
+  </configuration>
+</component>

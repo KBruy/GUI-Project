@@ -42,6 +42,11 @@ export function zoomAt(view: View, anchor: Point, zoom: number): View {
   return { zoom: next, offset: { x: anchor.x - sceneX * next, y: anchor.y - sceneY * next } }
 }
 
+// Punkt na ekranie (np. środek canvasu albo miejsce upuszczenia) → punkt sceny.
+export function toScenePoint(screen: Point, view: View): Point {
+  return { x: (screen.x - view.offset.x) / view.zoom, y: (screen.y - view.offset.y) / view.zoom }
+}
+
 // Największy zoom, przy którym cała mapa mieści się na ekranie, z mapą na środku.
 export function fitView(scene: Size, viewport: Size): View {
   const zoom = clampZoom(

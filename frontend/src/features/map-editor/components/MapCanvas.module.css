@@ -3,3 +3,17 @@
   position: absolute;
   inset: 0;
 }
+
+/* Współrzędne chwyconego obiektu przy kursorze podczas przeciągania (F-33). */
+.coords {
+  position: absolute;
+  pointer-events: none;
+  padding: 0 var(--space-1);
+  font-family: var(--font-body);
+  font-size: var(--font-size-md);
+  color: var(--color-text);
+  background: var(--color-surface);
+  border: var(--pixel-border);
+  box-shadow: var(--pixel-shadow);
+  white-space: nowrap;
+}

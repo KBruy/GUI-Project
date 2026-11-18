@@ -1,5 +1,6 @@
-import { beforeEach, describe, expect, it } from 'vitest'
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import type { Scene } from '@worldsmith/engine'
+import type { Asset } from '@/shared/lib/assets'
 import { addObject } from '../engine/engine'
 import { useEditorStore } from './editorStore'
 
@@ -40,6 +41,61 @@ describe('editor store', () => {
 
     expect(result).toEqual({ ok: true })
     expect(store().scene?.layers[1].objects).toHaveLength(1)
+  })
+
+  describe('selection', () => {
+    // Drzewo 64×64 na dolnej warstwie, nad nim drugie na górnej i trzecie obok.
+    beforeEach(() => {
+      store().execute(addObject('ground', TREE, { x: 100, y: 100 }))
+      store().execute(addObject('top', TREE, { x: 100, y: 100 }))
+      store().execute(addObject('top', TREE, { x: 300, y: 100 }))
+    })
+    const ids = () => store().scene!.layers.flatMap((layer) => layer.objects.map((o) => o.id))
+
+    it('selects the topmost object under the point', () => {
+      const [, top] = ids()
+      store().selectAt({ x: 110, y: 90 }, false)
+
+      expect(store().selectedIds).toEqual([top])
+    })
+
+    it('clears the selection on a click in an empty spot', () => {
+      store().select(ids())
+      store().selectAt({ x: 500, y: 400 }, false)
+
+      expect(store().selectedIds).toEqual([])
+    })
+
+    it('toggles objects with shift and ignores empty spots', () => {
+      const [, a, b] = ids()
+      store().selectAt({ x: 100, y: 100 }, false)
+      store().selectAt({ x: 300, y: 100 }, true)
+      expect(store().selectedIds).toEqual([a, b])
+
+      store().selectAt({ x: 500, y: 400 }, true)
+      store().selectAt({ x: 100, y: 100 }, true)
+      expect(store().selectedIds).toEqual([b])
+    })
+
+    it('selects every object touched by the rectangle', () => {
+      const [ground, a, b] = ids()
+      store().selectInRect({ x: 0, y: 0, width: 120, height: 120 }, false)
+      expect(store().selectedIds).toEqual([ground, a])
+
+      store().selectInRect({ x: 280, y: 80, width: 10, height: 10 }, true)
+      expect(store().selectedIds).toEqual([ground, a, b])
+    })
+
+    it('skips objects on hidden layers', () => {
+      const scene = store().scene!
+      store().loadScene({
+        ...scene,
+        layers: scene.layers.map((layer) => ({ ...layer, visible: layer.id === 'ground' })),
+      })
+      store().selectInRect({ x: 0, y: 0, width: 640, height: 480 }, false)
+
+      expect(store().selectedIds).toEqual([scene.layers[0].objects[0].id])
+    })
   })
 
   it('drops removed objects from the selection on undo', () => {
@@ -108,6 +164,169 @@ describe('editor store', () => {
       store().setViewport({ width: 300, height: 600 })
 
       expect(store().offset.x).toBe(300 - 64)
+    })
+  })
+
+  describe('assets', () => {
+    const ROCK: Asset = {
+      id: 'map_rock_01',
+      module: 'map',
+      category: 'rocks',
+      nameKey: 'assets.map.rock',
+      file: 'map/rocks/map_rock_01.png',
+      width: 32,
+      height: 32,
+    }
+
+    beforeEach(() => {
+      // Widok 1:1 bez przesunięcia: punkt ekranu = punkt sceny. Środek canvasu to (100, 90).
+      useEditorStore.setState({
+        viewport: { width: 200, height: 180 },
+        zoom: 1,
+        offset: { x: 0, y: 0 },
+      })
+    })
+
+    afterEach(() => {
+      vi.unstubAllGlobals()
+    })
+
+    it('loads the map assets from the backend', async () => {
+      vi.stubGlobal(
+        'fetch',
+        vi.fn(() => Promise.resolve(new Response(JSON.stringify([ROCK]), { status: 200 })))
+      )
+      await store().loadAssets()
+      expect(store().assets).toEqual([ROCK])
+      expect(store().assetsError).toBeNull()
+    })
+
+    it('keeps the error key when the backend is down', async () => {
+      vi.stubGlobal(
+        'fetch',
+        vi.fn(() => Promise.reject(new TypeError('Failed to fetch')))
+      )
+      await store().loadAssets()
+      expect(store().assetsError).toBe('errors.network')
+    })
+
+    it('adds the asset in the middle of the view, snapped to the grid', () => {
+      expect(store().addAsset(ROCK)).toEqual({ ok: true })
+      // Środek (100, 90) → lewy górny róg (84, 74) → siatka (96, 64) → środek obiektu (112, 80).
+      expect(store().scene!.layers[1].objects[0]).toMatchObject({ x: 112, y: 80 })
+    })
+
+    it('does not snap when snapping is off', () => {
+      store().setGridSnap(false)
+      store().addAsset(ROCK)
+      expect(store().scene!.layers[1].objects[0]).toMatchObject({ x: 100, y: 90 })
+      store().setGridSnap(true)
+    })
+
+    it('keeps the whole object inside the map', () => {
+      store().addAsset(ROCK, { x: 630, y: -50 })
+      expect(store().scene!.layers[1].objects[0]).toMatchObject({ x: 624, y: 16 })
+    })
+
+    it('refuses to add on top of another object at a given point', () => {
+      store().addAsset(ROCK, { x: 100, y: 100 })
+      expect(store().addAsset(ROCK, { x: 100, y: 100 })).toMatchObject({ ok: false })
+      expect(store().scene!.layers[1].objects).toHaveLength(1)
+    })
+
+    it('puts the next object in the nearest free spot around the middle', () => {
+      store().addAsset(ROCK)
+      expect(store().addAsset(ROCK)).toEqual({ ok: true })
+      const [first, second] = store().scene!.layers[1].objects
+      expect(second.x !== first.x || second.y !== first.y).toBe(true)
+      // Sąsiednie pole siatki, nie dalej.
+      expect(Math.abs(second.x - first.x)).toBeLessThanOrEqual(32)
+      expect(Math.abs(second.y - first.y)).toBeLessThanOrEqual(32)
+    })
+  })
+  describe('moveSelected', () => {
+    // Dwa drzewa 64×64 na górnej warstwie: A w (100, 100) i B w (300, 100).
+    beforeEach(() => {
+      store().execute(addObject('top', TREE, { x: 100, y: 100 }))
+      store().execute(addObject('top', TREE, { x: 300, y: 100 }))
+    })
+    const objects = () => store().scene!.layers[1].objects
+
+    it('moves all selected objects in one undo step', () => {
+      store().select(objects().map((o) => o.id))
+
+      expect(store().moveSelected({ x: 10, y: 32 })).toEqual({ ok: true })
+      expect(objects()).toMatchObject([
+        { x: 110, y: 132 },
+        { x: 310, y: 132 },
+      ])
+
+      store().undo()
+      expect(objects()).toMatchObject([
+        { x: 100, y: 100 },
+        { x: 300, y: 100 },
+      ])
+    })
+
+    it('stops the group at the map edge', () => {
+      store().select(objects().map((o) => o.id))
+      store().moveSelected({ x: -500, y: 1000 })
+
+      // Lewa krawędź A (68) dochodzi do 0, a dolna krawędź obu do 480.
+      expect(objects()).toMatchObject([
+        { x: 32, y: 448 },
+        { x: 232, y: 448 },
+      ])
+    })
+
+    it('does not move into another object on the same layer', () => {
+      const [a] = objects()
+      store().select([a.id])
+
+      expect(store().moveSelected({ x: 150, y: 0 })).toMatchObject({ ok: false })
+      expect(objects()[0]).toMatchObject({ x: 100, y: 100 })
+    })
+
+    it('lets objects on different layers overlap', () => {
+      store().execute(addObject('ground', TREE, { x: 200, y: 300 }))
+      const [a] = objects()
+      store().select([a.id])
+
+      expect(store().moveSelected({ x: 100, y: 200 })).toEqual({ ok: true })
+    })
+  })
+  describe('planMove', () => {
+    // Drzewo 64×64 w (100, 100), lewy górny róg w (68, 68), i drugie w (300, 100).
+    beforeEach(() => {
+      store().execute(addObject('top', TREE, { x: 100, y: 100 }))
+      store().execute(addObject('top', TREE, { x: 300, y: 100 }))
+      store().select([store().scene!.layers[1].objects[0].id])
+      store().setGridSnap(true)
+    })
+    const first = () => store().scene!.layers[1].objects[0]
+
+    it('snaps the anchor corner to the grid without changing the scene', () => {
+      const before = store().scene
+
+      // Róg 68 + 10 = 78 → najbliższa linia 64, więc wektor −4.
+      expect(store().planMove({ x: 10, y: 10 }, first().id)).toEqual({
+        delta: { x: -4, y: -4 },
+        result: { ok: true },
+      })
+      expect(store().scene).toBe(before)
+    })
+
+    it('keeps the exact vector with snapping off', () => {
+      store().setGridSnap(false)
+      expect(store().planMove({ x: 10, y: 10 }, first().id).delta).toEqual({ x: 10, y: 10 })
+    })
+
+    it('reports a collision with an object on the same layer', () => {
+      const other = store().scene!.layers[1].objects[1]
+      expect(store().planMove({ x: 190, y: 0 }, first().id).result).toEqual({
+        ok: false,
+        collidesWith: [other.id],
+      })
     })
   })
 })

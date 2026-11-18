@@ -17,13 +17,17 @@ editor.getScene()                                     // aktualna scena (nowy ob
 const off = editor.subscribe((scene) => ...)          // off() wypisuje słuchacza
 editor.execute(addObject(layerId, asset, { x, y }))   // { ok: true } albo { ok: false, collidesWith: [...] }
 editor.execute(transformObjects([id], { x: 320 }))
+editor.execute(moveObjects(ids, { x: 32, y: 0 }))     // przesuwa kilka obiektów o ten sam wektor, jeden krok cofania
 editor.execute(removeObjects([id]))
 editor.canPlace(id, { x, y })                         // to samo co wyżej, ale bez zmiany sceny (podgląd przy przeciąganiu)
+editor.canExecute(moveObjects(ids, delta))            // wynik dowolnego polecenia bez zmiany sceny
 editor.undo()
 editor.redo()
 editor.snapToGrid({ x, y })                           // najbliższy punkt siatki
 editor.objectsInRect({ x, y, width, height })         // id obiektów z widocznych warstw
 ```
+
+`moveObjects` i `canExecute` dopisaliśmy przy przeciąganiu (F-33), nie ma ich w rozdz. 6.3. `transformObjects` ustawia wszystkim obiektom te same wartości, więc nie przesunie grupy, a `canPlace` sprawdza jeden obiekt i uznałby kolizję z innym obiektem z tej samej grupy. Do uzgodnienia z Kubą, żeby prawdziwy silnik miał to samo.
 
 ## Uproszczenia zaślepki
 

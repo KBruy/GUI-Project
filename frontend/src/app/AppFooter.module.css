@@ -1,4 +1,8 @@
 .footer {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  gap: var(--space-4);
   padding: var(--space-4) var(--space-6);
   border-top: var(--pixel-border);
   color: var(--color-text-muted);
@@ -7,4 +11,22 @@
 
 .footer a {
   color: var(--color-text);
+}
+
+/* Kwadratowa kropka przed tekstem statusu; sam tekst też mówi, co się dzieje. */
+.server::before {
+  content: '';
+  display: inline-block;
+  width: 8px;
+  height: 8px;
+  margin-right: var(--space-2);
+  background: currentColor;
+}
+
+.server[data-state='online'] {
+  color: var(--color-success);
+}
+
+.server[data-state='offline'] {
+  color: var(--color-danger);
 }

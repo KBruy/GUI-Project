@@ -1,8 +1,21 @@
 import { fireEvent, render, screen, within } from '@testing-library/react'
 import { createMemoryRouter, RouterProvider } from 'react-router'
-import { afterEach, describe, expect, it } from 'vitest'
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { AppProviders } from './AppProviders'
 import { routes } from './router'
+
+// Stopka odpytuje /api/health. Domyślnie fetch nigdy nie odpowiada (stan „sprawdzam”),
+// żeby testy nie łączyły się z prawdziwym backendem.
+beforeEach(() => {
+  vi.stubGlobal(
+    'fetch',
+    vi.fn(() => new Promise(() => {}))
+  )
+})
+
+afterEach(() => {
+  vi.unstubAllGlobals()
+})
 
 // Pamięciowy router z tymi samymi trasami co aplikacja, ale startujący od podanego adresu.
 function renderAt(path: string) {
@@ -56,6 +69,26 @@ describe('AppLayout', () => {
       'href',
       'https://github.com/Joangeldelarosa/pxlkit/blob/main/LICENSE-ASSETS'
     )
+  })
+})
+
+describe('server status in the footer', () => {
+  it('shows connected when /api/health answers', async () => {
+    vi.stubGlobal(
+      'fetch',
+      vi.fn(() => Promise.resolve(new Response('{"ok":true}', { status: 200 })))
+    )
+    renderAt('/')
+    expect(await screen.findByText('Serwer: połączono')).toBeInTheDocument()
+  })
+
+  it('shows not connected when the backend is down', async () => {
+    vi.stubGlobal(
+      'fetch',
+      vi.fn(() => Promise.reject(new TypeError('Failed to fetch')))
+    )
+    renderAt('/')
+    expect(await screen.findByText('Serwer: brak połączenia')).toBeInTheDocument()
   })
 })
 

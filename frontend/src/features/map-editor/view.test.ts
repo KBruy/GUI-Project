@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { clampOffset, clampZoom, fitView, zoomAt } from './view'
+import { clampOffset, clampZoom, fitView, toScenePoint, zoomAt } from './view'
 
 const SCENE = { width: 640, height: 480 }
 const VIEWPORT = { width: 800, height: 600 }
@@ -42,5 +42,10 @@ describe('view', () => {
       y: 64 - 480,
     })
     expect(clampOffset({ x: 10, y: 20 }, 1, SCENE, VIEWPORT)).toEqual({ x: 10, y: 20 })
+  })
+
+  it('converts a screen point to a scene point', () => {
+    const view = { zoom: 2, offset: { x: 100, y: 50 } }
+    expect(toScenePoint({ x: 300, y: 250 }, view)).toEqual({ x: 100, y: 100 })
   })
 })

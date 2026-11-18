@@ -32,6 +32,7 @@ box-shadow: var(--pixel-shadow);      /* hard pixel drop-shadow */
 | `--color-on-accent` | Tekst na tle accent |
 | `--color-danger` | Ostrzeżenie, akcja destrukcyjna |
 | `--color-on-danger` | Tekst na tle danger |
+| `--color-success` | Sukces, np. „Serwer: połączono” w stopce |
 | `--color-focus` | Ring fokusu (dostępność) |
 
 ### Odstępy

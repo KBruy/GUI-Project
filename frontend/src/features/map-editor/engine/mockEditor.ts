@@ -44,6 +44,8 @@ export interface Editor {
   subscribe(listener: (scene: Scene) => void): () => void
   execute(command: Command): PlaceResult
   canPlace(objectId: string, transform: Partial<Transform>): PlaceResult
+  // Wynik polecenia bez zmiany sceny (podgląd przeciągania kilku obiektów). Do uzgodnienia z Kubą.
+  canExecute(command: Command): PlaceResult
   undo(): void
   redo(): void
   snapToGrid(point: Point): Point
@@ -104,12 +106,13 @@ export function addObject(layerId: string, asset: AssetSize, at: Point): Command
   }
 }
 
-// Ustawia te same wartości wszystkim podanym obiektom, np. { x: 320, y: 128 } albo { rotation: 90 }.
-export function transformObjects(ids: string[], transform: Partial<Transform>): Command {
+// Zmienia podane obiekty funkcją update i sprawdza kolizje każdego z nich na jego warstwie.
+// Obiekty z ids nie kolidują ze sobą nawzajem, bo przesuwają się razem.
+function updateObjects(ids: string[], update: (object: SceneObject) => SceneObject): Command {
   return (scene) => {
     const collidesWith = new Set<string>()
     const next = mapLayers(scene, (layer) => {
-      const objects = layer.objects.map((o) => (ids.includes(o.id) ? { ...o, ...transform } : o))
+      const objects = layer.objects.map((o) => (ids.includes(o.id) ? update(o) : o))
       for (const moved of objects.filter((o) => ids.includes(o.id))) {
         collisionsWith(objects, moved, ids).forEach((id) => collidesWith.add(id))
       }
@@ -118,6 +121,18 @@ export function transformObjects(ids: string[], transform: Partial<Transform>): 
     if (collidesWith.size > 0) return { collidesWith: [...collidesWith] }
     return { scene: next }
   }
+}
+
+// Ustawia te same wartości wszystkim podanym obiektom, np. { x: 320, y: 128 } albo { rotation: 90 }.
+export function transformObjects(ids: string[], transform: Partial<Transform>): Command {
+  return updateObjects(ids, (o) => ({ ...o, ...transform }))
+}
+
+// Przesuwa podane obiekty o ten sam wektor (przeciąganie kilku zaznaczonych, strzałki).
+// Jedno polecenie, więc Ctrl+Z cofa przesunięcie całej grupy naraz.
+// Nie ma go w rozdz. 6.3, do uzgodnienia z Kubą.
+export function moveObjects(ids: string[], delta: Point): Command {
+  return updateObjects(ids, (o) => ({ ...o, x: o.x + delta.x, y: o.y + delta.y }))
 }
 
 export function removeObjects(ids: string[]): Command {
@@ -157,6 +172,13 @@ export function createEditor(initialScene: Scene): Editor {
       future = []
       setScene(result.scene)
       return { ok: true }
+    },
+
+    canExecute(command) {
+      const result = command(scene)
+      return 'collidesWith' in result
+        ? { ok: false, collidesWith: result.collidesWith }
+        : { ok: true }
     },
 
     canPlace(objectId, transform) {
