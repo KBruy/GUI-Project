@@ -15,11 +15,11 @@ export const square = (id: string, x: number, y: number): SceneObject => ({
   scaleY: 1,
 })
 
-export const layer = (id: string, objects: SceneObject[]): Layer => ({
+export const layer = (id: string, objects: SceneObject[], locked = false): Layer => ({
   id,
   name: id,
   visible: true,
-  locked: false,
+  locked,
   objects,
 })
 

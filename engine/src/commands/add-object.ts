@@ -30,6 +30,9 @@ export function addObject(layerId: string, asset: AssetSize, at: Vec2): Command 
       if (layer === undefined) {
         throw new EngineError('LAYER_NOT_FOUND')
       }
+      if (layer.locked) {
+        throw new EngineError('LAYER_LOCKED')
+      }
       const collidesWith = findCollisions(layer.objects, object)
       if (collidesWith.length > 0) {
         return { ok: false, collidesWith }

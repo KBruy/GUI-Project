@@ -57,4 +57,16 @@ describe('addObject', () => {
     expect(caught instanceof EngineError).toBe(true)
     expect((caught as EngineError).code).toBe('LAYER_NOT_FOUND')
   })
+
+  it('zablokowana warstwa: EngineError z kodem LAYER_LOCKED', () => {
+    const locked = sceneWith([layer('body', [], true)])
+    let caught: unknown
+    try {
+      addObject('body', tree, { x: 100, y: 100 }).apply(locked)
+    } catch (error) {
+      caught = error
+    }
+    expect(caught instanceof EngineError).toBe(true)
+    expect((caught as EngineError).code).toBe('LAYER_LOCKED')
+  })
 })
