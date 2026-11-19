@@ -14,7 +14,9 @@ function transformOf(object: SceneObject): Transform {
  * Polecenie: ustaw te same wartości wszystkim podanym obiektom,
  * np. { x: 320, y: 128 } albo { rotation: 90 } (rozdz. 6.3).
  * Przy kolizji z obiektem, który się nie rusza, zwraca { ok: false, collidesWith }.
- * Obiekty z ids nie kolidują między sobą. Cofnięcie przywraca każdemu jego dawne wartości.
+ * Sprawdza też zmieniane obiekty między sobą,
+ * bo te same wartości mogą je na siebie nałożyć (to samo x i y, powiększenie sąsiadów).
+ * Cofnięcie przywraca każdemu jego dawne wartości.
  */
 export function transformObjects(ids: readonly string[], transform: Partial<Transform>): Command {
   // Wartości sprzed apply, zapisane dla każdego obiektu osobno.
@@ -37,7 +39,9 @@ export function transformObjects(ids: readonly string[], transform: Partial<Tran
           return { ...object, ...transform }
         })
         for (const moved of objects.filter((object) => ids.includes(object.id))) {
-          findCollisions(objects, moved, ids).forEach((id) => collidesWith.add(id))
+          for (const id of findCollisions(objects, moved, [moved.id])) {
+            collidesWith.add(id)
+          }
         }
         return { ...layer, objects }
       })

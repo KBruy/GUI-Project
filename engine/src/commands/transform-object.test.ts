@@ -31,10 +31,20 @@ describe('transformObjects', () => {
     expect(result).toEqual({ ok: false, collidesWith: ['b'] })
   })
 
-  it('przesuwane obiekty nie kolidują między sobą', () => {
+  it('powiększone obiekty nachodzące na siebie: kolizja', () => {
     // Skala 6 robi z a i c kwadraty 120 × 120, które na siebie nachodzą, ale nie sięgają b.
     const result = transformObjects(['a', 'c'], { scaleX: 6, scaleY: 6 }).apply(scene)
-    expect(result.ok).toBe(true)
+    if (result.ok) throw new Error('oczekiwano kolizji')
+    expect([...result.collidesWith].sort()).toEqual(['a', 'c'])
+  })
+
+  it('dwa obiekty ustawione w to samo miejsce: kolizja', () => {
+    const result = transformObjects(['a', 'b'], { x: 400, y: 400 }).apply(scene)
+    expect(result.ok).toBe(false)
+  })
+
+  it('obrót kilku obiektów, które się nie stykają: ok', () => {
+    expect(transformObjects(['a', 'b', 'c'], { rotation: 45 }).apply(scene).ok).toBe(true)
   })
 
   it('cofnij po przesunięciu przywraca pozycję', () => {
