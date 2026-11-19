@@ -2,7 +2,8 @@
 // - strzałki: przesuwają zaznaczone obiekty o 1 px, z Shiftem o jedno pole siatki (32 px),
 //   a przy włączonym przyciąganiu zawsze do następnej linii siatki,
 // - Ctrl+Z (na Macu Cmd+Z): cofnij, Ctrl+Shift+Z albo Ctrl+Y: ponów,
-// - Ctrl+S (Cmd+S): zapisz mapę (F-38).
+// - Ctrl+S (Cmd+S): zapisz mapę (F-38),
+// - Delete albo Backspace: usuń zaznaczone obiekty.
 // Zwraca id obiektu przesuniętego strzałkami: canvas pokazuje przy nim przez chwilę jego (x, y).
 import { useEffect, useRef, useState } from 'react'
 import { toast } from '@/shared/components/ui/Toast/toast'
@@ -43,7 +44,8 @@ export function useEditorShortcuts(): string | null {
       }
       // Skróty nie działają w polach formularza ani przy otwartym oknie (np. „Nowa mapa”).
       if (isTyping(event.target) || document.querySelector('dialog[open]')) return
-      const { scene, selectedIds, gridSnap, moveSelected, undo, redo } = useEditorStore.getState()
+      const { scene, selectedIds, gridSnap, moveSelected, deleteSelected, undo, redo } =
+        useEditorStore.getState()
       if (!scene) return
 
       const key = event.key.toLowerCase()
@@ -52,6 +54,13 @@ export function useEditorShortcuts(): string | null {
         else if ((key === 'z' && event.shiftKey) || key === 'y') redo()
         else return
         event.preventDefault()
+        return
+      }
+
+      // Backspace, bo na Macu nie ma osobnego klawisza Delete.
+      if (event.key === 'Delete' || event.key === 'Backspace') {
+        event.preventDefault()
+        deleteSelected()
         return
       }
 

@@ -26,6 +26,7 @@ const dictionary = {
   'editor.cursor': { pl: 'Pozycja kursora', en: 'Cursor position' },
   'editor.save': { pl: 'Zapisz', en: 'Save' },
   'editor.unsaved': { pl: 'Niezapisane zmiany', en: 'Unsaved changes' },
+  'editor.delete': { pl: 'Usuń', en: 'Delete' },
   'newMap.open': { pl: 'Nowa mapa', en: 'New map' },
   'newMap.title': { pl: 'Nowa mapa', en: 'New map' },
   'newMap.name': { pl: 'Nazwa mapy', en: 'Map name' },

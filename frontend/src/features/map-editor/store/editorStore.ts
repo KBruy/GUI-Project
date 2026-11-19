@@ -10,6 +10,7 @@ import {
   addObject,
   createEditor,
   moveObjects,
+  removeObjects,
   transformObjects,
   type Command,
   type Editor,
@@ -95,6 +96,8 @@ interface EditorState {
   // Przesuwa zaznaczone obiekty o wektor w punktach sceny, jednym krokiem cofania.
   // Wektor jest przycinany tak, żeby cała grupa została w granicach mapy.
   moveSelected: (delta: Point) => PlaceResult
+  // Usuwa zaznaczone obiekty jednym krokiem cofania. Zaznaczenie czyści subscribe.
+  deleteSelected: () => void
   // Podgląd przeciągania zaznaczonych obiektów, bez zmiany sceny. Zwraca wektor po przyciąganiu
   // (lewy górny róg obiektu `anchorId` trafia na siatkę) i przycięciu do mapy oraz wynik kolizji.
   planMove: (delta: Point, anchorId: string) => { delta: Point; result: PlaceResult }
@@ -438,6 +441,11 @@ export const useEditorStore = create<EditorState>()((set, get) => ({
     // Grupa już stoi przy krawędzi: nie zapisujemy pustego kroku w historii cofania.
     if (move.x === 0 && move.y === 0) return { ok: true }
     return get().execute(moveObjects(selectedIds, move))
+  },
+
+  deleteSelected() {
+    const { selectedIds } = get()
+    if (selectedIds.length > 0) get().execute(removeObjects(selectedIds))
   },
 
   planMove(delta, anchorId) {
