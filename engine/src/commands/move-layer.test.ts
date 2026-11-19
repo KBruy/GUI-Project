@@ -34,4 +34,21 @@ describe('moveLayer', () => {
   it('nieznana warstwa: LAYER_NOT_FOUND', () => {
     expect(errorCode(() => moveLayer('missing', 0).apply(scene))).toBe('LAYER_NOT_FOUND')
   })
+
+  it('zablokowanej warstwy nie można przenieść: LAYER_LOCKED', () => {
+    const character = sceneWith([layer('body', [], true), layer('pants', []), layer('shirt', [])])
+    expect(errorCode(() => moveLayer('body', 2).apply(character))).toBe('LAYER_LOCKED')
+  })
+
+  it('nie można przenieść warstwy przez zablokowaną: LAYER_LOCKED', () => {
+    const character = sceneWith([layer('body', [], true), layer('pants', []), layer('shirt', [])])
+    expect(errorCode(() => moveLayer('pants', 0).apply(character))).toBe('LAYER_LOCKED')
+  })
+
+  it('warstwy nad zablokowaną można zamieniać miejscami', () => {
+    const character = sceneWith([layer('body', [], true), layer('pants', []), layer('shirt', [])])
+    const result = moveLayer('shirt', 1).apply(character)
+    if (!result.ok) throw new Error('oczekiwano ok')
+    expect(order(result.scene)).toEqual(['body', 'shirt', 'pants'])
+  })
 })
