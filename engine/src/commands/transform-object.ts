@@ -13,10 +13,8 @@ function transformOf(object: SceneObject): Transform {
 /**
  * Polecenie: ustaw te same wartości wszystkim podanym obiektom,
  * np. { x: 320, y: 128 } albo { rotation: 90 } (rozdz. 6.3).
- * Przy kolizji z obiektem, który się nie rusza, zwraca { ok: false, collidesWith }.
- * Sprawdza też zmieniane obiekty między sobą,
+ * Przy kolizji zwraca { ok: false, collidesWith }. Sprawdza też zmieniane obiekty między sobą,
  * bo te same wartości mogą je na siebie nałożyć (to samo x i y, powiększenie sąsiadów).
- * Cofnięcie przywraca każdemu jego dawne wartości.
  */
 export function transformObjects(ids: readonly string[], transform: Partial<Transform>): Command {
   // Wartości sprzed apply, zapisane dla każdego obiektu osobno.
