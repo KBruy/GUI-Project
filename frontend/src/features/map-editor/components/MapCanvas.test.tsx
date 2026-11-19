@@ -190,6 +190,22 @@ describe('MapCanvas', () => {
     expect(useEditorStore.getState().tool).toBe('brush')
   })
 
+  it('fills the dragged rectangle with the brush asset in one undo step', () => {
+    const { container } = render(<MapCanvas />)
+    const canvas = container.firstElementChild!
+    act(() => useEditorStore.setState({ brush: STONE, tool: 'rect' }))
+
+    // 3 kolumny × 2 rzędy pól 32×32 (64 px ekranu na pole).
+    pointer(canvas, 'pointerDown', 164, 114)
+    pointer(window, 'pointerMove', 292, 178)
+    pointer(window, 'pointerUp', 292, 178)
+    expect(objects()).toHaveLength(6)
+    expect(new Set(objects().map((o) => o.x))).toEqual(new Set([48, 80, 112]))
+
+    act(() => useEditorStore.getState().undo())
+    expect(objects()).toHaveLength(0)
+  })
+
   it('does not drop on top of another object', () => {
     const { container } = render(<MapCanvas />)
 

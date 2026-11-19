@@ -107,7 +107,7 @@ export function MapCanvas() {
   const { drag } = selection
   const placing = usePalettePlacing(ref)
   const { ghost, floating, painted } = placing
-  const painting = useEditorStore((s) => s.tool === 'brush')
+  const painting = useEditorStore((s) => s.tool !== 'select')
   const nudgedId = useEditorShortcuts()
   const transform = useTransformControls()
 
