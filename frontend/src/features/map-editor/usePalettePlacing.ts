@@ -8,7 +8,7 @@
 // pędzel maluje: obiekt staje w każdym wolnym miejscu, przez które przejedzie kursor. Całe pociągnięcie
 // trafia do sceny po puszczeniu przycisku, jednym krokiem cofania. Esc porzuca pociągnięcie.
 // Narzędzie „Prostokąt” działa tak samo, tylko pociągnięcie to wszystkie wolne pola w prostokącie
-// od miejsca wciśnięcia przycisku do kursora.
+// od miejsca wciśnięcia przycisku do kursora. „Wiadro” jednym kliknięciem wypełnia wolne pola całej mapy.
 import {
   useEffect,
   useMemo,
@@ -109,6 +109,16 @@ function rectCells(asset: Asset, start: Point, to: Point): Point[] {
   return ys.flatMap((y) => xs.map((x) => ({ x, y })))
 }
 
+// Pola, na których asset nie koliduje ze sceną. Każde sprawdzamy osobno, bo pola z rectCells
+// nie nachodzą na siebie. Pole, które przyciąganie by przesunęło, pomijamy.
+function freeCells(asset: Asset, cells: Point[]): Point[] {
+  const { planAdd } = useEditorStore.getState()
+  return cells.filter((center) => {
+    const plan = planAdd(asset, center)
+    return plan.result.ok && plan.at.x === center.x && plan.at.y === center.y
+  })
+}
+
 // Stawia asset w punkcie mapy. Przy kolizji niczego nie zmienia i pokazuje komunikat.
 function place(asset: Asset, at: Point) {
   if (!useEditorStore.getState().addAsset(asset, at).ok) toast.error('errors.collision')
@@ -117,8 +127,9 @@ function place(asset: Asset, at: Point) {
 export function usePalettePlacing(ref: RefObject<HTMLElement | null>) {
   const placingAsset = useEditorStore((s) => s.placingAsset)
   // Asset z palety, tylko gdy wybrane jest narzędzie, które nim maluje.
-  const brush = useEditorStore((s) => (s.tool === 'brush' || s.tool === 'rect' ? s.brush : null))
+  const brush = useEditorStore((s) => (s.tool !== 'select' ? s.brush : null))
   const rect = useEditorStore((s) => s.tool === 'rect')
+  const fill = useEditorStore((s) => s.tool === 'fill')
   const [ghost, setGhost] = useState<PlacingGhost | null>(null)
   const [floating, setFloating] = useState<PlacingFloat | null>(null)
   // Środki obiektów namalowanych w trwającym pociągnięciu pędzla. Null: przycisk nie jest wciśnięty.
@@ -179,7 +190,8 @@ export function usePalettePlacing(ref: RefObject<HTMLElement | null>) {
 
     function onMove(event: PointerEvent) {
       const hit = overMap(ref.current, event)
-      if (!hit) return setGhost(null)
+      // Wiadro nie ma podglądu pod kursorem: wypełnia całą mapę.
+      if (!hit || fill) return setGhost(null)
       if (stroke.current && rectStart.current) {
         // Prostokąt: zamiast podglądu pod kursorem widać pola, które zostaną wypełnione.
         fillRect(asset, rectStart.current, hit.at)
@@ -231,15 +243,11 @@ export function usePalettePlacing(ref: RefObject<HTMLElement | null>) {
       window.removeEventListener('pointerup', onUp)
       window.removeEventListener('keydown', onKeyDown)
     }
-  }, [brush, rect, placingAsset, ref])
+  }, [brush, rect, fill, placingAsset, ref])
 
-  // Pociągnięcie prostokątem: każde pole sprawdzamy osobno ze sceną (pola nie nachodzą na siebie).
+  // Pociągnięcie prostokątem: wolne pola od startu do kursora.
   function fillRect(asset: Asset, start: Point, to: Point) {
-    const { planAdd } = useEditorStore.getState()
-    const centers = rectCells(asset, start, to).filter((center) => {
-      const plan = planAdd(asset, center)
-      return plan.result.ok && plan.at.x === center.x && plan.at.y === center.y
-    })
+    const centers = freeCells(asset, rectCells(asset, start, to))
     stroke.current = centers
     setPainted(centers)
   }
@@ -259,6 +267,16 @@ export function usePalettePlacing(ref: RefObject<HTMLElement | null>) {
     event.preventDefault()
     const hit = overMap(ref.current, event)
     if (!hit) return
+    if (fill) {
+      // Wiadro stawia od razu, bez podglądu: na dużej mapie to tysiące obiektów do narysowania.
+      const { width, height } = useEditorStore.getState().scene!
+      const centers = freeCells(
+        brush,
+        rectCells(brush, { x: brush.width / 2, y: brush.height / 2 }, { x: width, y: height })
+      )
+      if (centers.length > 0) useEditorStore.getState().addPainted(brush, centers)
+      return
+    }
     stroke.current = []
     if (rect) {
       rectStart.current = useEditorStore.getState().planAdd(brush, hit.at).at

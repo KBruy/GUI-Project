@@ -206,6 +206,19 @@ describe('MapCanvas', () => {
     expect(objects()).toHaveLength(0)
   })
 
+  it('fills every free cell of the map with one click, in one undo step', () => {
+    const { container } = render(<MapCanvas />)
+    act(() => useEditorStore.getState().addAsset(STONE, { x: 16, y: 16 }))
+    act(() => useEditorStore.setState({ brush: STONE, tool: 'fill' }))
+
+    click(container.firstElementChild!, 164, 114)
+    // Mapa 640×480 to 20×15 pól 32×32, jedno było już zajęte.
+    expect(objects()).toHaveLength(300)
+
+    act(() => useEditorStore.getState().undo())
+    expect(objects()).toHaveLength(1)
+  })
+
   it('does not drop on top of another object', () => {
     const { container } = render(<MapCanvas />)
 

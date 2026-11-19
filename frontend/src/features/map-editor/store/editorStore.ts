@@ -25,8 +25,8 @@ import {
 import { clampOffset, fitView, toScenePoint, zoomAt, type Size } from '../view'
 
 // Narzędzie z panelu „Narzędzia”: zaznaczanie (V) albo malowanie assetem wybranym w palecie:
-// pędzel (B) i prostokąt (R).
-export type Tool = 'select' | 'brush' | 'rect'
+// pędzel (B), prostokąt (R) i wiadro (G).
+export type Tool = 'select' | 'brush' | 'rect' | 'fill'
 
 interface EditorState {
   editor: Editor | null
