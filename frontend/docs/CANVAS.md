@@ -66,7 +66,7 @@ Canvas wypełnia komórkę `EditorLayout` (`position: absolute; inset: 0`). Jego
 - Przy pierwszym wyświetleniu woła `loadAssets()` ze store'u: `GET /api/assets?module=map`. Stan ładowania jest w store (`assetsStatus`, `assetsError`), przy błędzie paleta pokazuje komunikat i przycisk „Spróbuj ponownie”.
 - Kategorie (zakładki `SegmentedControl`) są w kolejności z manifestu. Etykieta to klucz `categories.<module>.<category>`, nazwa assetu to jego `nameKey`. Brak klucza w słowniku = pokazujemy surowy tekst, więc nowy asset od Moniki nie psuje widoku.
 - Kafelek (`OptionTile`) ma obrazek z `assetUrl(file)` (`shared/lib/assets.ts`) i dymek „nazwa · szer.×wys.”. Bez sceny kafelki są wyłączone.
-- Kliknięcie: `addAsset(asset)` stawia obiekt w środku widoku. Jeśli tam coś stoi, szuka najbliższego wolnego miejsca w kolejnych pierścieniach komórek siatki (do 8). Brak miejsca = toast `errors.collision`.
+- Kliknięcie: kafelek staje się pędzlem (`brush` w store, kafelek wciśnięty, nad kafelkami podpowiedź). Nad mapą podgląd jedzie za kursorem (kursor krzyżyk), a każde kliknięcie w mapę woła `addAsset(asset, punkt)`. Kolizja = toast. Esc albo ponowne kliknięcie kafelka wraca do zaznaczania.
 - Przeciągnięcie na mapę: bez systemowego drag&drop. Paleta ustawia `placingAsset` w store, a `features/map-editor/usePalettePlacing.ts` śledzi kursor w całym oknie. Poza mapą przy kursorze jedzie obrazek assetu, nad mapą podgląd obiektu z przyciąganiem, bursztynową ramką przy kolizji i etykietą (x, y). Puszczenie nad mapą woła `addAsset(asset, punkt)`, a puszczenie poza mapą (także na pustym pasie canvasu) albo Esc anuluje. Tu nie szukamy innego miejsca: kolizja = toast.
 - Zasady stawiania (`placeAsset` w store): przy włączonym przyciąganiu lewy górny róg trafia na siatkę, obiekt zawsze mieści się w mapie, a `x`, `y` obiektu to jego środek.
 - `<img>` w `OptionTile` ma `crossOrigin="anonymous"` tak jak `useAssetImage`. Bez tego przeglądarka zapamiętuje obrazek bez nagłówków CORS i canvas nie może go potem wczytać (zamiast grafiki widać czerwone prostokąty).
@@ -79,7 +79,7 @@ Zaznaczenie to `selectedIds` w store (F-32), więc widzą je wszystkie panele. P
 
 - Store: `selectAt(punkt, toggle)` zaznacza najwyższy obiekt pod punktem sceny i zwraca jego id (albo `null`), `selectInRect(prostokąt, add)` zaznacza wszystko, czego prostokąt dotyka, a `select(ids)` ustawia zaznaczenie wprost. Obiekty z ukrytych warstw pomija silnik (`objectsInRect`).
 - Mysz i klawiatura: `features/map-editor/useSelectionControls.ts`. Klik w obiekt zaznacza tylko jego, klik w puste miejsce czyści zaznaczenie. Shift+klik dokłada obiekt albo go zdejmuje. Przeciągnięcie po pustym miejscu (od 3 px) rysuje prostokąt, z Shiftem dokłada do zaznaczenia. Esc czyści zaznaczenie.
-- `MapCanvas` woła najpierw `useViewControls`, potem `useSelectionControls`. Gdy kliknięcie zaczyna przesuwanie widoku (spacja, środkowy przycisk), widok woła `preventDefault`, a zaznaczanie je pomija.
+- `MapCanvas` woła najpierw `useViewControls`, potem pędzel z `usePalettePlacing`, na końcu `useSelectionControls`. Gdy kliknięcie zaczyna przesuwanie widoku (spacja, środkowy przycisk) albo stawia obiekt pędzlem, ten krok woła `preventDefault`, a kolejne je pomijają.
 - Rysowanie: `shared/canvas/SelectionLayer.tsx` jako children `SceneRenderer`. Ramka ma położenie, obrót i skalę obiektu, czerwona linia leży na ciemnym obrysie. Ta sama warstwa rysuje prostokąt zaznaczania. Nie łapie kliknięć.
 
 ## Przesuwanie obiektów

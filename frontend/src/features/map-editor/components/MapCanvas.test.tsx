@@ -86,7 +86,7 @@ afterEach(() => {
   vi.unstubAllGlobals()
   vi.useRealTimers()
   vi.restoreAllMocks()
-  useEditorStore.getState().setPlacingAsset(null)
+  useEditorStore.setState({ placingAsset: null, brush: null })
 })
 
 describe('MapCanvas', () => {
@@ -163,6 +163,26 @@ describe('MapCanvas', () => {
 
     expect(objects()).toHaveLength(0)
     expect(useEditorStore.getState().placingAsset).toBeNull()
+  })
+
+  it('places the brush asset on every click on the map until Escape', () => {
+    const { container } = render(<MapCanvas />)
+    const canvas = container.firstElementChild!
+    act(() => useEditorStore.getState().setBrush(STONE))
+
+    click(canvas, 164, 114)
+    click(canvas, 324, 146)
+    expect(objects().map((o) => [o.x, o.y])).toEqual([
+      [48, 48],
+      [112, 48],
+    ])
+    // Kliknięcie stawia obiekt, a nie zaznacza.
+    expect(useEditorStore.getState().selectedIds).toEqual([])
+
+    act(() => {
+      window.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape' }))
+    })
+    expect(useEditorStore.getState().brush).toBeNull()
   })
 
   it('does not drop on top of another object', () => {

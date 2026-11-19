@@ -90,6 +90,10 @@ interface EditorState {
   // Asset przeciągany właśnie z palety na mapę. Upuszczenie obsługuje MapCanvas.
   placingAsset: Asset | null
   setPlacingAsset: (asset: Asset | null) => void
+  // Pędzel: asset wybrany kliknięciem w palecie. Każde kliknięcie w mapę stawia go w tym miejscu,
+  // aż do Esc albo ponownego kliknięcia tego samego kafelka. Null: zwykłe zaznaczanie.
+  brush: Asset | null
+  setBrush: (asset: Asset | null) => void
   // Punkt mapy pod kursorem (całe piksele sceny) dla paska narzędzi. Null, gdy kursor jest poza mapą.
   cursorPoint: Point | null
   setCursorPoint: (point: Point | null) => void
@@ -248,6 +252,7 @@ export const useEditorStore = create<EditorState>()((set, get) => ({
   assetsError: null,
   assetsStatus: 'idle',
   placingAsset: null,
+  brush: null,
   cursorPoint: null,
   projectId: null,
   savedScene: null,
@@ -404,6 +409,7 @@ export const useEditorStore = create<EditorState>()((set, get) => ({
     return { at: center, result: editor.canExecute(addObject(activeLayerId, asset, center)) }
   },
   setPlacingAsset: (placingAsset) => set({ placingAsset }),
+  setBrush: (brush) => set({ brush }),
 
   setCursorPoint(point) {
     const current = get().cursorPoint

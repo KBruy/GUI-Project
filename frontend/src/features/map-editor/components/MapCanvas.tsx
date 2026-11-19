@@ -104,7 +104,9 @@ export function MapCanvas() {
   const view = useViewControls(ref)
   const selection = useSelectionControls(ref)
   const { drag } = selection
-  const { ghost, floating } = usePalettePlacing(ref)
+  const placing = usePalettePlacing(ref)
+  const { ghost, floating } = placing
+  const brush = useEditorStore((s) => s.brush)
   const nudgedId = useEditorShortcuts()
   const transform = useTransformControls()
 
@@ -191,10 +193,15 @@ export function MapCanvas() {
     <div
       ref={ref}
       className={styles.canvas}
-      style={{ cursor: view.cursor ?? (hideCursor ? 'none' : drag ? 'move' : undefined) }}
-      // Najpierw widok: gdy zacznie przesuwanie, zaznaczanie to pomija (defaultPrevented).
+      style={{
+        cursor:
+          view.cursor ?? (hideCursor ? 'none' : drag ? 'move' : brush ? 'crosshair' : undefined),
+      }}
+      // Najpierw widok, potem pędzel: gdy któryś obsłuży kliknięcie, zaznaczanie je pomija
+      // (defaultPrevented).
       onPointerDown={(e) => {
         view.handlers.onPointerDown(e)
+        placing.onPointerDown(e)
         selection.handlers.onPointerDown(e)
       }}
       onPointerMove={(e) => {

@@ -46,6 +46,10 @@ const dictionary = {
   'palette.loading': { pl: 'Ładowanie grafik…', en: 'Loading assets…' },
   'palette.empty': { pl: 'Brak grafik', en: 'No assets' },
   'palette.retry': { pl: 'Spróbuj ponownie', en: 'Try again' },
+  'palette.brushHint': {
+    pl: 'Naciśnij ESC, żeby wyjść z trybu malowania',
+    en: 'Press ESC to exit paint mode',
+  },
   // Kategorie i nazwy assetów z assets/manifest.json: categories.<moduł>.<kategoria>, assets.<moduł>.<nazwa>.
   'categories.map.terrain': { pl: 'Teren', en: 'Terrain' },
   'categories.map.nature': { pl: 'Natura', en: 'Nature' },
