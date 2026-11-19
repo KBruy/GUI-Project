@@ -7,6 +7,7 @@ import { GridToggles } from '@/features/map-editor/components/GridToggles'
 import { MapCanvas } from '@/features/map-editor/components/MapCanvas'
 import { NewMapButton } from '@/features/map-editor/components/NewMapButton'
 import { SaveButton } from '@/features/map-editor/components/SaveButton'
+import { ToolPanel } from '@/features/map-editor/components/ToolPanel'
 import { ZoomControls } from '@/features/map-editor/components/ZoomControls'
 import { useProjectUrl } from '@/features/map-editor/useProjectUrl'
 import { EditorLayout, Panel, Sidebar, Toolbar } from '@/shared/components/layout/Layout'
@@ -33,6 +34,9 @@ export default function MapEditorPage() {
       }
       left={
         <Sidebar side="left" width={280}>
+          <Panel title={t('editor.tools')}>
+            <ToolPanel />
+          </Panel>
           <Panel title={t('editor.palette')}>
             <AssetPalette />
           </Panel>
