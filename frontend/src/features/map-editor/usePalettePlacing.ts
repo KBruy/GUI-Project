@@ -70,6 +70,20 @@ function ghostAt(asset: Asset, hit: { pointer: Point; at: Point }): PlacingGhost
   }
 }
 
+// Id podglądu obiektu namalowanego w trwającym pociągnięciu (jeszcze nie w scenie).
+const paintedId = (index: number) => `${GHOST_ID}-${index}`
+
+// Namalowane obiekty, na które nachodzi podgląd pod kursorem (dostają bursztynową ramkę).
+// Pomijamy obiekt postawiony właśnie w tym miejscu, żeby ramka nie świeciła przy każdym kroku.
+function paintedCollisions(ghost: SceneObject, centers: Point[]): string[] {
+  return centers.flatMap((center, index) => {
+    const justPainted = index === centers.length - 1 && center.x === ghost.x && center.y === ghost.y
+    const overlaps =
+      Math.abs(center.x - ghost.x) < ghost.width && Math.abs(center.y - ghost.y) < ghost.height
+    return overlaps && !justPainted ? [paintedId(index)] : []
+  })
+}
+
 // Stawia asset w punkcie mapy. Przy kolizji niczego nie zmienia i pokazuje komunikat.
 function place(asset: Asset, at: Point) {
   if (!useEditorStore.getState().addAsset(asset, at).ok) toast.error('errors.collision')
@@ -136,12 +150,18 @@ export function usePalettePlacing(ref: RefObject<HTMLElement | null>) {
 
     function onMove(event: PointerEvent) {
       const hit = overMap(ref.current, event)
-      // W trakcie malowania podgląd pod kursorem znika: widać same malowane obiekty.
+      if (!hit) return setGhost(null)
+      // Podgląd z ramką zostaje pod kursorem także w trakcie malowania. Kolizje liczymy wtedy
+      // także z obiektami namalowanymi w tym pociągnięciu.
+      if (stroke.current) paint(stroke.current, asset, hit.at)
+      const next = ghostAt(asset, hit)
       if (stroke.current) {
-        if (hit) paint(stroke.current, asset, hit.at)
-        return
+        next.collidesWith = [
+          ...next.collidesWith,
+          ...paintedCollisions(next.object, stroke.current),
+        ]
       }
-      setGhost(hit && ghostAt(asset, hit))
+      setGhost(next)
     }
 
     function onUp(event: PointerEvent) {
@@ -189,7 +209,6 @@ export function usePalettePlacing(ref: RefObject<HTMLElement | null>) {
     const hit = overMap(ref.current, event)
     if (!hit) return
     stroke.current = []
-    setGhost(null)
     // Komunikat tylko przy pierwszym miejscu. Dalej zajęte miejsca są po prostu pomijane.
     if (!paint(stroke.current, brush, hit.at)) toast.error('errors.collision')
   }
@@ -199,7 +218,7 @@ export function usePalettePlacing(ref: RefObject<HTMLElement | null>) {
     () =>
       brush
         ? painted.map((center, index) => ({
-            id: `${GHOST_ID}-${index}`,
+            id: paintedId(index),
             assetId: brush.id,
             ...center,
             width: brush.width,
