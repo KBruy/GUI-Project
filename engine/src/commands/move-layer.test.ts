@@ -1,9 +1,14 @@
 import { describe, expect, it } from 'vitest'
 import { moveLayer } from './move-layer'
 import { errorCode, layer, sceneWith } from './test-scene'
+import type { Layer } from '../types'
 
 const scene = sceneWith([layer('grass', []), layer('trees', []), layer('rocks', [])])
 const order = (s: typeof scene) => s.layers.map((l) => l.id)
+
+// Postać: ciało zablokowane na dole, nad nim spodnie i koszulka.
+const characterWith = (layers: Layer[]) => ({ ...sceneWith(layers), type: 'character' as const })
+const character = characterWith([layer('body', [], true), layer('pants', []), layer('shirt', [])])
 
 describe('moveLayer', () => {
   it('przenosi warstwę wyżej', () => {
@@ -36,28 +41,23 @@ describe('moveLayer', () => {
   })
 
   it('zablokowanej warstwy nie można przenieść: LAYER_LOCKED', () => {
-    const character = sceneWith([layer('body', [], true), layer('pants', []), layer('shirt', [])])
     expect(errorCode(() => moveLayer('body', 2).apply(character))).toBe('LAYER_LOCKED')
   })
 
-  it('inne warstwy mogą mijać zablokowaną (edytor map)', () => {
+  it('mapa: inne warstwy mogą mijać zablokowaną (edytor map)', () => {
     const map = sceneWith([layer('grass', []), layer('trees', [], true), layer('rocks', [])])
     const result = moveLayer('rocks', 0).apply(map)
     if (!result.ok) throw new Error('oczekiwano ok')
     expect(order(result.scene)).toEqual(['rocks', 'grass', 'trees'])
   })
 
-  it('warstwy nad zablokowaną można zamieniać miejscami', () => {
-    const character = sceneWith([layer('body', [], true), layer('pants', []), layer('shirt', [])])
+  it('nie można przenieść warstwy pod zablokowane ciało', () => {
+    expect(errorCode(() => moveLayer('pants', 0).apply(character))).toBe('LAYER_LOCKED')
+  })
+
+  it('postać: inne warstwy mogą mijać zablokowaną (edytor map)', () => {
     const result = moveLayer('shirt', 1).apply(character)
     if (!result.ok) throw new Error('oczekiwano ok')
     expect(order(result.scene)).toEqual(['body', 'shirt', 'pants'])
-  })
-
-  it('inne warstwy mogą mijać zablokowaną (edytor map)', () => {
-    const map = sceneWith([layer('grass', []), layer('trees', [], true), layer('rocks', [])])
-    const result = moveLayer('rocks', 0).apply(map)
-    if (!result.ok) throw new Error('oczekiwano ok')
-    expect(order(result.scene)).toEqual(['rocks', 'grass', 'trees'])
   })
 })

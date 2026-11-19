@@ -13,7 +13,8 @@ function withLayerMoved(scene: Scene, from: number, to: number): Scene {
 /**
  * Polecenie: przenieś warstwę na podaną pozycję (0 = najniżej, rysowana jako pierwsza).
  * Pozycja spoza listy jest przycinana do pierwszej albo ostatniej.
- * Zablokowanej warstwy nie można przenieść; inne warstwy mogą ją mijać.
+ * Zablokowanej warstwy nie można przenieść; na mapie inne warstwy mogą ją mijać.
+ * w postaci nie, bo warstwy mają stałą kolejność (rozdz. 5.3), a ciało musi zostać na dole.
  * Rzuca EngineError('LAYER_NOT_FOUND'), gdy warstwy nie ma,
  * i EngineError('LAYER_LOCKED'), gdy przenoszona warstwa jest zablokowana.
  */
@@ -28,11 +29,16 @@ export function moveLayer(layerId: string, toIndex: number): Command {
       if (from === -1) {
         throw new EngineError('LAYER_NOT_FOUND')
       }
+      to = Math.min(Math.max(toIndex, 0), scene.layers.length - 1)
+      const affected =
+        scene.type === 'character'
+          ? scene.layers.slice(Math.min(from, to), Math.max(from, to) + 1)
+          : [scene.layers[from]]
 
-      if (scene.layers[from].locked) {
+      if (affected.some((layer) => layer.locked)) {
         throw new EngineError('LAYER_LOCKED')
       }
-      to = Math.min(Math.max(toIndex, 0), scene.layers.length - 1)
+
       return { ok: true, scene: withLayerMoved(scene, from, to) }
     },
 
