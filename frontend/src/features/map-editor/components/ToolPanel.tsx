@@ -9,6 +9,7 @@ import styles from './ToolPanel.module.css'
 const TOOLS: { tool: Tool; icon: IconName; label: TranslationKey }[] = [
   { tool: 'select', icon: 'Cursor', label: 'tools.select' },
   { tool: 'brush', icon: 'Pencil', label: 'tools.brush' },
+  { tool: 'rect', icon: 'RectFill', label: 'tools.rect' },
 ]
 
 export function ToolPanel() {

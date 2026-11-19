@@ -65,7 +65,8 @@ Canvas wypełnia komórkę `EditorLayout` (`position: absolute; inset: 0`). Jego
 
 - Zaznaczanie (V): klikanie, prostokąt zaznaczania, przeciąganie i uchwyty. Tylko w tym narzędziu działa `useSelectionControls` i widać uchwyty.
 - Pędzel (B): maluje assetem wybranym w palecie (opis niżej).
-- Ikona kursora (`Cursor`) jest narysowana w `Icon.tsx` w formacie Pxlkit, bo paczki jej nie mają.
+- Prostokąt (R): przeciągnięcie po mapie wypełnia assetem z palety wszystkie wolne pola od miejsca wciśnięcia do kursora. Pole ma rozmiar assetu (przy przyciąganiu zaokrąglony w górę do siatki), zajęte pola i pola poza mapą są pomijane. Podgląd jak przy pędzlu, całość to jeden krok cofania, Esc w trakcie porzuca prostokąt.
+- Ikony kursora (`Cursor`) i prostokąta (`RectFill`) są narysowane w `customIcons.ts` w formacie Pxlkit, bo paczki ich nie mają.
 
 ## Paleta assetów
 

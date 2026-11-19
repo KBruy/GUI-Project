@@ -30,6 +30,7 @@ const dictionary = {
   'editor.tools': { pl: 'Narzędzia', en: 'Tools' },
   'tools.select': { pl: 'Zaznaczanie (V)', en: 'Select (V)' },
   'tools.brush': { pl: 'Pędzel (B)', en: 'Brush (B)' },
+  'tools.rect': { pl: 'Prostokąt (R)', en: 'Rectangle (R)' },
   'newMap.open': { pl: 'Nowa mapa', en: 'New map' },
   'newMap.title': { pl: 'Nowa mapa', en: 'New map' },
   'newMap.name': { pl: 'Nazwa mapy', en: 'Map name' },
