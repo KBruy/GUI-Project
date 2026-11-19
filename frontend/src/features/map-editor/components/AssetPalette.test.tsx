@@ -48,7 +48,7 @@ beforeEach(() => {
 
 afterEach(() => {
   vi.unstubAllGlobals()
-  useEditorStore.setState({ placingAsset: null, brush: null })
+  useEditorStore.setState({ placingAsset: null, brush: null, tool: 'select' })
 })
 
 // jsdom nie przekazuje współrzędnych ani przycisku do zdarzeń wskaźnika, więc dopisujemy je ręcznie.
@@ -63,19 +63,16 @@ function pointer(target: Element | Window, type: 'pointerDown' | 'pointerMove', 
 }
 
 describe('AssetPalette', () => {
-  it('shows the assets of the first category and picks one as the brush on click', async () => {
+  it('shows the assets of the first category and picks one for the brush on click', async () => {
     mockFetch(() => Promise.resolve(new Response(JSON.stringify([GRASS, STONE]))))
     renderPalette()
     const tile = await screen.findByRole('button', { name: 'Trawa' })
     expect(screen.queryByRole('button', { name: 'Kamień' })).not.toBeInTheDocument()
 
+    // Przy zaznaczaniu kliknięcie kafelka od razu włącza pędzel. Samo kliknięcie niczego nie dodaje.
     fireEvent.click(tile)
-    expect(useEditorStore.getState().brush).toEqual(GRASS)
+    expect(useEditorStore.getState()).toMatchObject({ brush: GRASS, tool: 'brush' })
     expect(tile).toHaveAttribute('aria-pressed', 'true')
-
-    // Drugie kliknięcie kończy stawianie. Samo kliknięcie w paletę niczego nie dodaje.
-    fireEvent.click(tile)
-    expect(useEditorStore.getState().brush).toBeNull()
     expect(objects()).toHaveLength(0)
   })
 

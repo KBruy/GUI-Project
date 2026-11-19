@@ -24,7 +24,8 @@ import {
 } from '../engine/engine'
 import { clampOffset, fitView, toScenePoint, zoomAt, type Size } from '../view'
 
-export type Tool = 'select' | 'pan'
+// Narzędzie z panelu „Narzędzia”: zaznaczanie (V) albo pędzel (B) z assetem wybranym w palecie.
+export type Tool = 'select' | 'brush'
 
 interface EditorState {
   editor: Editor | null
@@ -94,8 +95,7 @@ interface EditorState {
   // Asset przeciągany właśnie z palety na mapę. Upuszczenie obsługuje MapCanvas.
   placingAsset: Asset | null
   setPlacingAsset: (asset: Asset | null) => void
-  // Pędzel: asset wybrany kliknięciem w palecie. Każde kliknięcie w mapę stawia go w tym miejscu,
-  // aż do Esc albo ponownego kliknięcia tego samego kafelka. Null: zwykłe zaznaczanie.
+  // Asset wybrany w palecie, którym malują narzędzia (pędzel). Null: jeszcze nic nie wybrano.
   brush: Asset | null
   setBrush: (asset: Asset | null) => void
   // Punkt mapy pod kursorem (całe piksele sceny) dla paska narzędzi. Null, gdy kursor jest poza mapą.

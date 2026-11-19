@@ -86,7 +86,7 @@ afterEach(() => {
   vi.unstubAllGlobals()
   vi.useRealTimers()
   vi.restoreAllMocks()
-  useEditorStore.setState({ placingAsset: null, brush: null })
+  useEditorStore.setState({ placingAsset: null, brush: null, tool: 'select' })
 })
 
 describe('MapCanvas', () => {
@@ -168,7 +168,7 @@ describe('MapCanvas', () => {
   it('paints the brush asset along the stroke in one undo step, until Escape', () => {
     const { container } = render(<MapCanvas />)
     const canvas = container.firstElementChild!
-    act(() => useEditorStore.getState().setBrush(STONE))
+    act(() => useEditorStore.setState({ brush: STONE, tool: 'brush' }))
 
     // Co 32 px ekranu (16 px sceny): kamienie 32×32 stają co drugie pole, bez nachodzenia.
     pointer(canvas, 'pointerDown', 164, 114)
@@ -184,7 +184,7 @@ describe('MapCanvas', () => {
     act(() => {
       window.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape' }))
     })
-    expect(useEditorStore.getState().brush).toBeNull()
+    expect(useEditorStore.getState().tool).toBe('select')
   })
 
   it('does not drop on top of another object', () => {

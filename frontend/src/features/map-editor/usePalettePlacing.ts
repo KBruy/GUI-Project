@@ -3,7 +3,7 @@
 // (z przyciąganiem i kolizją), a poza nią sam obrazek assetu przy kursorze (floating).
 // Puszczenie przycisku nad mapą dodaje obiekt, a Esc albo puszczenie poza nią anuluje.
 // Liczy się sama mapa, nie cały canvas: pusty pas canvasu wokół mapy też jest „poza”.
-// Drugi tryb to pędzel (brush w store, kliknięcie kafelka): podgląd jedzie za kursorem nad mapą,
+// Drugi tryb to pędzel (narzędzie „brush” i asset z palety): podgląd jedzie za kursorem nad mapą,
 // a kliknięcie w mapę stawia obiekt (onPointerDown wołany przez MapCanvas). Z wciśniętym przyciskiem
 // pędzel maluje: obiekt staje w każdym wolnym miejscu, przez które przejedzie kursor. Całe pociągnięcie
 // trafia do sceny po puszczeniu przycisku, jednym krokiem cofania. Esc kończy tryb malowania.
@@ -91,7 +91,8 @@ function place(asset: Asset, at: Point) {
 
 export function usePalettePlacing(ref: RefObject<HTMLElement | null>) {
   const placingAsset = useEditorStore((s) => s.placingAsset)
-  const brush = useEditorStore((s) => s.brush)
+  // Asset pędzla, tylko gdy wybrane jest narzędzie „Pędzel”.
+  const brush = useEditorStore((s) => (s.tool === 'brush' ? s.brush : null))
   const [ghost, setGhost] = useState<PlacingGhost | null>(null)
   const [floating, setFloating] = useState<PlacingFloat | null>(null)
   // Środki obiektów namalowanych w trwającym pociągnięciu pędzla. Null: przycisk nie jest wciśnięty.
@@ -176,7 +177,7 @@ export function usePalettePlacing(ref: RefObject<HTMLElement | null>) {
     }
 
     function onKeyDown(event: KeyboardEvent) {
-      if (event.key === 'Escape') useEditorStore.getState().setBrush(null)
+      if (event.key === 'Escape') useEditorStore.getState().setTool('select')
     }
 
     window.addEventListener('pointermove', onMove)

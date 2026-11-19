@@ -1,6 +1,6 @@
 // Paleta assetów mapy (F-31): zakładki kategorii i kafelki z miniaturami.
-// Kliknięcie kafelka wybiera go jako pędzel: potem każde kliknięcie w mapę stawia ten asset
-// na aktywnej warstwie (usePalettePlacing). Drugie kliknięcie kafelka albo Esc kończy stawianie.
+// Kliknięcie kafelka wybiera asset, którym malują narzędzia z panelu „Narzędzia” (ToolPanel).
+// Przy zaznaczaniu kliknięcie od razu włącza pędzel. Esc wraca do zaznaczania.
 // Kafelek można też przeciągnąć na mapę. Nie używamy systemowego przeciągania (drag and drop),
 // tylko zdarzeń wskaźnika: paleta ustawia placingAsset w store, a podgląd i upuszczenie
 // obsługuje MapCanvas, tak samo jak przy przeciąganiu obiektów po mapie.
@@ -26,6 +26,8 @@ export function AssetPalette() {
   const loadAssets = useEditorStore((s) => s.loadAssets)
   const brush = useEditorStore((s) => s.brush)
   const setBrush = useEditorStore((s) => s.setBrush)
+  const painting = useEditorStore((s) => s.tool !== 'select')
+  const setTool = useEditorStore((s) => s.setTool)
   const setPlacingAsset = useEditorStore((s) => s.setPlacingAsset)
   const [picked, setPicked] = useState<string | null>(null)
   // Po przeciągnięciu przeglądarka może jeszcze wysłać click na kafelek: wtedy go pomijamy.
@@ -42,7 +44,8 @@ export function AssetPalette() {
 
   function pick(asset: Asset) {
     if (dragged.current) return
-    setBrush(brush?.id === asset.id ? null : asset)
+    setBrush(asset)
+    if (!painting) setTool('brush')
   }
 
   function startDrag(event: PointerEvent, asset: Asset) {
@@ -95,7 +98,7 @@ export function AssetPalette() {
           label: translate(`categories.map.${c}`, c),
         }))}
       />
-      {brush && <p className={styles.message}>{t('palette.brushHint')}</p>}
+      {painting && <p className={styles.message}>{t('palette.brushHint')}</p>}
       <div className={styles.grid}>
         {assets
           .filter((a) => a.category === category)
@@ -109,7 +112,7 @@ export function AssetPalette() {
                 label={name}
                 tooltip={`${name} · ${asset.width}×${asset.height}`}
                 imageUrl={assetUrl(asset.file)}
-                selected={brush?.id === asset.id}
+                selected={painting && brush?.id === asset.id}
                 disabled={!hasScene}
                 onClick={() => pick(asset)}
                 onPointerDown={(e) => startDrag(e, asset)}

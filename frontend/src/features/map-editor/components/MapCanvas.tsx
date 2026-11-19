@@ -107,7 +107,7 @@ export function MapCanvas() {
   const { drag } = selection
   const placing = usePalettePlacing(ref)
   const { ghost, floating, painted } = placing
-  const brush = useEditorStore((s) => s.brush)
+  const painting = useEditorStore((s) => s.tool === 'brush')
   const nudgedId = useEditorShortcuts()
   const transform = useTransformControls()
 
@@ -130,7 +130,7 @@ export function MapCanvas() {
   // Uchwyty obrotu i skali: tylko przy jednym zaznaczonym obiekcie na widocznej warstwie
   // i nie w trakcie przeciągania. Obiekt bierzemy ze sceny, bez podglądu.
   const handled =
-    !drag && !ghost && selectedIds.length === 1
+    !painting && !drag && !ghost && selectedIds.length === 1
       ? scene?.layers
           .filter((layer) => layer.visible)
           .flatMap((layer) => layer.objects)
@@ -196,7 +196,7 @@ export function MapCanvas() {
       className={styles.canvas}
       style={{
         cursor:
-          view.cursor ?? (hideCursor ? 'none' : drag ? 'move' : brush ? 'crosshair' : undefined),
+          view.cursor ?? (hideCursor ? 'none' : drag ? 'move' : painting ? 'crosshair' : undefined),
       }}
       // Najpierw widok, potem pędzel: gdy któryś obsłuży kliknięcie, zaznaczanie je pomija
       // (defaultPrevented).
