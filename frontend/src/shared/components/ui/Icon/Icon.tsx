@@ -12,13 +12,13 @@ import {
   WarningTriangle, ErrorOctagon,
   Bell, ShieldCheck, Bug,
 } from '@pxlkit/feedback'
-import { Cursor } from './customIcons'
+import { Cursor, RectFill } from './customIcons'
 import styles from './Icon.module.css'
 
 // Dozwolone ikony. Żeby dodać nową: zaimportuj powyżej (albo narysuj w customIcons.ts) i dopisz tutaj.
 const icons = {
   // Narzędzia edytora
-  Cursor, Pencil, Eraser, PaintBucket, Eyedropper,
+  Cursor, Pencil, RectFill, Eraser, PaintBucket, Eyedropper,
   // Akcje
   Undo, Redo, Close, Check, Trash, Edit, Copy, Download, Upload,
   // Nawigacja
