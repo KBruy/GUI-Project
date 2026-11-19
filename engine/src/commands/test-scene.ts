@@ -1,4 +1,5 @@
 import type { Layer, Scene, SceneObject } from '../types'
+import { EngineError } from '../errors'
 
 // Pomocnicze dane tylko dla testów poleceń.
 
@@ -37,3 +38,13 @@ export const sceneWith = (layers: Layer[]): Scene => ({
   createdAt: '2026-11-14T12:00:00Z',
   updatedAt: '2026-11-14T12:00:00Z',
 })
+
+/** Kod błędu EngineError rzuconego przez action albo undefined, gdy błędu nie było. */
+export function errorCode(action: () => unknown): string | undefined {
+  try {
+    action()
+  } catch (error) {
+    return error instanceof EngineError ? error.code : undefined
+  }
+  return undefined
+}
