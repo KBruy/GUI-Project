@@ -19,7 +19,7 @@ const ARROWS: Record<string, { x: number; y: number }> = {
   ArrowDown: { x: 0, y: 1 },
 }
 // Skróty narzędzi z panelu „Narzędzia”.
-const TOOL_KEYS: Record<string, Tool> = { v: 'select', b: 'brush', r: 'rect' }
+const TOOL_KEYS: Record<string, Tool> = { v: 'select', b: 'brush', r: 'rect', g: 'fill' }
 // Jak długo po ostatniej strzałce widać etykietę ze współrzędnymi.
 const NUDGE_LABEL_MS = 1500
 
