@@ -59,6 +59,14 @@ Widok to `zoom` i `offset` w store: punkt sceny `(x, y)` jest na ekranie w `(off
 
 Canvas wypełnia komórkę `EditorLayout` (`position: absolute; inset: 0`). Jego rozmiar mierzy `useElementSize()` z `shared/hooks/` (ResizeObserver), więc Stage dopasowuje się do zmiany rozmiaru okna. Przed pierwszym pomiarem (rozmiar 0) Stage się nie renderuje.
 
+## Narzędzia
+
+`features/map-editor/components/ToolPanel.tsx` w lewym panelu, nad paletą. Narzędzie jest w store (`tool`), skróty w `useEditorShortcuts.ts`.
+
+- Zaznaczanie (V): klikanie, prostokąt zaznaczania, przeciąganie i uchwyty. Tylko w tym narzędziu działa `useSelectionControls` i widać uchwyty.
+- Pędzel (B): maluje assetem wybranym w palecie (opis niżej). Esc wraca do zaznaczania.
+- Ikona kursora (`Cursor`) jest narysowana w `Icon.tsx` w formacie Pxlkit, bo paczki jej nie mają.
+
 ## Paleta assetów
 
 `features/map-editor/components/AssetPalette.tsx` w lewym panelu edytora (F-31).
@@ -66,7 +74,7 @@ Canvas wypełnia komórkę `EditorLayout` (`position: absolute; inset: 0`). Jego
 - Przy pierwszym wyświetleniu woła `loadAssets()` ze store'u: `GET /api/assets?module=map`. Stan ładowania jest w store (`assetsStatus`, `assetsError`), przy błędzie paleta pokazuje komunikat i przycisk „Spróbuj ponownie”.
 - Kategorie (zakładki `SegmentedControl`) są w kolejności z manifestu. Etykieta to klucz `categories.<module>.<category>`, nazwa assetu to jego `nameKey`. Brak klucza w słowniku = pokazujemy surowy tekst, więc nowy asset od Moniki nie psuje widoku.
 - Kafelek (`OptionTile`) ma obrazek z `assetUrl(file)` (`shared/lib/assets.ts`) i dymek „nazwa · szer.×wys.”. Bez sceny kafelki są wyłączone.
-- Kliknięcie: kafelek staje się pędzlem (`brush` w store, kafelek wciśnięty, nad kafelkami podpowiedź). Nad mapą podgląd jedzie za kursorem (kursor krzyżyk), a kliknięcie w mapę stawia obiekt. Z wciśniętym przyciskiem pędzel maluje: obiekt staje w każdym wolnym miejscu pod kursorem (`planAdd` z listą już namalowanych). Całe pociągnięcie trafia do sceny po puszczeniu przycisku, jednym poleceniem `addObjects` (`addPainted` w store), więc Ctrl+Z cofa je naraz. Zajęte pierwsze miejsce = toast, dalej zajęte miejsca są pomijane. Esc albo ponowne kliknięcie kafelka wraca do zaznaczania.
+- Kliknięcie: kafelek staje się assetem narzędzi (`brush` w store), a przy zaznaczaniu od razu włącza się pędzel (kafelek wciśnięty, nad kafelkami podpowiedź). Nad mapą podgląd jedzie za kursorem (kursor krzyżyk), a kliknięcie w mapę stawia obiekt. Z wciśniętym przyciskiem pędzel maluje: obiekt staje w każdym wolnym miejscu pod kursorem (`planAdd` z listą już namalowanych). Całe pociągnięcie trafia do sceny po puszczeniu przycisku, jednym poleceniem `addObjects` (`addPainted` w store), więc Ctrl+Z cofa je naraz. Zajęte pierwsze miejsce = toast, dalej zajęte miejsca są pomijane. Esc albo ponowne kliknięcie kafelka wraca do zaznaczania.
 - Przeciągnięcie na mapę: bez systemowego drag&drop. Paleta ustawia `placingAsset` w store, a `features/map-editor/usePalettePlacing.ts` śledzi kursor w całym oknie. Poza mapą przy kursorze jedzie obrazek assetu, nad mapą podgląd obiektu z przyciąganiem, bursztynową ramką przy kolizji i etykietą (x, y). Puszczenie nad mapą woła `addAsset(asset, punkt)`, a puszczenie poza mapą (także na pustym pasie canvasu) albo Esc anuluje. Tu nie szukamy innego miejsca: kolizja = toast.
 - Zasady stawiania (`placeAsset` w store): przy włączonym przyciąganiu lewy górny róg trafia na siatkę, obiekt zawsze mieści się w mapie, a `x`, `y` obiektu to jego środek.
 - `<img>` w `OptionTile` ma `crossOrigin="anonymous"` tak jak `useAssetImage`. Bez tego przeglądarka zapamiętuje obrazek bez nagłówków CORS i canvas nie może go potem wczytać (zamiast grafiki widać czerwone prostokąty).

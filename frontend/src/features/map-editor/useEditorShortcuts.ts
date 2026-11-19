@@ -3,12 +3,13 @@
 //   a przy włączonym przyciąganiu zawsze do następnej linii siatki,
 // - Ctrl+Z (na Macu Cmd+Z): cofnij, Ctrl+Shift+Z albo Ctrl+Y: ponów,
 // - Ctrl+S (Cmd+S): zapisz mapę (F-38),
-// - Delete albo Backspace: usuń zaznaczone obiekty.
+// - Delete albo Backspace: usuń zaznaczone obiekty,
+// - V: zaznaczanie, B: pędzel (panel „Narzędzia”).
 // Zwraca id obiektu przesuniętego strzałkami: canvas pokazuje przy nim przez chwilę jego (x, y).
 import { useEffect, useRef, useState } from 'react'
 import { toast } from '@/shared/components/ui/Toast/toast'
 import { saveProject } from './saveProject'
-import { useEditorStore } from './store/editorStore'
+import { useEditorStore, type Tool } from './store/editorStore'
 import { isTyping } from './useViewControls'
 
 const ARROWS: Record<string, { x: number; y: number }> = {
@@ -17,6 +18,8 @@ const ARROWS: Record<string, { x: number; y: number }> = {
   ArrowUp: { x: 0, y: -1 },
   ArrowDown: { x: 0, y: 1 },
 }
+// Skróty narzędzi z panelu „Narzędzia”.
+const TOOL_KEYS: Record<string, Tool> = { v: 'select', b: 'brush' }
 // Jak długo po ostatniej strzałce widać etykietę ze współrzędnymi.
 const NUDGE_LABEL_MS = 1500
 
@@ -54,6 +57,11 @@ export function useEditorShortcuts(): string | null {
         else if ((key === 'z' && event.shiftKey) || key === 'y') redo()
         else return
         event.preventDefault()
+        return
+      }
+
+      if (!event.altKey && TOOL_KEYS[key]) {
+        useEditorStore.getState().setTool(TOOL_KEYS[key])
         return
       }
 
