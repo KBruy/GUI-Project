@@ -98,7 +98,6 @@ export function AssetPalette() {
           label: translate(`categories.map.${c}`, c),
         }))}
       />
-      {painting && <p className={styles.message}>{t('palette.brushHint')}</p>}
       <div className={styles.grid}>
         {assets
           .filter((a) => a.category === category)

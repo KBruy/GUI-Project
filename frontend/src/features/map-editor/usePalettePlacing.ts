@@ -176,15 +176,18 @@ export function usePalettePlacing(ref: RefObject<HTMLElement | null>) {
       setGhost(hit && ghostAt(asset, hit))
     }
 
+    // Esc w trakcie malowania porzuca całe pociągnięcie. Narzędzie zmienia tylko panel i V/B.
     function onKeyDown(event: KeyboardEvent) {
-      if (event.key === 'Escape') useEditorStore.getState().setTool('select')
+      if (event.key !== 'Escape' || !stroke.current) return
+      stroke.current = null
+      setPainted([])
     }
 
     window.addEventListener('pointermove', onMove)
     window.addEventListener('pointerup', onUp)
     window.addEventListener('keydown', onKeyDown)
     return () => {
-      // Esc w trakcie malowania porzuca całe pociągnięcie.
+      // Zmiana narzędzia w trakcie malowania porzuca całe pociągnięcie.
       stroke.current = null
       setPainted([])
       setGhost(null)
