@@ -16,6 +16,8 @@ export interface SegmentedControlProps<T extends string> {
   // Etykieta grupy dla czytników ekranu (role="group" aria-label).
   label: string
   size?: ButtonSize
+  // Opcje przechodzą do kolejnego wiersza, gdy brak miejsca (np. kategorie w wąskim panelu).
+  wrap?: boolean
 }
 
 export function SegmentedControl<T extends string>({
@@ -24,9 +26,14 @@ export function SegmentedControl<T extends string>({
   onChange,
   label,
   size,
+  wrap,
 }: SegmentedControlProps<T>) {
   return (
-    <div role="group" aria-label={label} className={styles.group}>
+    <div
+      role="group"
+      aria-label={label}
+      className={[styles.group, wrap && styles.wrap].filter(Boolean).join(' ')}
+    >
       {options.map((option) => (
         <Button
           key={option.value}

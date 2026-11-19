@@ -86,6 +86,7 @@ export function AssetPalette() {
     <div className={styles.palette}>
       <SegmentedControl
         size="sm"
+        wrap
         label={t('palette.categories')}
         value={category}
         onChange={setPicked}
@@ -103,6 +104,7 @@ export function AssetPalette() {
               <OptionTile
                 key={asset.id}
                 size="sm"
+                className={styles.tile}
                 label={name}
                 tooltip={`${name} · ${asset.width}×${asset.height}`}
                 imageUrl={assetUrl(asset.file)}

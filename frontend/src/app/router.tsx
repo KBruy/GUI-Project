@@ -16,7 +16,8 @@ export const routes: RouteObject[] = [
     element: <AppLayout />,
     children: [
       { path: '/', element: <HomePage /> },
-      { path: '/map', element: <MapEditorPage /> },
+      // :id? to zapisany projekt. Jedna trasa, więc edytor nie montuje się od nowa po zapisie.
+      { path: '/map/:id?', element: <MapEditorPage /> },
       { path: '/character', element: <CharacterCreatorPage /> },
       { path: '/projects', element: <ProjectsPage /> },
       { path: '/dev/ui', element: <DevUiPage /> },

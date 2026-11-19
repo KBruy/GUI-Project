@@ -4,10 +4,10 @@
   gap: var(--space-3);
 }
 
-/* Tyle kolumn kafelków, ile zmieści panel. */
+/* Tyle kolumn kafelków, ile zmieści panel. 64 px mieści nazwę do ok. 7 liter. */
 .grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(48px, 1fr));
+  grid-template-columns: repeat(auto-fill, minmax(64px, 1fr));
   gap: var(--space-2);
 }
 
@@ -17,4 +17,9 @@
   align-items: flex-start;
   gap: var(--space-2);
   color: var(--color-text-muted);
+}
+
+/* Kafelek na całą szerokość kolumny, żeby nazwa miała miejsce. */
+.tile {
+  width: 100%;
 }

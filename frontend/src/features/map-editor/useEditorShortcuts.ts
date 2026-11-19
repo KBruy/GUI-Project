@@ -1,10 +1,12 @@
 // Skróty klawiszowe edytora map (F-33):
 // - strzałki: przesuwają zaznaczone obiekty o 1 px, z Shiftem o jedno pole siatki (32 px),
 //   a przy włączonym przyciąganiu zawsze do następnej linii siatki,
-// - Ctrl+Z (na Macu Cmd+Z): cofnij, Ctrl+Shift+Z albo Ctrl+Y: ponów.
+// - Ctrl+Z (na Macu Cmd+Z): cofnij, Ctrl+Shift+Z albo Ctrl+Y: ponów,
+// - Ctrl+S (Cmd+S): zapisz mapę (F-38).
 // Zwraca id obiektu przesuniętego strzałkami: canvas pokazuje przy nim przez chwilę jego (x, y).
 import { useEffect, useRef, useState } from 'react'
 import { toast } from '@/shared/components/ui/Toast/toast'
+import { saveProject } from './saveProject'
 import { useEditorStore } from './store/editorStore'
 import { isTyping } from './useViewControls'
 
@@ -32,6 +34,13 @@ export function useEditorShortcuts(): string | null {
 
   useEffect(() => {
     function onKeyDown(event: KeyboardEvent) {
+      // Ctrl+S zawsze blokujemy, bo inaczej przeglądarka zapisuje całą stronę jako plik HTML.
+      if ((event.ctrlKey || event.metaKey) && event.key.toLowerCase() === 's') {
+        event.preventDefault()
+        // Przytrzymane klawisze powtarzają zdarzenie, a zapis wystarczy jeden.
+        if (!event.repeat && !document.querySelector('dialog[open]')) void saveProject()
+        return
+      }
       // Skróty nie działają w polach formularza ani przy otwartym oknie (np. „Nowa mapa”).
       if (isTyping(event.target) || document.querySelector('dialog[open]')) return
       const { scene, selectedIds, gridSnap, moveSelected, undo, redo } = useEditorStore.getState()

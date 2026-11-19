@@ -3,6 +3,7 @@ import { useT } from '@/i18n/language'
 import type { TranslationKey } from '@/i18n/dictionary'
 import { ThemeSwitcher } from '@/features/settings/ThemeSwitcher'
 import { LanguageSwitcher } from '@/features/settings/LanguageSwitcher'
+import { useUnsavedWarning } from '@/features/map-editor/useUnsavedWarning'
 import { AppFooter } from './AppFooter'
 import styles from './AppLayout.module.css'
 
@@ -16,6 +17,7 @@ const NAV_LINKS: { to: string; labelKey: TranslationKey }[] = [
 // Wspólna rama każdej podstrony: nagłówek z nawigacją i przełącznikami, treść strony (Outlet) i stopka.
 export function AppLayout() {
   const { t } = useT()
+  useUnsavedWarning()
 
   return (
     <div className={styles.layout}>

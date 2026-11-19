@@ -43,8 +43,22 @@ interface EditorState {
   assetsError: TranslationKey | null
   // idle: jeszcze nie pobieraliśmy, done: pobrane albo błąd.
   assetsStatus: 'idle' | 'loading' | 'done'
+  // Zapis projektu. projectId: id projektu w backendzie, null dla mapy jeszcze niezapisanej.
+  projectId: string | null
+  // Scena z chwili ostatniego zapisu albo wczytania. Niezapisane zmiany: hasUnsavedChanges.
+  savedScene: Scene | null
+  saving: boolean
+  // Id projektu, który właśnie pobieramy z backendu, albo null.
+  openingId: string | null
 
-  loadScene: (scene: Scene) => void
+  // projectId podajemy przy wczytaniu zapisanego projektu, nowa mapa go nie ma.
+  loadScene: (scene: Scene, projectId?: string | null) => void
+  // Pierwszy zapis tworzy projekt (POST), kolejne go nadpisują (PUT). Przy błędzie rzuca ApiError,
+  // więc wywołujący pokazuje toast.error(err.messageKey). W trakcie zapisu kolejne wywołania nic nie robią.
+  save: () => Promise<void>
+  // Pobiera zapisany projekt i wczytuje go do edytora. Przy błędzie rzuca ApiError
+  // (np. errors.projectNotFound), a w edytorze zostaje poprzednia scena.
+  openProject: (id: string) => Promise<void>
   execute: (command: Command) => PlaceResult
   undo: () => void
   redo: () => void
@@ -111,30 +125,60 @@ function placeAsset(target: Point, asset: Asset, scene: Scene, snap: boolean): P
   }
 }
 
+// Prostokąt otaczający obiekt na mapie. Obrócony obiekt zajmuje prostokąt wokół obróconych narożników.
+function objectBox(object: SceneObject) {
+  const angle = (object.rotation * Math.PI) / 180
+  const width = object.width * object.scaleX
+  const height = object.height * object.scaleY
+  const halfW = (Math.abs(width * Math.cos(angle)) + Math.abs(height * Math.sin(angle))) / 2
+  const halfH = (Math.abs(width * Math.sin(angle)) + Math.abs(height * Math.cos(angle))) / 2
+  return {
+    x: object.x - halfW,
+    y: object.y - halfH,
+    right: object.x + halfW,
+    bottom: object.y + halfH,
+  }
+}
+
+// Dosuwa do mapy obiekty, które z niej wystają. Backend sprawdza tylko środek obiektu,
+// więc w zapisanym albo zaimportowanym projekcie obiekt może częściowo wystawać,
+// a edytor zakłada, że każdy obiekt jest w całości na mapie (clampMove).
+// Obiekt większy od mapy stawiamy na jej środku. Kolizji po dosunięciu nie sprawdzamy.
+function fitObjectsInMap(scene: Scene): Scene {
+  const axis = (value: number, start: number, end: number, size: number) => {
+    if (end - start > size) return size / 2
+    // Jak w clampMove: przesunięcie do pół piksela w stronę środka mapy.
+    if (start < 0) return value + Math.ceil(-start * 2) / 2
+    if (end > size) return value - Math.ceil((end - size) * 2) / 2
+    return value
+  }
+  return {
+    ...scene,
+    layers: scene.layers.map((layer) => ({
+      ...layer,
+      objects: layer.objects.map((object) => {
+        const box = objectBox(object)
+        return {
+          ...object,
+          x: axis(object.x, box.x, box.right, scene.width),
+          y: axis(object.y, box.y, box.bottom, scene.height),
+        }
+      }),
+    })),
+  }
+}
+
 // Przycina wektor przesunięcia tak, żeby obiekty ids nie wyszły poza mapę. Tak jak w placeAsset
-// to decyzja frontendu (backend sprawdza tylko środek). Obrócony obiekt zajmuje prostokąt
-// otaczający jego obrócone narożniki.
+// to decyzja frontendu (backend sprawdza tylko środek).
 function clampMove(scene: Scene, ids: string[], delta: Point): Point {
   const boxes = scene.layers
     .flatMap((layer) => layer.objects)
     .filter((object) => ids.includes(object.id))
-    .map((object) => {
-      const angle = (object.rotation * Math.PI) / 180
-      const width = object.width * object.scaleX
-      const height = object.height * object.scaleY
-      const halfW = (Math.abs(width * Math.cos(angle)) + Math.abs(height * Math.sin(angle))) / 2
-      const halfH = (Math.abs(width * Math.sin(angle)) + Math.abs(height * Math.cos(angle))) / 2
-      return {
-        x: object.x - halfW,
-        y: object.y - halfH,
-        right: object.x + halfW,
-        bottom: object.y + halfH,
-      }
-    })
+    .map(objectBox)
   if (boxes.length === 0) return { x: 0, y: 0 }
   // Zakłada, że obiekty już są w całości na mapie: edytor nie pozwala postawić ich inaczej.
-  // Sceny z backendu (wczytanie, import) mogą mieć obiekty wystające, bo backend sprawdza
-  // tylko środek. Dosuwamy je do mapy przy wczytaniu sceny (F-38).
+  // Sceny z backendu mogą mieć obiekty wystające, bo backend sprawdza tylko środek,
+  // dlatego openProject dosuwa je do mapy (fitObjectsInMap).
   // Granice obróconego obiektu wychodzą z sinusa, np. 45,2548… Zaokrąglamy je do pół piksela
   // w stronę środka mapy, żeby x i y zostały na pół pikselu, tak jak po normalizeTransform.
   const clamp = (value: number, min: number, max: number) =>
@@ -178,6 +222,11 @@ function normalizeTransform(object: SceneObject, transform: Transform): Transfor
   }
 }
 
+// Czy scena zmieniła się od ostatniego zapisu albo wczytania. Silnik po każdej zmianie daje nowy
+// obiekt sceny, więc wystarczy porównać referencje. Cofnięcie do zapisanego stanu też liczy się
+// jako zmiana, bo to już inny obiekt.
+export const hasUnsavedChanges = (state: EditorState) => state.scene !== state.savedScene
+
 // Wypisuje store z poprzedniego silnika przy wczytaniu nowej sceny.
 let unsubscribe: (() => void) | null = null
 
@@ -197,8 +246,12 @@ export const useEditorStore = create<EditorState>()((set, get) => ({
   assetsStatus: 'idle',
   placingAsset: null,
   cursorPoint: null,
+  projectId: null,
+  savedScene: null,
+  saving: false,
+  openingId: null,
 
-  loadScene(scene) {
+  loadScene(scene, projectId = null) {
     unsubscribe?.()
     const editor = createEditor(scene)
     unsubscribe = editor.subscribe((next) => {
@@ -209,6 +262,8 @@ export const useEditorStore = create<EditorState>()((set, get) => ({
     set({
       editor,
       scene: editor.getScene(),
+      savedScene: editor.getScene(),
+      projectId,
       selectedIds: [],
       // Nowe obiekty trafiają domyślnie na najwyższą warstwę.
       activeLayerId: scene.layers.at(-1)?.id ?? null,
@@ -304,6 +359,38 @@ export const useEditorStore = create<EditorState>()((set, get) => ({
         assetsError: err instanceof ApiError ? err.messageKey : 'errors.serverError',
         assetsStatus: 'done',
       })
+    }
+  },
+
+  async save() {
+    const { editor, scene, projectId, saving } = get()
+    if (!scene || saving) return
+    set({ saving: true })
+    try {
+      // Wysyłamy całą scenę. Backend przy POST nadaje nowe id i daty, ale sceny w edytorze
+      // nie podmieniamy odpowiedzią: id projektu trzymamy osobno, a w trakcie zapisu
+      // użytkownik mógł już coś zmienić.
+      const saved = projectId
+        ? await api.put<Scene>(`/api/projects/${projectId}`, scene)
+        : await api.post<Scene>('/api/projects', scene)
+      // W trakcie zapisu wczytano inną mapę: wynik dotyczy poprzedniej.
+      if (get().editor !== editor) return
+      // Zapisana jest wysłana scena. Zmiany zrobione w trakcie zapisu zostają niezapisane.
+      set({ projectId: saved.id, savedScene: scene })
+    } finally {
+      set({ saving: false })
+    }
+  },
+
+  async openProject(id) {
+    set({ openingId: id })
+    try {
+      const scene = await api.get<Scene>(`/api/projects/${id}`)
+      // W międzyczasie otwarto inny projekt: ten wynik jest już nieaktualny.
+      if (get().openingId !== id) return
+      get().loadScene(fitObjectsInMap(scene), id)
+    } finally {
+      if (get().openingId === id) set({ openingId: null })
     }
   },
 

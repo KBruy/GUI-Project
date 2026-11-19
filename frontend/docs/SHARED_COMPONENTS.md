@@ -61,7 +61,7 @@ Wybór jednej opcji z kilku (motyw, język, narzędzie). Rząd `Button` z `press
 />
 ```
 
-Opcja może mieć `icon`. `size` jak w Button. Typ `value` wynika z `options`, więc `onChange={setTheme}` nie wymaga rzutowania.
+Opcja może mieć `icon`. `size` jak w Button. `wrap` pozwala opcjom przejść do kolejnego wiersza, gdy brak miejsca (kategorie palety): opcje stoją wtedy osobno, z odstępem. Typ `value` wynika z `options`, więc `onChange={setTheme}` nie wymaga rzutowania.
 
 ## Tooltip
 
@@ -139,7 +139,7 @@ Kafelek wyboru z miniaturą i podpisem: paleta assetów, rozmiar mapy w oknie �
 | `size`     | `sm` (paleta) \| `md` (większe kafelki)              | `md`      |
 | `tooltip`  | dodatkowy opis w dymku (gotowy tekst)                | —         |
 
-Bez `imageUrl` i bez `children` kafelek pokazuje krzyżyk: to wariant „Brak”. Kliknięcie obsługuje zwykły `onClick`, a `disabled` daje przerywaną ramkę jak w `Button`.
+Podpis mieści się w szerokości kafelka i ucina się wielokropkiem dopiero wtedy, gdy kafelek ma ustaloną szerokość (w palecie: cała kolumna siatki, `className`). Bez `imageUrl` i bez `children` kafelek pokazuje krzyżyk: to wariant „Brak”. Kliknięcie obsługuje zwykły `onClick`, a `disabled` daje przerywaną ramkę jak w `Button`.
 
 ## Input, Select i Slider (pola formularzy)
 
