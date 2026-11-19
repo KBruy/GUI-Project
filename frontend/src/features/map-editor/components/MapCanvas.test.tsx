@@ -165,19 +165,21 @@ describe('MapCanvas', () => {
     expect(useEditorStore.getState().placingAsset).toBeNull()
   })
 
-  it('places the brush asset on every click on the map until Escape', () => {
+  it('paints the brush asset along the stroke in one undo step, until Escape', () => {
     const { container } = render(<MapCanvas />)
     const canvas = container.firstElementChild!
     act(() => useEditorStore.getState().setBrush(STONE))
 
-    click(canvas, 164, 114)
-    click(canvas, 324, 146)
-    expect(objects().map((o) => [o.x, o.y])).toEqual([
-      [48, 48],
-      [112, 48],
-    ])
-    // Kliknięcie stawia obiekt, a nie zaznacza.
+    // Co 32 px ekranu (16 px sceny): kamienie 32×32 stają co drugie pole, bez nachodzenia.
+    pointer(canvas, 'pointerDown', 164, 114)
+    for (const x of [196, 228, 260, 292]) pointer(window, 'pointerMove', x, 114)
+    pointer(window, 'pointerUp', 292, 114)
+    expect(objects().map((o) => o.x)).toEqual([48, 80, 112])
+    // Malowanie nie zaznacza.
     expect(useEditorStore.getState().selectedIds).toEqual([])
+
+    act(() => useEditorStore.getState().undo())
+    expect(objects()).toHaveLength(0)
 
     act(() => {
       window.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape' }))

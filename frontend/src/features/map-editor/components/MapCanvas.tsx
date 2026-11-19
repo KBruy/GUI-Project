@@ -26,12 +26,13 @@ const SCALE_LIMITS = { min: MIN_SCALE, max: MAX_SCALE }
 const LABEL_SPACE = { x: 112, y: 40 }
 
 // Scena do pokazania podczas przeciągania: obiekty ids przesunięte o wektor, a podgląd assetu
-// z palety (ghost) dopisany na aktywną warstwę. Scena w store zmienia się dopiero po upuszczeniu.
+// z palety i obiekty malowane pędzlem (extra) dopisane na aktywną warstwę. Scena w store zmienia się
+// dopiero po upuszczeniu albo puszczeniu przycisku.
 function previewScene(
   scene: Scene,
   ids: string[],
   delta: Point | null,
-  ghost: SceneObject | null,
+  extra: SceneObject[],
   layerId: string | null,
   transformed: SceneObject | null
 ): Scene {
@@ -42,7 +43,7 @@ function previewScene(
         if (o.id === transformed?.id) return transformed
         return delta && ids.includes(o.id) ? { ...o, x: o.x + delta.x, y: o.y + delta.y } : o
       })
-      return { ...layer, objects: ghost && layer.id === layerId ? [...objects, ghost] : objects }
+      return { ...layer, objects: layer.id === layerId ? [...objects, ...extra] : objects }
     }),
   }
 }
@@ -105,7 +106,7 @@ export function MapCanvas() {
   const selection = useSelectionControls(ref)
   const { drag } = selection
   const placing = usePalettePlacing(ref)
-  const { ghost, floating } = placing
+  const { ghost, floating, painted } = placing
   const brush = useEditorStore((s) => s.brush)
   const nudgedId = useEditorShortcuts()
   const transform = useTransformControls()
@@ -114,17 +115,17 @@ export function MapCanvas() {
   // a podczas obracania i skalowania obiekt po zmianie.
   const shownScene = useMemo(
     () =>
-      scene && (drag || ghost || transform.preview)
+      scene && (drag || ghost || painted.length > 0 || transform.preview)
         ? previewScene(
             scene,
             selectedIds,
             drag?.delta ?? null,
-            ghost?.object ?? null,
+            ghost ? [...painted, ghost.object] : painted,
             activeLayerId,
             transform.preview?.object ?? null
           )
         : scene,
-    [scene, selectedIds, drag, ghost, activeLayerId, transform.preview]
+    [scene, selectedIds, drag, ghost, painted, activeLayerId, transform.preview]
   )
   // Uchwyty obrotu i skali: tylko przy jednym zaznaczonym obiekcie na widocznej warstwie
   // i nie w trakcie przeciągania. Obiekt bierzemy ze sceny, bez podglądu.

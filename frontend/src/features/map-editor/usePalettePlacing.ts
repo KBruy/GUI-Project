@@ -4,8 +4,17 @@
 // Puszczenie przycisku nad mapą dodaje obiekt, a Esc albo puszczenie poza nią anuluje.
 // Liczy się sama mapa, nie cały canvas: pusty pas canvasu wokół mapy też jest „poza”.
 // Drugi tryb to pędzel (brush w store, kliknięcie kafelka): podgląd jedzie za kursorem nad mapą,
-// a każde kliknięcie w mapę stawia obiekt (onPointerDown wołany przez MapCanvas). Esc kończy.
-import { useEffect, useState, type PointerEvent as ReactPointerEvent, type RefObject } from 'react'
+// a kliknięcie w mapę stawia obiekt (onPointerDown wołany przez MapCanvas). Z wciśniętym przyciskiem
+// pędzel maluje: obiekt staje w każdym wolnym miejscu, przez które przejedzie kursor. Całe pociągnięcie
+// trafia do sceny po puszczeniu przycisku, jednym krokiem cofania. Esc kończy tryb malowania.
+import {
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+  type PointerEvent as ReactPointerEvent,
+  type RefObject,
+} from 'react'
 import { toast } from '@/shared/components/ui/Toast/toast'
 import type { Asset } from '@/shared/lib/assets'
 import type { Point, SceneObject } from './engine/engine'
@@ -71,6 +80,9 @@ export function usePalettePlacing(ref: RefObject<HTMLElement | null>) {
   const brush = useEditorStore((s) => s.brush)
   const [ghost, setGhost] = useState<PlacingGhost | null>(null)
   const [floating, setFloating] = useState<PlacingFloat | null>(null)
+  // Środki obiektów namalowanych w trwającym pociągnięciu pędzla. Null: przycisk nie jest wciśnięty.
+  const stroke = useRef<Point[] | null>(null)
+  const [painted, setPainted] = useState<Point[]>([])
 
   // Przeciąganie kafelka z palety.
   useEffect(() => {
@@ -124,6 +136,22 @@ export function usePalettePlacing(ref: RefObject<HTMLElement | null>) {
 
     function onMove(event: PointerEvent) {
       const hit = overMap(ref.current, event)
+      // W trakcie malowania podgląd pod kursorem znika: widać same malowane obiekty.
+      if (stroke.current) {
+        if (hit) paint(stroke.current, asset, hit.at)
+        return
+      }
+      setGhost(hit && ghostAt(asset, hit))
+    }
+
+    function onUp(event: PointerEvent) {
+      const centers = stroke.current
+      if (!centers) return
+      stroke.current = null
+      setPainted([])
+      if (centers.length > 0) useEditorStore.getState().addPainted(asset, centers)
+      // Nowe obiekty stoją pod kursorem, więc podgląd od razu pokazuje kolizję z nimi.
+      const hit = overMap(ref.current, event)
       setGhost(hit && ghostAt(asset, hit))
     }
 
@@ -132,24 +160,57 @@ export function usePalettePlacing(ref: RefObject<HTMLElement | null>) {
     }
 
     window.addEventListener('pointermove', onMove)
+    window.addEventListener('pointerup', onUp)
     window.addEventListener('keydown', onKeyDown)
     return () => {
+      // Esc w trakcie malowania porzuca całe pociągnięcie.
+      stroke.current = null
+      setPainted([])
       setGhost(null)
       window.removeEventListener('pointermove', onMove)
+      window.removeEventListener('pointerup', onUp)
       window.removeEventListener('keydown', onKeyDown)
     }
   }, [brush, placingAsset, ref])
 
-  // Kliknięcie w mapę z pędzlem stawia obiekt. preventDefault: zaznaczanie to kliknięcie pomija.
+  // Dokłada obiekt do pociągnięcia, jeśli w tym miejscu nie koliduje ze sceną ani z resztą pociągnięcia.
+  function paint(centers: Point[], asset: Asset, at: Point): boolean {
+    const plan = useEditorStore.getState().planAdd(asset, at, centers)
+    if (!plan.result.ok) return false
+    centers.push(plan.at)
+    setPainted([...centers])
+    return true
+  }
+
+  // Wciśnięcie przycisku nad mapą z pędzlem zaczyna malowanie. preventDefault: zaznaczanie to pomija.
   function onPointerDown(event: ReactPointerEvent) {
     if (!brush || event.defaultPrevented || event.button !== 0) return
     event.preventDefault()
     const hit = overMap(ref.current, event)
     if (!hit) return
-    place(brush, hit.at)
-    // Nowy obiekt stoi pod kursorem, więc podgląd od razu pokazuje kolizję z nim.
-    setGhost(ghostAt(brush, hit))
+    stroke.current = []
+    setGhost(null)
+    // Komunikat tylko przy pierwszym miejscu. Dalej zajęte miejsca są po prostu pomijane.
+    if (!paint(stroke.current, brush, hit.at)) toast.error('errors.collision')
   }
 
-  return { ghost, floating, onPointerDown }
+  // Namalowane obiekty jako podgląd na ekranie (do sceny trafiają po puszczeniu przycisku).
+  const paintedObjects = useMemo<SceneObject[]>(
+    () =>
+      brush
+        ? painted.map((center, index) => ({
+            id: `${GHOST_ID}-${index}`,
+            assetId: brush.id,
+            ...center,
+            width: brush.width,
+            height: brush.height,
+            rotation: 0,
+            scaleX: 1,
+            scaleY: 1,
+          }))
+        : [],
+    [brush, painted]
+  )
+
+  return { ghost, floating, painted: paintedObjects, onPointerDown }
 }

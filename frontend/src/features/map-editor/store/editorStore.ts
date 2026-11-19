@@ -8,6 +8,7 @@ import { ApiError, api } from '@/shared/lib/apiClient'
 import type { Asset } from '@/shared/lib/assets'
 import {
   addObject,
+  addObjects,
   createEditor,
   moveObjects,
   removeObjects,
@@ -86,7 +87,10 @@ interface EditorState {
   // najbliżej środka widoku, żeby kolejne kliknięcia w paletę nie trafiały w zajęte pole.
   addAsset: (asset: Asset, at?: Point) => PlaceResult
   // Podgląd dodania assetu w punkcie sceny, bez zmiany sceny: gdzie stanie jego środek i czy koliduje.
-  planAdd: (asset: Asset, at: Point) => { at: Point; result: PlaceResult }
+  // painted: środki obiektów namalowanych już w tym pociągnięciu pędzla, jeszcze nie w scenie.
+  planAdd: (asset: Asset, at: Point, painted?: Point[]) => { at: Point; result: PlaceResult }
+  // Stawia obiekty pociągnięcia pędzla (gotowe środki z planAdd) jednym krokiem cofania.
+  addPainted: (asset: Asset, centers: Point[]) => PlaceResult
   // Asset przeciągany właśnie z palety na mapę. Upuszczenie obsługuje MapCanvas.
   placingAsset: Asset | null
   setPlacingAsset: (asset: Asset | null) => void
@@ -402,11 +406,17 @@ export const useEditorStore = create<EditorState>()((set, get) => ({
     }
   },
 
-  planAdd(asset, at) {
+  planAdd(asset, at, painted = []) {
     const { scene, editor, activeLayerId, gridSnap } = get()
     if (!scene || !editor || !activeLayerId) throw new Error('No scene loaded')
     const center = placeAsset(at, asset, scene, gridSnap)
-    return { at: center, result: editor.canExecute(addObject(activeLayerId, asset, center)) }
+    const command = addObjects(activeLayerId, asset, [...painted, center])
+    return { at: center, result: editor.canExecute(command) }
+  },
+  addPainted(asset, centers) {
+    const { activeLayerId } = get()
+    if (!activeLayerId) throw new Error('No scene loaded')
+    return get().execute(addObjects(activeLayerId, asset, centers))
   },
   setPlacingAsset: (placingAsset) => set({ placingAsset }),
   setBrush: (brush) => set({ brush }),
