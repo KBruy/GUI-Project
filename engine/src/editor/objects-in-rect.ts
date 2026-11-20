@@ -3,6 +3,7 @@ import { pointInShape } from '../geometry/point'
 import { satOverlap } from '../geometry/sat'
 import type { Scene } from '../types'
 import type { Rect } from './types'
+import { aabbOverlap, getAABB } from '../geometry/aabb'
 
 /**
  * Id obiektów, które nachodzą na prostokąt, od najniższego do najwyższego
@@ -31,6 +32,12 @@ export function objectsInRect(scene: Scene, rect: Rect): string[] {
     scaleX: 1,
     scaleY: 1,
   })
-  const hit = selectable.filter((object) => satOverlap(area, getCorners(object)))
+  const box = getAABB(area)
+  // Najpierw AABB jak w kolizjach: ramka o zerowej szerokości lub wysokości nie ma
+  // w SAT jednej osi, więc sam SAT zaznaczyłby obrócony obiekt obok niej.
+  const hit = selectable.filter((object) => {
+    const corners = getCorners(object)
+    return aabbOverlap(box, getAABB(corners)) && satOverlap(area, corners)
+  })
   return hit.map((object) => object.id)
 }

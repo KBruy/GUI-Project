@@ -25,6 +25,7 @@ export interface Editor {
   /** Wykonuje polecenie i zapisuje je w historii. Przy kolizji niczego nie zmienia. */
   execute(command: Command): PlaceResult
   /** Wynik polecenia bez zmiany sceny i historii (podgląd przy przeciąganiu). */
+  /** Podawaj nowe polecenie: apply nadpisuje to, co polecenie pamięta do cofania. */
   canExecute(command: Command): PlaceResult
   canPlace(objectId: string, transform: Partial<Transform>): PlaceResult
   undo(): void

@@ -43,4 +43,12 @@ describe('objectsInRect', () => {
     const scene = sceneWith([hidden, locked])
     expect(objectsInRect(scene, { x: 0, y: 0, width: 640, height: 480 })).toEqual([])
   })
+  it('ramka w kształcie linii nie zaznacza obróconego obiektu obok niej', () => {
+    // Romb (kwadrat obrócony o 45°) sięga w poziomie od ok. 85,9 do 114,1.
+    const scene = sceneWith([layer('l1', [{ ...a, rotation: 45 }])])
+    expect(objectsInRect(scene, { x: 115, y: 90, width: 0, height: 20 })).toEqual([])
+    expect(objectsInRect(scene, { x: 90, y: 115, width: 20, height: 0 })).toEqual([])
+    expect(objectsInRect(scene, { x: 100, y: 90, width: 0, height: 20 })).toEqual(['a'])
+  })
+
 })
