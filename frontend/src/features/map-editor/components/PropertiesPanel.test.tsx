@@ -57,3 +57,40 @@ it('saves a value on Enter and shows an error when the object would collide', ()
   expect(x).toHaveValue(150)
   expect(objects()[0].x).toBe(150)
 })
+
+it('sets the same scale for all selected objects in one undo step', () => {
+  const ids = setup()
+  act(() => useEditorStore.getState().editObjects([ids[0]], { scaleX: 1.5 }))
+  act(() => useEditorStore.getState().select(ids))
+  const scaleX = screen.getByLabelText('Skala X')
+  // Różne wartości: puste pole z podpowiedzią.
+  expect(scaleX).toHaveValue(null)
+  expect(scaleX).toHaveAttribute('placeholder', 'różne')
+
+  scaleX.focus()
+  fireEvent.change(scaleX, { target: { value: '2' } })
+  fireEvent.keyDown(scaleX, { key: 'Enter' })
+  expect(objects().map((o) => o.scaleX)).toEqual([2, 2])
+
+  act(() => useEditorStore.getState().undo())
+  expect(objects().map((o) => o.scaleX)).toEqual([1.5, 1])
+
+  // Skala spoza zakresu: błąd zamiast cichego przycięcia.
+  fireEvent.change(scaleX, { target: { value: '-3' } })
+  fireEvent.keyDown(scaleX, { key: 'Enter' })
+  expect(screen.getByText('Skala poza zakresem')).toBeInTheDocument()
+  expect(objects().map((o) => o.scaleX)).toEqual([1.5, 1])
+})
+
+it('moves the whole group by its center', () => {
+  const ids = setup()
+  act(() => useEditorStore.getState().select(ids))
+  const x = screen.getByLabelText('X')
+  // Kłody w 100 i 300: środek grupy w 200.
+  expect(x).toHaveValue(200)
+
+  x.focus()
+  fireEvent.change(x, { target: { value: '250' } })
+  fireEvent.keyDown(x, { key: 'Enter' })
+  expect(objects().map((o) => o.x)).toEqual([150, 350])
+})

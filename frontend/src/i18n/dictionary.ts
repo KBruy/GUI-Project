@@ -59,6 +59,7 @@ const dictionary = {
   'properties.scaleX': { pl: 'Skala X', en: 'Scale X' },
   'properties.scaleY': { pl: 'Skala Y', en: 'Scale Y' },
   'properties.rotation': { pl: 'Obrót (°)', en: 'Rotation (°)' },
+  'properties.mixed': { pl: 'różne', en: 'mixed' },
   'palette.categories': { pl: 'Kategorie', en: 'Categories' },
   'palette.loading': { pl: 'Ładowanie grafik…', en: 'Loading assets…' },
   'palette.empty': { pl: 'Brak grafik', en: 'No assets' },
