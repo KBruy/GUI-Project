@@ -11,6 +11,7 @@ const TOOLS: { tool: Tool; icon: IconName; label: TranslationKey }[] = [
   { tool: 'brush', icon: 'Pencil', label: 'tools.brush' },
   { tool: 'rect', icon: 'RectFill', label: 'tools.rect' },
   { tool: 'fill', icon: 'PaintBucket', label: 'tools.fill' },
+  { tool: 'eraser', icon: 'Eraser', label: 'tools.eraser' },
 ]
 
 export function ToolPanel() {

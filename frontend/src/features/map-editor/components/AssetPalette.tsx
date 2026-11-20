@@ -26,7 +26,8 @@ export function AssetPalette() {
   const loadAssets = useEditorStore((s) => s.loadAssets)
   const brush = useEditorStore((s) => s.brush)
   const setBrush = useEditorStore((s) => s.setBrush)
-  const painting = useEditorStore((s) => s.tool !== 'select')
+  // Narzędzia malujące assetem z palety. Przy zaznaczaniu i gumce klik w kafelek włącza pędzel.
+  const painting = useEditorStore((s) => s.tool !== 'select' && s.tool !== 'eraser')
   const setTool = useEditorStore((s) => s.setTool)
   const setPlacingAsset = useEditorStore((s) => s.setPlacingAsset)
   const [picked, setPicked] = useState<string | null>(null)

@@ -67,6 +67,7 @@ Canvas wypełnia komórkę `EditorLayout` (`position: absolute; inset: 0`). Jego
 - Pędzel (B): maluje assetem wybranym w palecie (opis niżej).
 - Prostokąt (R): przeciągnięcie po mapie wypełnia assetem z palety wszystkie wolne pola od miejsca wciśnięcia do kursora. Pole ma rozmiar assetu (przy przyciąganiu zaokrąglony w górę do siatki), zajęte pola i pola poza mapą są pomijane. Podgląd jak przy pędzlu, całość to jeden krok cofania, Esc w trakcie porzuca prostokąt.
 - Wiadro (G): kliknięcie w mapę wypełnia assetem z palety wszystkie wolne pola całej mapy (te same pola co przy prostokącie od lewego górnego rogu). Bez podglądu pod kursorem, jeden krok cofania.
+- Gumka (E): `features/map-editor/useEraser.ts`. Wciśnięty przycisk i ruch po mapie usuwają obiekt pod kursorem (najwyższy, jak przy zaznaczaniu). Na ekranie znika od razu, ze sceny po puszczeniu przycisku, jednym krokiem cofania. Esc w trakcie porzuca pociągnięcie. Klik w kafelek palety przy gumce włącza pędzel.
 - Ikony kursora (`Cursor`) i prostokąta (`RectFill`) są narysowane w `customIcons.ts` w formacie Pxlkit, bo paczki ich nie mają.
 
 ## Paleta assetów

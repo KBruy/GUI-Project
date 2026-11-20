@@ -32,6 +32,7 @@ const dictionary = {
   'tools.brush': { pl: 'Pędzel (B)', en: 'Brush (B)' },
   'tools.rect': { pl: 'Prostokąt (R)', en: 'Rectangle (R)' },
   'tools.fill': { pl: 'Wiadro (G)', en: 'Bucket (G)' },
+  'tools.eraser': { pl: 'Gumka (E)', en: 'Eraser (E)' },
   'newMap.open': { pl: 'Nowa mapa', en: 'New map' },
   'newMap.title': { pl: 'Nowa mapa', en: 'New map' },
   'newMap.name': { pl: 'Nazwa mapy', en: 'Map name' },
