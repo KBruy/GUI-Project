@@ -99,7 +99,7 @@ Przeciąganie zaznaczonego obiektu przesuwa całe zaznaczenie (F-33), jednym kro
 
 - Logika: `useSelectionControls.ts`. W trakcie store liczy `planMove(wektor, idChwyconego)`: przy przyciąganiu lewy górny róg chwyconego obiektu trafia na siatkę, a wektor jest przycinany tak, żeby cała grupa została w mapie. Silnik sprawdza kolizje bez zmiany sceny (`canExecute`).
 - Kolizja w trakcie: ramki obiektów, z którymi grupa by się zderzyła, robią się bursztynowe. Puszczenie na zajęte miejsce zostawia obiekty, pokazuje toast `errors.collision` i potrząsa ramkami (`shakeKey`).
-- Strzałki (`useEditorShortcuts.ts`): 1 px, z Shiftem 32 px, a przy przyciąganiu zawsze do następnej linii siatki (`moveSelected`). Tu też Ctrl+Z / Cmd+Z cofa, a Ctrl+Shift+Z albo Ctrl+Y ponawia.
+- Strzałki (`useEditorShortcuts.ts`): 1 px, a przy przyciąganiu do następnej linii siatki. Shift+strzałka zawsze przesuwa o 32 px (`moveSelected`). Tu też Ctrl+Z / Cmd+Z cofa, a Ctrl+Shift+Z albo Ctrl+Y ponawia.
 - Delete albo Backspace usuwa zaznaczone obiekty, tak samo jak przycisk „Usuń” w pasku narzędzi (`DeleteButton.tsx`, `deleteSelected` w store). Jeden krok cofania, a zaznaczenie znika samo.
 - Etykieta (x, y) pokazuje środek obiektu, tak jak dane sceny. Przy przeciąganiu jedzie za kursorem, ale nie wychodzi poza obiekt, a przy prawej i dolnej krawędzi canvasu przechodzi na drugą stronę. Po strzałkach widać ją 1,5 s przy prawym dolnym rogu. Obiekt z etykietą ma w środku kropkę 8 px (`center` w `SelectionLayer`), a kursor nad przeciąganym obiektem znika (`cursor: none`).
 - Punkt mapy pod kursorem jest w store (`cursorPoint`) i pokazuje go `CursorPosition` na końcu paska narzędzi. Ruch myszy nie przerysowuje sceny.
@@ -120,7 +120,7 @@ Gdy zaznaczony jest dokładnie jeden obiekt na widocznej warstwie, a nic nie jes
 ```
 
 - Konva `Transformer` zmienia niewidoczny prostokąt o kształcie obiektu, a nie scenę. Komponent tylko podaje `{ x, y, rotation, scaleX, scaleY }` w trakcie i na końcu, a po końcu wraca do obiektu z propsów.
-- Uchwyty to kwadraty 10 px w kolorach ramki, ramkę dalej rysuje `SelectionLayer`. Shift przy obrocie skacze co 15°, Shift przy skali trzyma proporcje (oba wbudowane w Konvę). Bez odbicia lustrzanego (`flipEnabled={false}`), bo backend nie przyjmuje ujemnej skali.
+- Uchwyty to kwadraty w kolorach ramki, o boku 1/4 krótszego boku obiektu na ekranie (od 5 do 10 px, żeby przy małym zoomie nie zasłaniały obiektu), ramkę dalej rysuje `SelectionLayer`. Shift przy obrocie skacze co 15°, Shift przy skali trzyma proporcje (oba wbudowane w Konvę). Bez odbicia lustrzanego (`flipEnabled={false}`), bo backend nie przyjmuje ujemnej skali.
 - `boundBoxFunc` pilnuje, żeby obrócone narożniki zostały na mapie (pół piksela zapasu na zaokrąglenia), a skala w `scaleLimits` (0,1–10, `MIN_SCALE` i `MAX_SCALE` ze store'u). Pudełko za granicą jest dociągane do niej osobno dla szerokości i wysokości: obiekt na limicie wysokości dalej rośnie w poziomie, a przy szybkim ruchu myszy dochodzi do krawędzi albo limitu, zamiast zatrzymać się przed nią. Uchwyty zostają na ramce.
 - Store: `planTransform` (podgląd) i `transformObject` (zapis jednym krokiem cofania). Oba zaokrąglają tak samo: `x`, `y` do 0,5 px, obrót do całych stopni w zakresie 0–359, skala do całych pikseli rozmiaru i w zakresie 0,1–10 (jak w backendzie).
 - `features/map-editor/useTransformControls.ts` trzyma podgląd i kolizje. W trakcie ramki kolidujących obiektów są bursztynowe, a przy kolizji na końcu obiekt wraca, jest toast i drżenie ramek, tak jak przy przeciąganiu.
