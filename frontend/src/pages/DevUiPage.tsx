@@ -65,6 +65,7 @@ export default function DevUiPage() {
   const [scale, setScale] = useState(2)
   const [modalOpen, setModalOpen] = useState(false)
   const [tile, setTile] = useState('grass')
+  const [category, setCategory] = useState('budynki')
 
   const mapSizeOptions = [
     { value: 'small' as const, label: 'Mała (16 × 16)' },
@@ -194,6 +195,28 @@ export default function DevUiPage() {
                 label="lg"
                 size="lg"
               />
+            </Stack>
+
+            <Stack direction="column" gap={3}>
+              <p>Zawijanie (wrap) w wąskim miejscu, jak kategorie palety</p>
+              <div style={{ maxWidth: 240 }}>
+                <SegmentedControl
+                  options={[
+                    'budynki',
+                    'natura',
+                    'teren',
+                    'drzewa',
+                    'dekoracje',
+                    'woda',
+                    'drogi',
+                  ].map((value) => ({ value, label: value[0].toUpperCase() + value.slice(1) }))}
+                  value={category}
+                  onChange={setCategory}
+                  label="Kategoria"
+                  size="sm"
+                  wrap
+                />
+              </div>
             </Stack>
           </Stack>
         </Panel>
