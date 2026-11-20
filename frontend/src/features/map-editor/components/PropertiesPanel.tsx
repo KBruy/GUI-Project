@@ -2,6 +2,7 @@
 // położenie (środek, jak w etykiecie przy przeciąganiu), rozmiar w px sceny, skala i obrót.
 // Kilka obiektów: ich liczba, położenie grupy (środek prostokąta wokół nich; zmiana przesuwa
 // całą grupę) oraz wspólny obrót i skala (puste pole = różne wartości).
+// Wartości zmieniają się na bieżąco także w trakcie przeciągania i uchwytów (preview w store).
 // Pola zapisują zmianę po Enterze albo wyjściu z pola (jeden krok cofania), a Esc cofa wpisaną
 // wartość. Enter i Esc wychodzą też z pola, żeby od razu działały skróty edytora. Gdy obiekt
 // wyszedłby poza mapę albo na inny, pole pokazuje błąd i wraca do wartości.
@@ -81,7 +82,8 @@ function NumberField({ label, value, onCommit, ...limits }: NumberFieldProps) {
 
 export function PropertiesPanel() {
   const { t } = useT()
-  const scene = useEditorStore((s) => s.scene)
+  // Podczas przeciągania i uchwytów wartości z podglądu, więc zmieniają się na bieżąco.
+  const scene = useEditorStore((s) => s.preview ?? s.scene)
   const selectedIds = useEditorStore((s) => s.selectedIds)
   const assets = useEditorStore((s) => s.assets)
   const editObjects = useEditorStore((s) => s.editObjects)

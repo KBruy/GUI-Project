@@ -94,3 +94,16 @@ it('moves the whole group by its center', () => {
   fireEvent.keyDown(x, { key: 'Enter' })
   expect(objects().map((o) => o.x)).toEqual([150, 350])
 })
+
+it('shows values from the canvas preview while dragging', () => {
+  const ids = setup()
+  act(() => useEditorStore.getState().select([ids[0]]))
+  const scene = useEditorStore.getState().scene!
+  const moved = { ...scene.layers[0].objects[0], x: 120 }
+  const preview = { ...scene, layers: [{ ...scene.layers[0], objects: [moved] }] }
+
+  act(() => useEditorStore.getState().setPreview(preview))
+  expect(screen.getByLabelText('X')).toHaveValue(120)
+  act(() => useEditorStore.getState().setPreview(null))
+  expect(screen.getByLabelText('X')).toHaveValue(100)
+})

@@ -192,6 +192,11 @@ export function MapCanvas() {
     setCursorPoint(inside ? { x, y } : null)
   }
 
+  // Panel właściwości pokazuje położenie, obrót i skalę na bieżąco, także w trakcie przeciągania.
+  const setPreview = useEditorStore((s) => s.setPreview)
+  const preview = drag || transform.preview ? shownScene : null
+  useEffect(() => setPreview(preview), [preview, setPreview])
+
   // Store potrzebuje rozmiaru canvasu do zoomu w środku i „Dopasuj do ekranu”.
   useEffect(() => {
     if (width > 0 && height > 0) setViewport({ width, height })

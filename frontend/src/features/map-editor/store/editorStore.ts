@@ -102,6 +102,10 @@ interface EditorState {
   // Punkt mapy pod kursorem (całe piksele sceny) dla paska narzędzi. Null, gdy kursor jest poza mapą.
   cursorPoint: Point | null
   setCursorPoint: (point: Point | null) => void
+  // Scena narysowana na canvasie w trakcie przeciągania, obracania albo skalowania (jeszcze
+  // niezapisana). Panel właściwości pokazuje z niej wartości na bieżąco. Null: nic się nie dzieje.
+  preview: Scene | null
+  setPreview: (preview: Scene | null) => void
   // Przesuwa zaznaczone obiekty o wektor w punktach sceny, jednym krokiem cofania.
   // Wektor jest przycinany tak, żeby cała grupa została w granicach mapy.
   moveSelected: (delta: Point) => PlaceResult
@@ -281,6 +285,7 @@ export const useEditorStore = create<EditorState>()((set, get) => ({
   placingAsset: null,
   brush: null,
   cursorPoint: null,
+  preview: null,
   projectId: null,
   savedScene: null,
   saving: false,
@@ -442,6 +447,7 @@ export const useEditorStore = create<EditorState>()((set, get) => ({
     return get().execute(addObjects(activeLayerId, asset, centers))
   },
   setPlacingAsset: (placingAsset) => set({ placingAsset }),
+  setPreview: (preview) => set({ preview }),
   setBrush: (brush) => set({ brush }),
 
   setCursorPoint(point) {
