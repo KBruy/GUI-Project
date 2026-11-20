@@ -10,9 +10,14 @@ import { Layer, Rect, Transformer } from 'react-konva'
 import type { SceneObject } from '@worldsmith/engine'
 import { FRAME_COLOR, FRAME_SHADOW } from './SelectionLayer'
 
-// Uchwyty w px ekranu: kwadraty w kolorze ramki, jak piksele.
-const ANCHOR_SIZE = 10
-const ROTATE_OFFSET = 24
+// Uchwyty w px ekranu: kwadraty w kolorze ramki, jak piksele. Rosną z obiektem na ekranie
+// (1/4 krótszego boku), od 5 do 10 px, więc przy małym zoomie (duża mapa) nie zasłaniają obiektu.
+const MIN_ANCHOR = 5
+const MAX_ANCHOR = 10
+
+function anchorSizeFor(width: number, height: number): number {
+  return Math.round(Math.min(Math.max(Math.min(width, height) / 4, MIN_ANCHOR), MAX_ANCHOR))
+}
 
 export type ObjectTransform = Pick<SceneObject, 'x' | 'y' | 'rotation' | 'scaleX' | 'scaleY'>
 
@@ -21,8 +26,13 @@ interface SelectionTransformerProps {
   object: SceneObject
   // Rozmiar sceny: obrócony i przeskalowany obiekt nie może z niej wyjść.
   bounds: { width: number; height: number }
+  // Powiększenie widoku (px ekranu na px sceny): od rozmiaru obiektu na ekranie zależy rozmiar uchwytów.
+  zoom: number
   // Najmniejsza i największa skala obiektu. Uchwyty zatrzymują się na nich razem z obiektem.
   scaleLimits: { min: number; max: number }
+  // Rozmiar pola siatki, gdy włączone jest przyciąganie: przy skalowaniu bez obrotu boki
+  // obiektu stają na liniach siatki.
+  snap?: number
   onTransform: (transform: ObjectTransform) => void
   onTransformEnd: (transform: ObjectTransform) => void
 }
@@ -55,10 +65,16 @@ function transformOf(node: Konva.Node): ObjectTransform {
 export function SelectionTransformer({
   object,
   bounds,
+  zoom,
   scaleLimits,
+  snap,
   onTransform,
   onTransformEnd,
 }: SelectionTransformerProps) {
+  const anchorSize = anchorSizeFor(
+    object.width * object.scaleX * zoom,
+    object.height * object.scaleY * zoom
+  )
   const shapeRef = useRef<Konva.Rect>(null)
   const transformerRef = useRef<Konva.Transformer>(null)
 
@@ -180,6 +196,43 @@ export function SelectionTransformer({
     return t === 0 ? oldBox : both(t)
   }
 
+  // Pudełko bez obrotu, w którym bok ciągnięty uchwytem stoi na najbliższej linii siatki,
+  // a bok naprzeciw zostaje w miejscu (obiekt ma co najmniej jedno pole).
+  // Siatka jest w px sceny, a pudełko w px canvasu, więc przeliczamy przez zoom.
+  function snapped(oldBox: Box, box: Box): Box {
+    const layer = transformerRef.current?.getLayer()
+    if (!snap || !layer || Math.abs(box.rotation) > 1e-9) return box
+    const zoom = layer.getAbsoluteScale().x
+    const origin = layer.getAbsoluteTransform().point({ x: 0, y: 0 })
+    const cell = snap * zoom
+    const axis = (start: number, size: number, oldStart: number, oldSize: number, from: number) => {
+      const toGrid = (p: number) => from + Math.round((p - from) / cell) * cell
+      const end = start + size
+      const startFixed = Math.abs(start - oldStart) < 1e-6
+      const endFixed = Math.abs(end - (oldStart + oldSize)) < 1e-6
+      if (startFixed && !endFixed) {
+        return { start, size: Math.max(toGrid(end), start + cell) - start }
+      }
+      if (endFixed && !startFixed) {
+        const first = Math.min(toGrid(start), end - cell)
+        return { start: first, size: end - first }
+      }
+      return { start, size }
+    }
+    const x = axis(box.x, box.width, oldBox.x, oldBox.width, origin.x)
+    const y = axis(box.y, box.height, oldBox.y, oldBox.height, origin.y)
+    return { x: x.start, y: y.start, width: x.size, height: y.size, rotation: box.rotation }
+  }
+
+  // Skalowanie z przyciąganiem: dozwolone pudełko dociągnięte do siatki. Gdy dociągnięte nie
+  // pasuje (limit skali), obiekt zostaje, jak był.
+  function boundBox(oldBox: Box, newBox: Box): Box {
+    const box = allowedBox(oldBox, newBox)
+    if (!snap || Math.abs(newBox.rotation - oldBox.rotation) > 1e-9) return box
+    const onGrid = snapped(oldBox, box)
+    return fits(onGrid) ? onGrid : oldBox
+  }
+
   return (
     <Layer>
       <Rect
@@ -192,17 +245,17 @@ export function SelectionTransformer({
         ref={transformerRef}
         // Ramkę rysuje SelectionLayer, więc Transformer daje tylko uchwyty.
         borderEnabled={false}
-        anchorSize={ANCHOR_SIZE}
+        anchorSize={anchorSize}
         anchorCornerRadius={0}
         anchorFill={FRAME_COLOR}
         anchorStroke={FRAME_SHADOW}
-        anchorStrokeWidth={2}
-        rotateAnchorOffset={ROTATE_OFFSET}
+        anchorStrokeWidth={anchorSize < MAX_ANCHOR ? 1 : 2}
+        rotateAnchorOffset={anchorSize * 2.4}
         // Bez Shifta krawędzie i narożniki skalują osie osobno, z Shiftem proporcjonalnie.
         keepRatio={false}
         // Backend nie przyjmuje ujemnej skali, więc bez odbicia lustrzanego.
         flipEnabled={false}
-        boundBoxFunc={allowedBox}
+        boundBoxFunc={boundBox}
         onTransform={() => shapeRef.current && onTransform(transformOf(shapeRef.current))}
         onTransformEnd={() => {
           const shape = shapeRef.current
