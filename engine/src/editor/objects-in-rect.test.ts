@@ -50,5 +50,4 @@ describe('objectsInRect', () => {
     expect(objectsInRect(scene, { x: 90, y: 115, width: 20, height: 0 })).toEqual([])
     expect(objectsInRect(scene, { x: 100, y: 90, width: 0, height: 20 })).toEqual(['a'])
   })
-
 })
