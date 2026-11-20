@@ -1,16 +1,18 @@
-import { render, screen } from '@testing-library/react'
-import { describe, expect, it } from 'vitest'
+import { act, render, screen } from '@testing-library/react'
+import { describe, expect, it, vi } from 'vitest'
 import { LanguageProvider } from '@/i18n/LanguageProvider'
 import { createMapScene } from '../engine/engine'
 import { useEditorStore } from '../store/editorStore'
-import { NewMapButton } from './NewMapButton'
+import { NewMapButton, OPEN_AFTER_ERROR_MS } from './NewMapButton'
 
 function renderButton(autoOpen?: boolean) {
-  render(
+  const button = (open?: boolean) => (
     <LanguageProvider>
-      <NewMapButton autoOpen={autoOpen} />
+      <NewMapButton autoOpen={open} />
     </LanguageProvider>
   )
+  const { rerender } = render(button(autoOpen))
+  return { rerender: (open: boolean) => rerender(button(open)) }
 }
 
 describe('NewMapButton', () => {
@@ -33,5 +35,18 @@ describe('NewMapButton', () => {
     renderButton(false)
 
     expect(screen.getByRole('dialog', { hidden: true })).not.toHaveAttribute('open')
+  })
+
+  it('opens a moment later when the saved project fails to load', () => {
+    vi.useFakeTimers()
+    useEditorStore.setState({ scene: null })
+    const { rerender } = renderButton(false)
+
+    // Adres wrócił na /map: najpierw widać toast z błędem, potem okno.
+    rerender(true)
+    expect(screen.getByRole('dialog', { hidden: true })).not.toHaveAttribute('open')
+    act(() => vi.advanceTimersByTime(OPEN_AFTER_ERROR_MS))
+    expect(screen.getByRole('dialog', { hidden: true })).toHaveAttribute('open')
+    vi.useRealTimers()
   })
 })
