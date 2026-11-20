@@ -165,7 +165,7 @@ describe('MapCanvas', () => {
     expect(useEditorStore.getState().placingAsset).toBeNull()
   })
 
-  it('paints the brush asset along the stroke in one undo step, Escape drops the stroke', () => {
+  it('paints the brush asset along the stroke in one undo step, Escape drops the stroke and selects', () => {
     const { container } = render(<MapCanvas />)
     const canvas = container.firstElementChild!
     act(() => useEditorStore.setState({ brush: STONE, tool: 'brush' }))
@@ -187,7 +187,7 @@ describe('MapCanvas', () => {
     })
     pointer(window, 'pointerUp', 164, 114)
     expect(objects()).toHaveLength(0)
-    expect(useEditorStore.getState().tool).toBe('brush')
+    expect(useEditorStore.getState().tool).toBe('select')
   })
 
   it('fills the dragged rectangle with the brush asset in one undo step', () => {

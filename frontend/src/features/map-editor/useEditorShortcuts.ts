@@ -4,7 +4,7 @@
 // - Ctrl+Z (na Macu Cmd+Z): cofnij, Ctrl+Shift+Z albo Ctrl+Y: ponów,
 // - Ctrl+S (Cmd+S): zapisz mapę (F-38),
 // - Delete albo Backspace: usuń zaznaczone obiekty,
-// - V: zaznaczanie, B: pędzel (panel „Narzędzia”).
+// - V, B, R, G, E: narzędzia z panelu „Narzędzia”, Esc: powrót do zaznaczania.
 // Zwraca id obiektu przesuniętego strzałkami: canvas pokazuje przy nim przez chwilę jego (x, y).
 import { useEffect, useRef, useState } from 'react'
 import { toast } from '@/shared/components/ui/Toast/toast'
@@ -63,6 +63,12 @@ export function useEditorShortcuts(): string | null {
         else if ((key === 'z' && event.shiftKey) || key === 'y') redo()
         else return
         event.preventDefault()
+        return
+      }
+
+      // Esc w trakcie malowania przerywa też pociągnięcie (pędzel i gumka mają własne nasłuchy).
+      if (event.key === 'Escape') {
+        useEditorStore.getState().setTool('select')
         return
       }
 
