@@ -34,4 +34,8 @@ export interface Editor {
   snapToGrid(point: Point): Point
   /** Id obiektów w prostokącie, od najniższego do najwyższego. */
   objectsInRect(rect: Rect): string[]
+  /** Czy jest co cofnąć: przycisk „Cofnij” w pasku narzędzi jest aktywny. */
+  canUndo(): boolean
+  /** Czy jest co ponowić: przycisk „Ponów” w pasku narzędzi jest aktywny. */
+  canRedo(): boolean
 }

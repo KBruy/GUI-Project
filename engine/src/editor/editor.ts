@@ -6,6 +6,8 @@ import {
   execute as executeCommand,
   redo as redoCommand,
   undo as undoCommand,
+  canRedo as hasRedo,
+  canUndo as hasUndo,
 } from '../history/history'
 import { snapToGrid as snapPoint } from '../snapping/snap'
 import type { Scene } from '../types'
@@ -75,6 +77,10 @@ export function createEditor(initialScene: Scene): Editor {
       history = step.history
       setScene(step.scene)
     },
+
+    canUndo: () => hasUndo(history),
+
+    canRedo: () => hasRedo(history),
 
     snapToGrid: (point) => snapPoint(point, scene.gridSize),
 

@@ -53,6 +53,21 @@ describe('createEditor', () => {
     expect(calls).toBe(0)
   })
 
+  it('canUndo i canRedo mówią, czy przyciski mają być aktywne', () => {
+    const editor = createEditor(start)
+    expect(editor.canUndo()).toBe(false)
+    expect(editor.canRedo()).toBe(false)
+    const seen: boolean[] = []
+    editor.subscribe(() => seen.push(editor.canUndo()))
+    editor.execute(transformObjects(['a'], { x: 300 }))
+    expect(editor.canUndo()).toBe(true)
+    editor.undo()
+    expect(editor.canUndo()).toBe(false)
+    expect(editor.canRedo()).toBe(true)
+    // Słuchacz dostaje powiadomienie, gdy historia jest już zmieniona.
+    expect(seen).toEqual([true, false])
+  })
+
   it('po wypisaniu słuchacz nie dostaje zmian', () => {
     const editor = createEditor(start)
     let calls = 0
