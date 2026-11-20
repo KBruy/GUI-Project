@@ -9,6 +9,7 @@ import { assetUrl } from '@/shared/lib/assets'
 import type { Point, Scene, SceneObject } from '../engine/engine'
 import { MAX_SCALE, MIN_SCALE, useEditorStore } from '../store/editorStore'
 import { useEditorShortcuts } from '../useEditorShortcuts'
+import { useEraser } from '../useEraser'
 import { usePalettePlacing } from '../usePalettePlacing'
 import { useSelectionControls } from '../useSelectionControls'
 import { useTransformControls } from '../useTransformControls'
@@ -27,19 +28,21 @@ const LABEL_SPACE = { x: 112, y: 40 }
 
 // Scena do pokazania podczas przeciągania: obiekty ids przesunięte o wektor, a podgląd assetu
 // z palety i obiekty malowane pędzlem (extra) dopisane na aktywną warstwę. Scena w store zmienia się
-// dopiero po upuszczeniu albo puszczeniu przycisku.
+// dopiero po upuszczeniu albo puszczeniu przycisku. Obiekty starte gumką (hidden) są pominięte.
 function previewScene(
   scene: Scene,
   ids: string[],
   delta: Point | null,
   extra: SceneObject[],
   layerId: string | null,
-  transformed: SceneObject | null
+  transformed: SceneObject | null,
+  hidden: string[]
 ): Scene {
   return {
     ...scene,
     layers: scene.layers.map((layer) => {
-      const objects = layer.objects.map((o) => {
+      const shown = layer.objects.filter((o) => !hidden.includes(o.id))
+      const objects = shown.map((o) => {
         if (o.id === transformed?.id) return transformed
         return delta && ids.includes(o.id) ? { ...o, x: o.x + delta.x, y: o.y + delta.y } : o
       })
@@ -107,6 +110,8 @@ export function MapCanvas() {
   const { drag } = selection
   const placing = usePalettePlacing(ref)
   const { ghost, floating, painted } = placing
+  const eraser = useEraser(ref)
+  const { erased } = eraser
   const painting = useEditorStore((s) => s.tool !== 'select')
   const nudgedId = useEditorShortcuts()
   const transform = useTransformControls()
@@ -115,17 +120,18 @@ export function MapCanvas() {
   // a podczas obracania i skalowania obiekt po zmianie.
   const shownScene = useMemo(
     () =>
-      scene && (drag || ghost || painted.length > 0 || transform.preview)
+      scene && (drag || ghost || painted.length > 0 || erased.length > 0 || transform.preview)
         ? previewScene(
             scene,
             selectedIds,
             drag?.delta ?? null,
             ghost ? [...painted, ghost.object] : painted,
             activeLayerId,
-            transform.preview?.object ?? null
+            transform.preview?.object ?? null,
+            erased
           )
         : scene,
-    [scene, selectedIds, drag, ghost, painted, activeLayerId, transform.preview]
+    [scene, selectedIds, drag, ghost, painted, erased, activeLayerId, transform.preview]
   )
   // Uchwyty obrotu i skali: tylko przy jednym zaznaczonym obiekcie na widocznej warstwie
   // i nie w trakcie przeciągania. Obiekt bierzemy ze sceny, bez podglądu.
@@ -203,6 +209,7 @@ export function MapCanvas() {
       onPointerDown={(e) => {
         view.handlers.onPointerDown(e)
         placing.onPointerDown(e)
+        eraser.onPointerDown(e)
         selection.handlers.onPointerDown(e)
       }}
       onPointerMove={(e) => {

@@ -127,7 +127,7 @@ function place(asset: Asset, at: Point) {
 export function usePalettePlacing(ref: RefObject<HTMLElement | null>) {
   const placingAsset = useEditorStore((s) => s.placingAsset)
   // Asset z palety, tylko gdy wybrane jest narzędzie, które nim maluje.
-  const brush = useEditorStore((s) => (s.tool !== 'select' ? s.brush : null))
+  const brush = useEditorStore((s) => (s.tool !== 'select' && s.tool !== 'eraser' ? s.brush : null))
   const rect = useEditorStore((s) => s.tool === 'rect')
   const fill = useEditorStore((s) => s.tool === 'fill')
   const [ghost, setGhost] = useState<PlacingGhost | null>(null)

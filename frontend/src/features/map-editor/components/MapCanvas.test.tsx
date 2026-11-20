@@ -219,6 +219,23 @@ describe('MapCanvas', () => {
     expect(objects()).toHaveLength(1)
   })
 
+  it('erases the objects under the stroke in one undo step', () => {
+    const { container } = render(<MapCanvas />)
+    const canvas = container.firstElementChild!
+    for (const x of [48, 80, 112])
+      act(() => useEditorStore.getState().addAsset(STONE, { x, y: 48 }))
+    act(() => useEditorStore.setState({ tool: 'eraser' }))
+
+    // Kamienie ze środkami x 48, 80, 112 (y 48). Ekran = 100 + 2·x, 50 + 2·y.
+    pointer(canvas, 'pointerDown', 196, 146)
+    pointer(window, 'pointerMove', 260, 146)
+    pointer(window, 'pointerUp', 260, 146)
+    expect(objects().map((o) => o.x)).toEqual([112])
+
+    act(() => useEditorStore.getState().undo())
+    expect(objects()).toHaveLength(3)
+  })
+
   it('does not drop on top of another object', () => {
     const { container } = render(<MapCanvas />)
 
