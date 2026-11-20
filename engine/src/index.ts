@@ -1,5 +1,13 @@
 export const ENGINE_VERSION = '0.0.0'
-export { SCHEMA_VERSION, GRID_SIZE, MAX_LAYERS } from './types'
+export {
+  SCHEMA_VERSION,
+  GRID_SIZE,
+  MAX_LAYERS,
+  MIN_SCALE,
+  MAX_SCALE,
+  MIN_ROTATION,
+  MAX_ROTATION,
+} from './types'
 export type { SceneType, SceneObject, Layer, Scene } from './types'
 export {
   createMapScene,
@@ -32,3 +40,6 @@ export type { Command, CommandResult, AssetSize } from './commands/types'
 export { emptyHistory, execute, undo, redo, canUndo, canRedo } from './history/history'
 export type { History, HistoryStep } from './history/history'
 export type { Vec2 } from './math/vec2'
+export { validateScene } from './validation/validate'
+export { MESSAGE_KEYS } from './validation/types'
+export type { ValidationCode, ValidationIssue } from './validation/types'

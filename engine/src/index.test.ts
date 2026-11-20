@@ -10,6 +10,7 @@ import {
   emptyHistory,
   execute,
   undo,
+  validateScene,
 } from './index'
 
 describe('engine', () => {
@@ -54,5 +55,9 @@ describe('publiczne API', () => {
     expect(result.scene.layers[0].objects).toHaveLength(2)
     expect(canUndo(history)).toBe(true)
     expect(undo(history, result.scene).scene).toEqual(scene)
+  })
+
+  it('eksportuje walidację sceny', () => {
+    expect(validateScene(createMapScene('Test', MAP_SIZES[0]))).toEqual([])
   })
 })

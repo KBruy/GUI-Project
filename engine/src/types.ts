@@ -13,6 +13,14 @@ export const GRID_SIZE = 32
 /** Maksymalna liczba warstw w scenie. */
 export const MAX_LAYERS = 10
 
+/** Zakres skali obiektu (scaleX i scaleY), granice dozwolone, jak w backendzie. */
+export const MIN_SCALE = 0.1
+export const MAX_SCALE = 10
+
+/** Zakres obrotu obiektu w stopniach, granice dozwolone, jak w backendzie. */
+export const MIN_ROTATION = 0
+export const MAX_ROTATION = 360
+
 /** Obiekt na scenie: odwołanie do assetu z położeniem i przekształceniem. */
 export interface SceneObject {
   id: string
