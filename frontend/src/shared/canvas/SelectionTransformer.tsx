@@ -30,6 +30,9 @@ interface SelectionTransformerProps {
   zoom: number
   // Najmniejsza i największa skala obiektu. Uchwyty zatrzymują się na nich razem z obiektem.
   scaleLimits: { min: number; max: number }
+  // Rozmiar pola siatki, gdy włączone jest przyciąganie: przy skalowaniu bez obrotu boki
+  // obiektu stają na liniach siatki.
+  snap?: number
   onTransform: (transform: ObjectTransform) => void
   onTransformEnd: (transform: ObjectTransform) => void
 }
@@ -64,6 +67,7 @@ export function SelectionTransformer({
   bounds,
   zoom,
   scaleLimits,
+  snap,
   onTransform,
   onTransformEnd,
 }: SelectionTransformerProps) {
@@ -192,6 +196,43 @@ export function SelectionTransformer({
     return t === 0 ? oldBox : both(t)
   }
 
+  // Pudełko bez obrotu, w którym bok ciągnięty uchwytem stoi na najbliższej linii siatki,
+  // a bok naprzeciw zostaje w miejscu (obiekt ma co najmniej jedno pole).
+  // Siatka jest w px sceny, a pudełko w px canvasu, więc przeliczamy przez zoom.
+  function snapped(oldBox: Box, box: Box): Box {
+    const layer = transformerRef.current?.getLayer()
+    if (!snap || !layer || Math.abs(box.rotation) > 1e-9) return box
+    const zoom = layer.getAbsoluteScale().x
+    const origin = layer.getAbsoluteTransform().point({ x: 0, y: 0 })
+    const cell = snap * zoom
+    const axis = (start: number, size: number, oldStart: number, oldSize: number, from: number) => {
+      const toGrid = (p: number) => from + Math.round((p - from) / cell) * cell
+      const end = start + size
+      const startFixed = Math.abs(start - oldStart) < 1e-6
+      const endFixed = Math.abs(end - (oldStart + oldSize)) < 1e-6
+      if (startFixed && !endFixed) {
+        return { start, size: Math.max(toGrid(end), start + cell) - start }
+      }
+      if (endFixed && !startFixed) {
+        const first = Math.min(toGrid(start), end - cell)
+        return { start: first, size: end - first }
+      }
+      return { start, size }
+    }
+    const x = axis(box.x, box.width, oldBox.x, oldBox.width, origin.x)
+    const y = axis(box.y, box.height, oldBox.y, oldBox.height, origin.y)
+    return { x: x.start, y: y.start, width: x.size, height: y.size, rotation: box.rotation }
+  }
+
+  // Skalowanie z przyciąganiem: dozwolone pudełko dociągnięte do siatki. Gdy dociągnięte nie
+  // pasuje (limit skali), obiekt zostaje, jak był.
+  function boundBox(oldBox: Box, newBox: Box): Box {
+    const box = allowedBox(oldBox, newBox)
+    if (!snap || Math.abs(newBox.rotation - oldBox.rotation) > 1e-9) return box
+    const onGrid = snapped(oldBox, box)
+    return fits(onGrid) ? onGrid : oldBox
+  }
+
   return (
     <Layer>
       <Rect
@@ -214,7 +255,7 @@ export function SelectionTransformer({
         keepRatio={false}
         // Backend nie przyjmuje ujemnej skali, więc bez odbicia lustrzanego.
         flipEnabled={false}
-        boundBoxFunc={allowedBox}
+        boundBoxFunc={boundBox}
         onTransform={() => shapeRef.current && onTransform(transformOf(shapeRef.current))}
         onTransformEnd={() => {
           const shape = shapeRef.current

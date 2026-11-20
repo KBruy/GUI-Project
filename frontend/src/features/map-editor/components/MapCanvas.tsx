@@ -96,6 +96,7 @@ export function MapCanvas() {
   const scene = useEditorStore((s) => s.scene)
   const gridVisible = useEditorStore((s) => s.gridVisible)
   const zoom = useEditorStore((s) => s.zoom)
+  const gridSnap = useEditorStore((s) => s.gridSnap)
   const offset = useEditorStore((s) => s.offset)
   const setViewport = useEditorStore((s) => s.setViewport)
   const assets = useEditorStore((s) => s.assets)
@@ -260,6 +261,7 @@ export function MapCanvas() {
               bounds={shownScene}
               zoom={zoom}
               scaleLimits={SCALE_LIMITS}
+              snap={gridSnap ? shownScene.gridSize : undefined}
               onTransform={(t) => transform.onTransform(handled.id, t)}
               onTransformEnd={(t) => transform.onTransformEnd(handled.id, t)}
             />

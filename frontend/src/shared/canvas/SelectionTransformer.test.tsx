@@ -18,7 +18,7 @@ const LOG: SceneObject = {
   scaleY: 1,
 }
 
-function setup(zoom = 4) {
+function setup(zoom = 4, snap?: number) {
   const onTransform = vi.fn()
   const onTransformEnd = vi.fn()
   render(
@@ -27,6 +27,7 @@ function setup(zoom = 4) {
         object={LOG}
         bounds={{ width: 640, height: 480 }}
         zoom={zoom}
+        snap={snap}
         scaleLimits={{ min: 0.1, max: 4 }}
         onTransform={onTransform}
         onTransformEnd={onTransformEnd}
@@ -104,6 +105,18 @@ describe('SelectionTransformer', () => {
     expect(limit(old, { ...old, height: 200 }).height).toBeCloseTo(128, 0)
     // 0,1 z 32 px to 3,2 px, więc 2 px jest już za mało.
     expect(limit(old, { ...old, height: 2 }).height).toBeCloseTo(3.2, 0)
+  })
+
+  it('puts the scaled edges on grid lines when snapping is on', () => {
+    const limit = setup(4, 32).transformer.boundBoxFunc()!
+    const old = { x: 256, y: 224, width: 128, height: 32, rotation: 0 }
+
+    // Prawy bok na 396 px przeskakuje na linię 384, a na 406 px na linię 416.
+    expect(limit(old, { ...old, width: 140 })).toMatchObject({ x: 256, width: 128 })
+    expect(limit(old, { ...old, width: 150 })).toMatchObject({ x: 256, width: 160 })
+    // Lewy górny róg w dół i w prawo: prawy i dolny bok stoją, wysokość zostaje na jednym polu.
+    const corner = limit(old, { x: 276, y: 244, width: 108, height: 12, rotation: 0 })
+    expect(corner).toMatchObject({ x: 288, y: 224, width: 96, height: 32 })
   })
 
   it('keeps following the cursor on one axis when the other is at its limit', () => {
