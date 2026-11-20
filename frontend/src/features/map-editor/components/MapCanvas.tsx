@@ -258,6 +258,7 @@ export function MapCanvas() {
             <SelectionTransformer
               object={handled}
               bounds={shownScene}
+              zoom={zoom}
               scaleLimits={SCALE_LIMITS}
               onTransform={(t) => transform.onTransform(handled.id, t)}
               onTransformEnd={(t) => transform.onTransformEnd(handled.id, t)}

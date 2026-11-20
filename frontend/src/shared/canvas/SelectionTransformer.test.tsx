@@ -18,7 +18,7 @@ const LOG: SceneObject = {
   scaleY: 1,
 }
 
-function setup() {
+function setup(zoom = 4) {
   const onTransform = vi.fn()
   const onTransformEnd = vi.fn()
   render(
@@ -26,6 +26,7 @@ function setup() {
       <SelectionTransformer
         object={LOG}
         bounds={{ width: 640, height: 480 }}
+        zoom={zoom}
         scaleLimits={{ min: 0.1, max: 4 }}
         onTransform={onTransform}
         onTransformEnd={onTransformEnd}
@@ -43,6 +44,13 @@ describe('SelectionTransformer', () => {
 
     expect(transformer.nodes()).toHaveLength(1)
     expect(shape.attrs).toMatchObject({ x: 320, y: 240, offsetX: 64, offsetY: 16, rotation: 0 })
+  })
+
+  it('makes the handles smaller when the object is small on screen', () => {
+    // Kłoda ma 32 px wysokości: na ekranie 128, 32 i 16 px.
+    expect(setup(4).transformer.anchorSize()).toBe(10)
+    expect(setup(1).transformer.anchorSize()).toBe(8)
+    expect(setup(0.5).transformer.anchorSize()).toBe(5)
   })
 
   it('reports the transform while it lasts and at the end, then goes back to the object', () => {
