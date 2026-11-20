@@ -42,7 +42,7 @@ def create_app(settings: Settings | None = None) -> FastAPI:
 
     # app.state przechowuje obiekty wspólne dla całej aplikacji; endpointy dostają je przez deps.py.
     app.state.asset_repository = build_asset_repository(settings)
-    app.state.project_repository = build_project_repository()
+    app.state.project_repository = build_project_repository(settings)
 
     # include_router dołącza endpointy zdefiniowane w osobnym pliku (jeden plik na temat).
     app.include_router(health.router)

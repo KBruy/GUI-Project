@@ -45,7 +45,8 @@ MAX_IMPORT_FILE_BYTES = MAX_BODY_BYTES
 @dataclass(frozen=True)
 class Settings:
     client_origins: list[str]
-    database_url: str = DEFAULT_DATABASE_URL
+    # None oznacza repozytoria w pamięci (testy endpointów); load_settings zawsze podaje adres bazy.
+    database_url: str | None = None
     assets_manifest: Path = DEFAULT_ASSETS_MANIFEST
 
 
