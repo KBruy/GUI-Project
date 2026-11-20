@@ -115,6 +115,9 @@ interface EditorState {
   planTransform: (id: string, transform: Transform) => { transform: Transform; result: PlaceResult }
   // Zapisuje obrót i skalę jednego obiektu jednym krokiem cofania (te same zaokrąglenia).
   transformObject: (id: string, transform: Transform) => PlaceResult
+  // Zmiana z panelu właściwości, jednym krokiem cofania. Te same zaokrąglenia co uchwyty, a obiekt
+  // musi zostać w całości na mapie i bez kolizji. Zwraca klucz błędu albo null, gdy się udało.
+  editObject: (id: string, changes: Partial<Transform>) => TranslationKey | null
 }
 
 // Ile pierścieni pól wokół środka widoku sprawdzamy przy szukaniu wolnego miejsca.
@@ -495,5 +498,24 @@ export const useEditorStore = create<EditorState>()((set, get) => ({
     // execute sam sprawdza kolizję i przy niej niczego nie zmienia.
     const { transform: next } = get().planTransform(id, transform)
     return get().execute(transformObjects([id], next))
+  },
+
+  editObject(id, changes) {
+    const { scene } = get()
+    const object = scene?.layers.flatMap((layer) => layer.objects).find((o) => o.id === id)
+    if (!scene || !object) return null
+    const { x, y, rotation, scaleX, scaleY } = object
+    const plan = get().planTransform(id, { x, y, rotation, scaleX, scaleY, ...changes })
+    const box = objectBox({ ...object, ...plan.transform })
+    // Zapas na zaokrąglenia sinusa przy obrocie.
+    const outside =
+      box.x < -0.01 ||
+      box.y < -0.01 ||
+      box.right > scene.width + 0.01 ||
+      box.bottom > scene.height + 0.01
+    if (outside) return 'errors.objectOutOfBounds'
+    if (!plan.result.ok) return 'errors.collision'
+    get().execute(transformObjects([id], plan.transform))
+    return null
   },
 }))
