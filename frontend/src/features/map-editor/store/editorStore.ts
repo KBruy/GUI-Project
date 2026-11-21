@@ -569,7 +569,7 @@ export const useEditorStore = create<EditorState>()((set, get) => ({
       x: Math.round(((target.x ?? center.x) - center.x) * 2) / 2,
       y: Math.round(((target.y ?? center.y) - center.y) * 2) / 2,
     }
-    if (delta.x === 0 && delta.y === 0) return null
+    // Zerowy wektor też zapisujemy: panel na żywo zastępuje nim poprzedni krok (powrót do środka).
     // clampMove przycina wektor do mapy, więc inny wektor znaczy, że grupa by z niej wyszła.
     const allowed = clampMove(scene, ids, delta)
     if (allowed.x !== delta.x || allowed.y !== delta.y) return 'errors.objectOutOfBounds'

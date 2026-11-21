@@ -38,24 +38,29 @@ it('shows a hint, the values of one selected object or the number of selected ob
   expect(screen.getByText('Zaznaczone obiekty: 2')).toBeInTheDocument()
 })
 
-it('saves a value on Enter and shows an error when the object would collide', () => {
+it('changes the object while typing, in one undo step, and shows an error on collision', () => {
   const ids = setup()
   act(() => useEditorStore.getState().select([ids[0]]))
   const x = screen.getByLabelText('X')
 
   x.focus()
+  fireEvent.change(x, { target: { value: '15' } })
   fireEvent.change(x, { target: { value: '150' } })
-  fireEvent.keyDown(x, { key: 'Enter' })
   expect(objects()[0].x).toBe(150)
-  // Enter wychodzi z pola, żeby działały skróty edytora.
-  expect(x).not.toHaveFocus()
 
-  // Na drugiej kłodzie: błąd, a pole wraca do wartości obiektu.
+  // Na drugiej kłodzie: błąd, a obiekt zostaje przy ostatniej poprawnej wartości.
   fireEvent.change(x, { target: { value: '300' } })
-  fireEvent.keyDown(x, { key: 'Enter' })
   expect(screen.getByText('Obiekty nachodzą na siebie')).toBeInTheDocument()
-  expect(x).toHaveValue(150)
   expect(objects()[0].x).toBe(150)
+
+  // Enter wychodzi z pola, żeby działały skróty edytora.
+  fireEvent.keyDown(x, { key: 'Enter' })
+  expect(x).not.toHaveFocus()
+  expect(x).toHaveValue(150)
+
+  // Całe wpisywanie to jeden krok cofania.
+  act(() => useEditorStore.getState().undo())
+  expect(objects()[0].x).toBe(100)
 })
 
 it('sets the same scale for all selected objects in one undo step', () => {
