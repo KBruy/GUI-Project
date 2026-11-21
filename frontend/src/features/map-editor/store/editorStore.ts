@@ -165,17 +165,28 @@ function objectBox(object: SceneObject) {
   }
 }
 
-// Środek prostokąta otaczającego obiekty ids: położenie grupy w panelu właściwości.
-export function groupCenter(scene: Scene, ids: string[]): Point | null {
+// Prostokąt otaczający obiekty ids (od lewego górnego rogu) albo null, gdy żadnego nie ma.
+export function groupBox(scene: Scene, ids: string[]): Rect | null {
   const boxes = scene.layers
     .flatMap((layer) => layer.objects)
     .filter((object) => ids.includes(object.id))
     .map(objectBox)
   if (boxes.length === 0) return null
+  const x = Math.min(...boxes.map((b) => b.x))
+  const y = Math.min(...boxes.map((b) => b.y))
   return {
-    x: (Math.min(...boxes.map((b) => b.x)) + Math.max(...boxes.map((b) => b.right))) / 2,
-    y: (Math.min(...boxes.map((b) => b.y)) + Math.max(...boxes.map((b) => b.bottom))) / 2,
+    x,
+    y,
+    width: Math.max(...boxes.map((b) => b.right)) - x,
+    height: Math.max(...boxes.map((b) => b.bottom)) - y,
   }
+}
+
+// Środek prostokąta otaczającego obiekty ids: położenie grupy w panelu właściwości
+// i w etykiecie przy przeciąganiu kilku obiektów.
+export function groupCenter(scene: Scene, ids: string[]): Point | null {
+  const box = groupBox(scene, ids)
+  return box && { x: box.x + box.width / 2, y: box.y + box.height / 2 }
 }
 
 // Dosuwa do mapy obiekty, które z niej wystają. Backend sprawdza tylko środek obiektu,
