@@ -1,6 +1,6 @@
 // Skróty klawiszowe edytora map (F-33):
-// - strzałki: przesuwają zaznaczone obiekty o 1 px, z Shiftem o jedno pole siatki (32 px),
-//   a przy włączonym przyciąganiu zawsze do następnej linii siatki,
+// - strzałki: przesuwają zaznaczone obiekty o 1 px, a przy włączonym przyciąganiu do następnej
+//   linii siatki. Shift+strzałka zawsze przesuwa o jedno pole siatki (32 px),
 // - Ctrl+Z (na Macu Cmd+Z): cofnij, Ctrl+Shift+Z albo Ctrl+Y: ponów,
 // - Ctrl+S (Cmd+S): zapisz mapę (F-38),
 // - Delete albo Backspace: usuń zaznaczone obiekty,
@@ -89,7 +89,7 @@ export function useEditorShortcuts(): string | null {
       // Bez tego strzałki przewijają stronę.
       event.preventDefault()
       let delta: { x: number; y: number }
-      if (gridSnap) {
+      if (gridSnap && !event.shiftKey) {
         // Lewy górny róg pierwszego zaznaczonego obiektu trafia na siatkę, tak jak przy dodawaniu z palety.
         const first = scene.layers
           .flatMap((layer) => layer.objects)

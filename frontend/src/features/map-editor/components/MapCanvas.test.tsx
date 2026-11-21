@@ -334,6 +334,10 @@ describe('MapCanvas', () => {
       // Krawędź na linii przeskakuje o całe pole.
       fireEvent.keyDown(window, { key: 'ArrowUp' })
       expect(objects()[0]).toMatchObject({ x: 80, y: 16 })
+
+      // Shift przesuwa o całe pole także z przyciąganiem.
+      fireEvent.keyDown(window, { key: 'ArrowRight', shiftKey: true })
+      expect(objects()[0]).toMatchObject({ x: 112, y: 16 })
     })
 
     it('shows the moved object position for a moment after an arrow press', () => {
