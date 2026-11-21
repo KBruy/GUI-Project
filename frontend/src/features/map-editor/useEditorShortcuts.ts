@@ -2,12 +2,14 @@
 // - strzałki: przesuwają zaznaczone obiekty o 1 px, z Shiftem o jedno pole siatki (32 px),
 //   a przy włączonym przyciąganiu zawsze do następnej linii siatki,
 // - Ctrl+Z (na Macu Cmd+Z): cofnij, Ctrl+Shift+Z albo Ctrl+Y: ponów,
-// - Ctrl+S (Cmd+S): zapisz mapę (F-38).
+// - Ctrl+S (Cmd+S): zapisz mapę (F-38),
+// - Delete albo Backspace: usuń zaznaczone obiekty,
+// - V, B, R, G, E: narzędzia z panelu „Narzędzia”, Esc: powrót do zaznaczania.
 // Zwraca id obiektu przesuniętego strzałkami: canvas pokazuje przy nim przez chwilę jego (x, y).
 import { useEffect, useRef, useState } from 'react'
 import { toast } from '@/shared/components/ui/Toast/toast'
 import { saveProject } from './saveProject'
-import { useEditorStore } from './store/editorStore'
+import { useEditorStore, type Tool } from './store/editorStore'
 import { isTyping } from './useViewControls'
 
 const ARROWS: Record<string, { x: number; y: number }> = {
@@ -15,6 +17,14 @@ const ARROWS: Record<string, { x: number; y: number }> = {
   ArrowRight: { x: 1, y: 0 },
   ArrowUp: { x: 0, y: -1 },
   ArrowDown: { x: 0, y: 1 },
+}
+// Skróty narzędzi z panelu „Narzędzia”.
+const TOOL_KEYS: Record<string, Tool> = {
+  v: 'select',
+  b: 'brush',
+  r: 'rect',
+  g: 'fill',
+  e: 'eraser',
 }
 // Jak długo po ostatniej strzałce widać etykietę ze współrzędnymi.
 const NUDGE_LABEL_MS = 1500
@@ -43,7 +53,8 @@ export function useEditorShortcuts(): string | null {
       }
       // Skróty nie działają w polach formularza ani przy otwartym oknie (np. „Nowa mapa”).
       if (isTyping(event.target) || document.querySelector('dialog[open]')) return
-      const { scene, selectedIds, gridSnap, moveSelected, undo, redo } = useEditorStore.getState()
+      const { scene, selectedIds, gridSnap, moveSelected, deleteSelected, undo, redo } =
+        useEditorStore.getState()
       if (!scene) return
 
       const key = event.key.toLowerCase()
@@ -52,6 +63,24 @@ export function useEditorShortcuts(): string | null {
         else if ((key === 'z' && event.shiftKey) || key === 'y') redo()
         else return
         event.preventDefault()
+        return
+      }
+
+      // Esc w trakcie malowania przerywa też pociągnięcie (pędzel i gumka mają własne nasłuchy).
+      if (event.key === 'Escape') {
+        useEditorStore.getState().setTool('select')
+        return
+      }
+
+      if (!event.altKey && TOOL_KEYS[key]) {
+        useEditorStore.getState().setTool(TOOL_KEYS[key])
+        return
+      }
+
+      // Backspace, bo na Macu nie ma osobnego klawisza Delete.
+      if (event.key === 'Delete' || event.key === 'Backspace') {
+        event.preventDefault()
+        deleteSelected()
         return
       }
 

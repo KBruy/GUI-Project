@@ -68,7 +68,8 @@ export function useSelectionControls(ref: RefObject<HTMLElement | null>) {
   function onPointerDown(event: PointerEvent) {
     // defaultPrevented: to kliknięcie zaczęło przesuwanie widoku (spacja, środkowy przycisk).
     if (event.defaultPrevented || event.button !== 0 || !ref.current) return
-    if (!useEditorStore.getState().scene) return
+    // Zaznaczanie działa tylko z narzędziem „Zaznaczanie”.
+    if (!useEditorStore.getState().scene || useEditorStore.getState().tool !== 'select') return
     const { screen, scene } = pointsOf(event)
     const { objectAt, selectedIds } = useEditorStore.getState()
     const hit = objectAt(scene)

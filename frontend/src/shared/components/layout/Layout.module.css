@@ -45,9 +45,12 @@
   border-left: var(--pixel-border);
 }
 
-/* EditorLayout: siatka 3 kolumn. Środkowa kolumna i dolny rząd biorą całe wolne miejsce. */
+/* EditorLayout: siatka 3 kolumn. Środkowa kolumna i dolny rząd biorą całe wolne miejsce.
+   height: 0 + flex-grow: wysokość bierze z wolnego miejsca, a nie z treści paneli, więc długi
+   panel nie wydłuża strony, tylko przewija się w środku. */
 .editor {
-  flex: 1;
+  flex-grow: 1;
+  height: 0;
   display: grid;
   grid-template-columns: auto minmax(0, 1fr) auto;
   grid-template-rows: auto minmax(0, 1fr);
@@ -77,11 +80,26 @@
   margin: 0;
 }
 
-/* Flex, żeby Sidebar w środku rozciągnął się na całą wysokość (ramka do samego dołu). */
+/* Flex, żeby Sidebar w środku rozciągnął się na całą wysokość (ramka do samego dołu).
+   Pasek przewijania widać tylko po najechaniu myszą na panel. */
 .editorLeft,
 .editorRight {
   display: flex;
   overflow-y: auto;
+  scrollbar-width: thin;
+  scrollbar-color: transparent transparent;
+}
+
+.editorLeft:hover,
+.editorRight:hover {
+  scrollbar-color: var(--color-border) transparent;
+}
+
+/* Sidebar rośnie razem z treścią (ramka do końca przewijanej treści), ale co najmniej do dołu. */
+.editorLeft > .sidebar,
+.editorRight > .sidebar {
+  align-self: flex-start;
+  min-height: 100%;
 }
 
 .editorLeft {

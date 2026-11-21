@@ -113,6 +113,22 @@ export function addObject(layerId: string, asset: AssetSize, at: Point): Command
   }
 }
 
+// Kilka obiektów tego samego assetu jednym poleceniem, więc Ctrl+Z cofa je naraz (malowanie pędzlem).
+// Kolejne obiekty nie mogą nachodzić na wcześniejsze ani na resztę warstwy.
+// Nie ma go w rozdz. 6.3, do uzgodnienia z Kubą.
+export function addObjects(layerId: string, asset: AssetSize, centers: Point[]): Command {
+  const commands = centers.map((center) => addObject(layerId, asset, center))
+  return (scene) => {
+    let next = scene
+    for (const command of commands) {
+      const result = command(next)
+      if ('collidesWith' in result) return result
+      next = result.scene
+    }
+    return { scene: next }
+  }
+}
+
 // Zmienia podane obiekty funkcją update i sprawdza kolizje każdego z nich na jego warstwie.
 // Obiekty z ids nie kolidują ze sobą nawzajem, bo przesuwają się razem.
 function updateObjects(ids: string[], update: (object: SceneObject) => SceneObject): Command {

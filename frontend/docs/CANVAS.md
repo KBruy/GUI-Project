@@ -59,6 +59,17 @@ Widok to `zoom` i `offset` w store: punkt sceny `(x, y)` jest na ekranie w `(off
 
 Canvas wypełnia komórkę `EditorLayout` (`position: absolute; inset: 0`). Jego rozmiar mierzy `useElementSize()` z `shared/hooks/` (ResizeObserver), więc Stage dopasowuje się do zmiany rozmiaru okna. Przed pierwszym pomiarem (rozmiar 0) Stage się nie renderuje.
 
+## Narzędzia
+
+`features/map-editor/components/ToolPanel.tsx` w lewym panelu, nad paletą. Narzędzie jest w store (`tool`), skróty w `useEditorShortcuts.ts`. Esc zawsze wraca do zaznaczania.
+
+- Zaznaczanie (V): klikanie, prostokąt zaznaczania, przeciąganie i uchwyty. Tylko w tym narzędziu działa `useSelectionControls` i widać uchwyty.
+- Pędzel (B): maluje assetem wybranym w palecie (opis niżej).
+- Prostokąt (R): przeciągnięcie po mapie wypełnia assetem z palety wszystkie wolne pola od miejsca wciśnięcia do kursora. Pole ma rozmiar assetu (przy przyciąganiu zaokrąglony w górę do siatki), zajęte pola i pola poza mapą są pomijane. Podgląd jak przy pędzlu, całość to jeden krok cofania, Esc w trakcie porzuca prostokąt.
+- Wiadro (G): kliknięcie w mapę wypełnia assetem z palety wszystkie wolne pola całej mapy (te same pola co przy prostokącie od lewego górnego rogu). Bez podglądu pod kursorem, jeden krok cofania.
+- Gumka (E): `features/map-editor/useEraser.ts`. Wciśnięty przycisk i ruch po mapie usuwają obiekt pod kursorem (najwyższy, jak przy zaznaczaniu). Na ekranie znika od razu, ze sceny po puszczeniu przycisku, jednym krokiem cofania. Esc w trakcie porzuca pociągnięcie. Klik w kafelek palety przy gumce włącza pędzel.
+- Ikony kursora (`Cursor`) i prostokąta (`RectFill`) są narysowane w `customIcons.ts` w formacie Pxlkit, bo paczki ich nie mają.
+
 ## Paleta assetów
 
 `features/map-editor/components/AssetPalette.tsx` w lewym panelu edytora (F-31).
@@ -66,7 +77,7 @@ Canvas wypełnia komórkę `EditorLayout` (`position: absolute; inset: 0`). Jego
 - Przy pierwszym wyświetleniu woła `loadAssets()` ze store'u: `GET /api/assets?module=map`. Stan ładowania jest w store (`assetsStatus`, `assetsError`), przy błędzie paleta pokazuje komunikat i przycisk „Spróbuj ponownie”.
 - Kategorie (zakładki `SegmentedControl`) są w kolejności z manifestu. Etykieta to klucz `categories.<module>.<category>`, nazwa assetu to jego `nameKey`. Brak klucza w słowniku = pokazujemy surowy tekst, więc nowy asset od Moniki nie psuje widoku.
 - Kafelek (`OptionTile`) ma obrazek z `assetUrl(file)` (`shared/lib/assets.ts`) i dymek „nazwa · szer.×wys.”. Bez sceny kafelki są wyłączone.
-- Kliknięcie: `addAsset(asset)` stawia obiekt w środku widoku. Jeśli tam coś stoi, szuka najbliższego wolnego miejsca w kolejnych pierścieniach komórek siatki (do 8). Brak miejsca = toast `errors.collision`.
+- Kliknięcie: kafelek staje się assetem narzędzi (`brush` w store), a przy zaznaczaniu od razu włącza się pędzel (kafelek wciśnięty). Nad mapą podgląd jedzie za kursorem (kursor krzyżyk), a kliknięcie w mapę stawia obiekt. Z wciśniętym przyciskiem pędzel maluje: obiekt staje w każdym wolnym miejscu pod kursorem (`planAdd` z listą już namalowanych). Całe pociągnięcie trafia do sceny po puszczeniu przycisku, jednym poleceniem `addObjects` (`addPainted` w store), więc Ctrl+Z cofa je naraz. Zajęte pierwsze miejsce = toast, dalej zajęte miejsca są pomijane. Esc w trakcie malowania porzuca pociągnięcie.
 - Przeciągnięcie na mapę: bez systemowego drag&drop. Paleta ustawia `placingAsset` w store, a `features/map-editor/usePalettePlacing.ts` śledzi kursor w całym oknie. Poza mapą przy kursorze jedzie obrazek assetu, nad mapą podgląd obiektu z przyciąganiem, bursztynową ramką przy kolizji i etykietą (x, y). Puszczenie nad mapą woła `addAsset(asset, punkt)`, a puszczenie poza mapą (także na pustym pasie canvasu) albo Esc anuluje. Tu nie szukamy innego miejsca: kolizja = toast.
 - Zasady stawiania (`placeAsset` w store): przy włączonym przyciąganiu lewy górny róg trafia na siatkę, obiekt zawsze mieści się w mapie, a `x`, `y` obiektu to jego środek.
 - `<img>` w `OptionTile` ma `crossOrigin="anonymous"` tak jak `useAssetImage`. Bez tego przeglądarka zapamiętuje obrazek bez nagłówków CORS i canvas nie może go potem wczytać (zamiast grafiki widać czerwone prostokąty).
@@ -79,7 +90,7 @@ Zaznaczenie to `selectedIds` w store (F-32), więc widzą je wszystkie panele. P
 
 - Store: `selectAt(punkt, toggle)` zaznacza najwyższy obiekt pod punktem sceny i zwraca jego id (albo `null`), `selectInRect(prostokąt, add)` zaznacza wszystko, czego prostokąt dotyka, a `select(ids)` ustawia zaznaczenie wprost. Obiekty z ukrytych warstw pomija silnik (`objectsInRect`).
 - Mysz i klawiatura: `features/map-editor/useSelectionControls.ts`. Klik w obiekt zaznacza tylko jego, klik w puste miejsce czyści zaznaczenie. Shift+klik dokłada obiekt albo go zdejmuje. Przeciągnięcie po pustym miejscu (od 3 px) rysuje prostokąt, z Shiftem dokłada do zaznaczenia. Esc czyści zaznaczenie.
-- `MapCanvas` woła najpierw `useViewControls`, potem `useSelectionControls`. Gdy kliknięcie zaczyna przesuwanie widoku (spacja, środkowy przycisk), widok woła `preventDefault`, a zaznaczanie je pomija.
+- `MapCanvas` woła najpierw `useViewControls`, potem pędzel z `usePalettePlacing`, na końcu `useSelectionControls`. Gdy kliknięcie zaczyna przesuwanie widoku (spacja, środkowy przycisk) albo stawia obiekt pędzlem, ten krok woła `preventDefault`, a kolejne je pomijają.
 - Rysowanie: `shared/canvas/SelectionLayer.tsx` jako children `SceneRenderer`. Ramka ma położenie, obrót i skalę obiektu, czerwona linia leży na ciemnym obrysie. Ta sama warstwa rysuje prostokąt zaznaczania. Nie łapie kliknięć.
 
 ## Przesuwanie obiektów
@@ -89,6 +100,7 @@ Przeciąganie zaznaczonego obiektu przesuwa całe zaznaczenie (F-33), jednym kro
 - Logika: `useSelectionControls.ts`. W trakcie store liczy `planMove(wektor, idChwyconego)`: przy przyciąganiu lewy górny róg chwyconego obiektu trafia na siatkę, a wektor jest przycinany tak, żeby cała grupa została w mapie. Silnik sprawdza kolizje bez zmiany sceny (`canExecute`).
 - Kolizja w trakcie: ramki obiektów, z którymi grupa by się zderzyła, robią się bursztynowe. Puszczenie na zajęte miejsce zostawia obiekty, pokazuje toast `errors.collision` i potrząsa ramkami (`shakeKey`).
 - Strzałki (`useEditorShortcuts.ts`): 1 px, z Shiftem 32 px, a przy przyciąganiu zawsze do następnej linii siatki (`moveSelected`). Tu też Ctrl+Z / Cmd+Z cofa, a Ctrl+Shift+Z albo Ctrl+Y ponawia.
+- Delete albo Backspace usuwa zaznaczone obiekty, tak samo jak przycisk „Usuń” w pasku narzędzi (`DeleteButton.tsx`, `deleteSelected` w store). Jeden krok cofania, a zaznaczenie znika samo.
 - Etykieta (x, y) pokazuje środek obiektu, tak jak dane sceny. Przy przeciąganiu jedzie za kursorem, ale nie wychodzi poza obiekt, a przy prawej i dolnej krawędzi canvasu przechodzi na drugą stronę. Po strzałkach widać ją 1,5 s przy prawym dolnym rogu. Obiekt z etykietą ma w środku kropkę 8 px (`center` w `SelectionLayer`), a kursor nad przeciąganym obiektem znika (`cursor: none`).
 - Punkt mapy pod kursorem jest w store (`cursorPoint`) i pokazuje go `CursorPosition` na końcu paska narzędzi. Ruch myszy nie przerysowuje sceny.
 - Granice mapy to decyzja frontendu: backend sprawdza tylko środek obiektu. Obiekty wystające za mapę ze scen z backendu dosuwamy przy wczytaniu (F-38).

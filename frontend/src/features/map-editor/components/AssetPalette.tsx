@@ -1,5 +1,6 @@
 // Paleta assetów mapy (F-31): zakładki kategorii i kafelki z miniaturami.
-// Kliknięcie kafelka stawia obiekt na środku widoku, na aktywnej warstwie.
+// Kliknięcie kafelka wybiera asset, którym malują narzędzia z panelu „Narzędzia” (ToolPanel).
+// Przy zaznaczaniu kliknięcie od razu włącza pędzel. Esc wraca do zaznaczania.
 // Kafelek można też przeciągnąć na mapę. Nie używamy systemowego przeciągania (drag and drop),
 // tylko zdarzeń wskaźnika: paleta ustawia placingAsset w store, a podgląd i upuszczenie
 // obsługuje MapCanvas, tak samo jak przy przeciąganiu obiektów po mapie.
@@ -9,7 +10,6 @@ import { useT } from '@/i18n/language'
 import { Button } from '@/shared/components/ui/Button/Button'
 import { OptionTile } from '@/shared/components/ui/OptionTile/OptionTile'
 import { SegmentedControl } from '@/shared/components/ui/SegmentedControl/SegmentedControl'
-import { toast } from '@/shared/components/ui/Toast/toast'
 import { assetUrl, type Asset } from '@/shared/lib/assets'
 import { useEditorStore } from '../store/editorStore'
 import styles from './AssetPalette.module.css'
@@ -24,7 +24,11 @@ export function AssetPalette() {
   const status = useEditorStore((s) => s.assetsStatus)
   const hasScene = useEditorStore((s) => s.scene !== null)
   const loadAssets = useEditorStore((s) => s.loadAssets)
-  const addAsset = useEditorStore((s) => s.addAsset)
+  const brush = useEditorStore((s) => s.brush)
+  const setBrush = useEditorStore((s) => s.setBrush)
+  // Narzędzia malujące assetem z palety. Przy zaznaczaniu i gumce klik w kafelek włącza pędzel.
+  const painting = useEditorStore((s) => s.tool !== 'select' && s.tool !== 'eraser')
+  const setTool = useEditorStore((s) => s.setTool)
   const setPlacingAsset = useEditorStore((s) => s.setPlacingAsset)
   const [picked, setPicked] = useState<string | null>(null)
   // Po przeciągnięciu przeglądarka może jeszcze wysłać click na kafelek: wtedy go pomijamy.
@@ -39,10 +43,10 @@ export function AssetPalette() {
     if (useEditorStore.getState().assetsStatus === 'idle') loadAssets()
   }, [loadAssets])
 
-  function add(asset: Asset) {
+  function pick(asset: Asset) {
     if (dragged.current) return
-    const result = addAsset(asset)
-    if (!result.ok) toast.error('errors.collision')
+    setBrush(asset)
+    if (!painting) setTool('brush')
   }
 
   function startDrag(event: PointerEvent, asset: Asset) {
@@ -108,8 +112,9 @@ export function AssetPalette() {
                 label={name}
                 tooltip={`${name} · ${asset.width}×${asset.height}`}
                 imageUrl={assetUrl(asset.file)}
+                selected={painting && brush?.id === asset.id}
                 disabled={!hasScene}
-                onClick={() => add(asset)}
+                onClick={() => pick(asset)}
                 onPointerDown={(e) => startDrag(e, asset)}
                 // Obrazek w kafelku przeglądarka chce przeciągać po swojemu: blokujemy to.
                 onDragStart={(e) => e.preventDefault()}

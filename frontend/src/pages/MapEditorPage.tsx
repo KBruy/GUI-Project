@@ -2,10 +2,12 @@ import { useParams } from 'react-router'
 import { useT } from '@/i18n/language'
 import { AssetPalette } from '@/features/map-editor/components/AssetPalette'
 import { CursorPosition } from '@/features/map-editor/components/CursorPosition'
+import { DeleteButton } from '@/features/map-editor/components/DeleteButton'
 import { GridToggles } from '@/features/map-editor/components/GridToggles'
 import { MapCanvas } from '@/features/map-editor/components/MapCanvas'
 import { NewMapButton } from '@/features/map-editor/components/NewMapButton'
 import { SaveButton } from '@/features/map-editor/components/SaveButton'
+import { ToolPanel } from '@/features/map-editor/components/ToolPanel'
 import { ZoomControls } from '@/features/map-editor/components/ZoomControls'
 import { useProjectUrl } from '@/features/map-editor/useProjectUrl'
 import { EditorLayout, Panel, Sidebar, Toolbar } from '@/shared/components/layout/Layout'
@@ -24,6 +26,7 @@ export default function MapEditorPage() {
           {/* Pod /map/<id> projekt się wczytuje, więc okno „Nowa mapa” nie otwiera się samo. */}
           <NewMapButton autoOpen={!id} />
           <SaveButton />
+          <DeleteButton />
           <GridToggles />
           <ZoomControls />
           <CursorPosition />
@@ -31,6 +34,9 @@ export default function MapEditorPage() {
       }
       left={
         <Sidebar side="left" width={280}>
+          <Panel title={t('editor.tools')}>
+            <ToolPanel />
+          </Panel>
           <Panel title={t('editor.palette')}>
             <AssetPalette />
           </Panel>

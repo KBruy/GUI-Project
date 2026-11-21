@@ -8,8 +8,10 @@ import { ApiError, api } from '@/shared/lib/apiClient'
 import type { Asset } from '@/shared/lib/assets'
 import {
   addObject,
+  addObjects,
   createEditor,
   moveObjects,
+  removeObjects,
   transformObjects,
   type Command,
   type Editor,
@@ -22,7 +24,9 @@ import {
 } from '../engine/engine'
 import { clampOffset, fitView, toScenePoint, zoomAt, type Size } from '../view'
 
-export type Tool = 'select' | 'pan'
+// Narzędzie z panelu „Narzędzia”: zaznaczanie (V) albo malowanie assetem wybranym w palecie:
+// pędzel (B), prostokąt (R) i wiadro (G). Gumka (E) usuwa obiekty pod kursorem.
+export type Tool = 'select' | 'brush' | 'rect' | 'fill' | 'eraser'
 
 interface EditorState {
   editor: Editor | null
@@ -85,16 +89,24 @@ interface EditorState {
   // najbliżej środka widoku, żeby kolejne kliknięcia w paletę nie trafiały w zajęte pole.
   addAsset: (asset: Asset, at?: Point) => PlaceResult
   // Podgląd dodania assetu w punkcie sceny, bez zmiany sceny: gdzie stanie jego środek i czy koliduje.
-  planAdd: (asset: Asset, at: Point) => { at: Point; result: PlaceResult }
+  // painted: środki obiektów namalowanych już w tym pociągnięciu pędzla, jeszcze nie w scenie.
+  planAdd: (asset: Asset, at: Point, painted?: Point[]) => { at: Point; result: PlaceResult }
+  // Stawia obiekty pociągnięcia pędzla (gotowe środki z planAdd) jednym krokiem cofania.
+  addPainted: (asset: Asset, centers: Point[]) => PlaceResult
   // Asset przeciągany właśnie z palety na mapę. Upuszczenie obsługuje MapCanvas.
   placingAsset: Asset | null
   setPlacingAsset: (asset: Asset | null) => void
+  // Asset wybrany w palecie, którym malują narzędzia (pędzel). Null: jeszcze nic nie wybrano.
+  brush: Asset | null
+  setBrush: (asset: Asset | null) => void
   // Punkt mapy pod kursorem (całe piksele sceny) dla paska narzędzi. Null, gdy kursor jest poza mapą.
   cursorPoint: Point | null
   setCursorPoint: (point: Point | null) => void
   // Przesuwa zaznaczone obiekty o wektor w punktach sceny, jednym krokiem cofania.
   // Wektor jest przycinany tak, żeby cała grupa została w granicach mapy.
   moveSelected: (delta: Point) => PlaceResult
+  // Usuwa zaznaczone obiekty jednym krokiem cofania. Zaznaczenie czyści subscribe.
+  deleteSelected: () => void
   // Podgląd przeciągania zaznaczonych obiektów, bez zmiany sceny. Zwraca wektor po przyciąganiu
   // (lewy górny róg obiektu `anchorId` trafia na siatkę) i przycięciu do mapy oraz wynik kolizji.
   planMove: (delta: Point, anchorId: string) => { delta: Point; result: PlaceResult }
@@ -245,6 +257,7 @@ export const useEditorStore = create<EditorState>()((set, get) => ({
   assetsError: null,
   assetsStatus: 'idle',
   placingAsset: null,
+  brush: null,
   cursorPoint: null,
   projectId: null,
   savedScene: null,
@@ -394,13 +407,20 @@ export const useEditorStore = create<EditorState>()((set, get) => ({
     }
   },
 
-  planAdd(asset, at) {
+  planAdd(asset, at, painted = []) {
     const { scene, editor, activeLayerId, gridSnap } = get()
     if (!scene || !editor || !activeLayerId) throw new Error('No scene loaded')
     const center = placeAsset(at, asset, scene, gridSnap)
-    return { at: center, result: editor.canExecute(addObject(activeLayerId, asset, center)) }
+    const command = addObjects(activeLayerId, asset, [...painted, center])
+    return { at: center, result: editor.canExecute(command) }
+  },
+  addPainted(asset, centers) {
+    const { activeLayerId } = get()
+    if (!activeLayerId) throw new Error('No scene loaded')
+    return get().execute(addObjects(activeLayerId, asset, centers))
   },
   setPlacingAsset: (placingAsset) => set({ placingAsset }),
+  setBrush: (brush) => set({ brush }),
 
   setCursorPoint(point) {
     const current = get().cursorPoint
@@ -438,6 +458,11 @@ export const useEditorStore = create<EditorState>()((set, get) => ({
     // Grupa już stoi przy krawędzi: nie zapisujemy pustego kroku w historii cofania.
     if (move.x === 0 && move.y === 0) return { ok: true }
     return get().execute(moveObjects(selectedIds, move))
+  },
+
+  deleteSelected() {
+    const { selectedIds } = get()
+    if (selectedIds.length > 0) get().execute(removeObjects(selectedIds))
   },
 
   planMove(delta, anchorId) {
