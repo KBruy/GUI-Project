@@ -63,6 +63,19 @@ it('changes the object while typing, in one undo step, and shows an error on col
   expect(objects()[0].x).toBe(100)
 })
 
+it('keeps a change made on the map while the field is still being edited', () => {
+  const ids = setup()
+  act(() => useEditorStore.getState().select([ids[0]]))
+  const x = screen.getByLabelText('X')
+
+  x.focus()
+  fireEvent.change(x, { target: { value: '120' } })
+  // Np. przeciągnięcie na mapie, a pole dalej ma fokus.
+  act(() => useEditorStore.getState().moveSelected({ x: 0, y: 10 }))
+  fireEvent.change(x, { target: { value: '130' } })
+  expect(objects()[0]).toMatchObject({ x: 130, y: 60 })
+})
+
 it('sets the same scale for all selected objects in one undo step', () => {
   const ids = setup()
   act(() => useEditorStore.getState().editObjects([ids[0]], { scaleX: 1.5 }))
@@ -80,10 +93,9 @@ it('sets the same scale for all selected objects in one undo step', () => {
   act(() => useEditorStore.getState().undo())
   expect(objects().map((o) => o.scaleX)).toEqual([1.5, 1])
 
-  // Skala spoza zakresu: błąd zamiast cichego przycięcia.
+  // Skala spoza zakresu: komunikat z zakresem zamiast cichego przycięcia.
   fireEvent.change(scaleX, { target: { value: '-3' } })
-  fireEvent.keyDown(scaleX, { key: 'Enter' })
-  expect(screen.getByText('Skala poza zakresem')).toBeInTheDocument()
+  expect(screen.getByText('Dozwolony zakres: 0.1–10')).toBeInTheDocument()
   expect(objects().map((o) => o.scaleX)).toEqual([1.5, 1])
 })
 

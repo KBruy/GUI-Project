@@ -60,6 +60,7 @@ const dictionary = {
   'properties.scaleY': { pl: 'Skala Y', en: 'Scale Y' },
   'properties.rotation': { pl: 'Obrót (°)', en: 'Rotation (°)' },
   'properties.mixed': { pl: 'różne', en: 'mixed' },
+  'properties.range': { pl: 'Dozwolony zakres', en: 'Allowed range' },
   'palette.categories': { pl: 'Kategorie', en: 'Categories' },
   'palette.loading': { pl: 'Ładowanie grafik…', en: 'Loading assets…' },
   'palette.empty': { pl: 'Brak grafik', en: 'No assets' },
