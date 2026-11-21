@@ -461,7 +461,7 @@ describe('MapCanvas', () => {
       expect(position(b)).toMatchObject({ x: 112, y: 112 })
     })
 
-    it('marks only the grabbed object with a dot, the one the label shows', () => {
+    it('marks the center of the whole group with a dot, the one the label shows', () => {
       measureCanvas()
       const { canvas } = setup()
       click(canvas, 196, 146)
@@ -471,10 +471,11 @@ describe('MapCanvas', () => {
       pointer(canvas, 'pointerMove', 196, 274)
       const dots = Konva.stages.at(-1)!.find('.selection-center')
 
-      expect(screen.getByText('48, 112')).toBeInTheDocument()
+      // Kamienie w 48 i 112 po przesunięciu w dół: środek grupy w (80, 112), jak X, Y w panelu.
+      expect(screen.getByText('80, 112')).toBeInTheDocument()
       expect(canvas).toHaveStyle({ cursor: 'none' })
       expect(dots).toHaveLength(1)
-      expect(dots[0].attrs).toMatchObject({ x: 48, y: 112 })
+      expect(dots[0].attrs).toMatchObject({ x: 80, y: 112 })
 
       pointer(canvas, 'pointerUp', 196, 274)
       expect(Konva.stages.at(-1)!.find('.selection-center')).toHaveLength(0)

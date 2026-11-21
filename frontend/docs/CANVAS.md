@@ -100,7 +100,7 @@ Przeciąganie zaznaczonego obiektu przesuwa całe zaznaczenie (F-33), jednym kro
 - Logika: `useSelectionControls.ts`. W trakcie store liczy `planMove(wektor, idChwyconego)`: przy przyciąganiu lewy górny róg chwyconego obiektu trafia na siatkę, a wektor jest przycinany tak, żeby cała grupa została w mapie. Silnik sprawdza kolizje bez zmiany sceny (`canExecute`).
 - Kolizja w trakcie: ramki obiektów, z którymi grupa by się zderzyła, robią się bursztynowe. Puszczenie na zajęte miejsce zostawia obiekty, pokazuje toast `errors.collision` i potrząsa ramkami (`shakeKey`).
 - Strzałki (`useEditorShortcuts.ts`): 1 px, a przy przyciąganiu do następnej linii siatki. Shift+strzałka zawsze przesuwa o 32 px (`moveSelected`). Tu też Ctrl+Z / Cmd+Z cofa, a Ctrl+Shift+Z albo Ctrl+Y ponawia.
-- Delete albo Backspace usuwa zaznaczone obiekty, tak samo jak przycisk „Usuń” w pasku narzędzi (`DeleteButton.tsx`, `deleteSelected` w store). Jeden krok cofania, a zaznaczenie znika samo.
+- Delete albo Backspace usuwa zaznaczone obiekty, tak samo jak przycisk „Usuń” w panelu Właściwości (`PropertiesPanel.tsx`, `deleteSelected` w store). Jeden krok cofania, a zaznaczenie znika samo.
 - Etykieta (x, y) pokazuje środek obiektu, tak jak dane sceny. Przy przeciąganiu jedzie za kursorem, ale nie wychodzi poza obiekt, a przy prawej i dolnej krawędzi canvasu przechodzi na drugą stronę. Po strzałkach widać ją 1,5 s przy prawym dolnym rogu. Obiekt z etykietą ma w środku kropkę 8 px (`center` w `SelectionLayer`), a kursor nad przeciąganym obiektem znika (`cursor: none`).
 - Punkt mapy pod kursorem jest w store (`cursorPoint`) i pokazuje go `CursorPosition` na końcu paska narzędzi. Ruch myszy nie przerysowuje sceny.
 - Granice mapy to decyzja frontendu: backend sprawdza tylko środek obiektu. Obiekty wystające za mapę ze scen z backendu dosuwamy przy wczytaniu (F-38).
@@ -126,6 +126,19 @@ Gdy zaznaczony jest dokładnie jeden obiekt na widocznej warstwie, a nic nie jes
 - Store: `planTransform` (podgląd) i `transformObject` (zapis jednym krokiem cofania). Oba zaokrąglają tak samo: `x`, `y` do 0,5 px, obrót do całych stopni w zakresie 0–359, skala do całych pikseli rozmiaru i w zakresie 0,1–10 (jak w backendzie).
 - `features/map-editor/useTransformControls.ts` trzyma podgląd i kolizje. W trakcie ramki kolidujących obiektów są bursztynowe, a przy kolizji na końcu obiekt wraca, jest toast i drżenie ramek, tak jak przy przeciąganiu.
 - Kolizje w zaślepce silnika liczą się z prostokąta otaczającego obrócony obiekt, do czasu SAT z #122.
+
+## Panel właściwości
+
+`features/map-editor/components/PropertiesPanel.tsx` w prawym panelu (F-36) pokazuje i zmienia zaznaczone obiekty.
+
+- Nic nie jest zaznaczone: podpowiedź „Zaznacz obiekt na mapie”.
+- Jeden obiekt: grafika, warstwa, X i Y (środek obiektu, jak w etykiecie przy przeciąganiu), szerokość i wysokość w px sceny, skala X i Y oraz obrót.
+- Kilka obiektów: ich liczba, X i Y grupy (środek prostokąta wokół wszystkich, `groupCenter` w store) oraz wspólna skala i obrót. Gdy obiekty mają różne wartości, pole jest puste z podpowiedzią „różne”. Skala i obrót zmieniają każdy obiekt wokół jego własnego środka, a X i Y przesuwają całą grupę (`moveGroupTo`). Etykieta i kropka przy przeciąganiu kilku obiektów też pokazują środek grupy.
+- Na bieżąco w obie strony. Podczas przeciągania i uchwytów `MapCanvas` wkłada scenę z podglądu do store'u (`preview`), a panel czyta `preview ?? scene`. Wpisana liczba od razu zmienia mapę, bez Entera.
+- Całe wpisywanie w jednym polu to jeden krok cofania: każda kolejna zmiana cofa poprzednią z tego pola i robi nową. Panel pamięta scenę po swojej ostatniej zmianie, więc nie cofnie cudzego kroku, gdy w międzyczasie obiekt przeciągnięto na mapie. Esc cofa wpisywanie, Enter i Esc wychodzą z pola, żeby działały skróty edytora.
+- Błędy (store `editObjects` i `moveGroupTo` zwracają klucz albo null): obiekt poza mapą, kolizja, skala spoza 0,1–10. Obiekt zostaje przy ostatniej poprawnej wartości, a pod polem jest komunikat. Krok strzałką, kółkiem albo przyciskami pola, którego obiekt nie przyjął, nie zostaje w polu. Wpisywany tekst zostaje, bo „1” może być początkiem „150”.
+- Strzałki mają granice pola: skala 0,1–10 co 0,1, rozmiar w px z tych samych granic skali co 1 px. Na granicy pod polem jest „Dozwolony zakres: min–max”.
+- „Usuń” na dole panelu robi to samo co Delete i Backspace (`deleteSelected`).
 
 ## Testy
 

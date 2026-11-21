@@ -1,0 +1,10 @@
+/* Pola parami: X i Y, szerokość i wysokość, skala X i Y, a obrót sam w ostatnim wierszu. */
+.pairs {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: var(--space-3) var(--space-2);
+}
+
+.message {
+  color: var(--color-text-muted);
+}
