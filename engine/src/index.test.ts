@@ -11,6 +11,8 @@ import {
   execute,
   undo,
   validateScene,
+  snapCenter,
+  snapToGrid,
 } from './index'
 
 describe('engine', () => {
@@ -59,5 +61,10 @@ describe('publiczne API', () => {
 
   it('eksportuje walidację sceny', () => {
     expect(validateScene(createMapScene('Test', MAP_SIZES[0]))).toEqual([])
+  })
+
+  it('eksportuje przyciąganie do siatki', () => {
+    expect(snapToGrid({ x: 40, y: 70 })).toEqual({ x: 32, y: 64 })
+    expect(snapCenter({ x: 50, y: 50 }, 32, 32)).toEqual({ x: 48, y: 48 })
   })
 })
