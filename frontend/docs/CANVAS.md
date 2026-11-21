@@ -127,6 +127,19 @@ Gdy zaznaczony jest dokładnie jeden obiekt na widocznej warstwie, a nic nie jes
 - `features/map-editor/useTransformControls.ts` trzyma podgląd i kolizje. W trakcie ramki kolidujących obiektów są bursztynowe, a przy kolizji na końcu obiekt wraca, jest toast i drżenie ramek, tak jak przy przeciąganiu.
 - Kolizje w zaślepce silnika liczą się z prostokąta otaczającego obrócony obiekt, do czasu SAT z #122.
 
+## Panel właściwości
+
+`features/map-editor/components/PropertiesPanel.tsx` w prawym panelu (F-36) pokazuje i zmienia zaznaczone obiekty.
+
+- Nic nie jest zaznaczone: podpowiedź „Zaznacz obiekt na mapie”.
+- Jeden obiekt: grafika, warstwa, X i Y (środek obiektu, jak w etykiecie przy przeciąganiu), szerokość i wysokość w px sceny, skala X i Y oraz obrót.
+- Kilka obiektów: ich liczba, X i Y grupy (środek prostokąta wokół wszystkich, `groupCenter` w store) oraz wspólna skala i obrót. Gdy obiekty mają różne wartości, pole jest puste z podpowiedzią „różne”. Skala i obrót zmieniają każdy obiekt wokół jego własnego środka, a X i Y przesuwają całą grupę (`moveGroupTo`). Etykieta i kropka przy przeciąganiu kilku obiektów też pokazują środek grupy.
+- Na bieżąco w obie strony. Podczas przeciągania i uchwytów `MapCanvas` wkłada scenę z podglądu do store'u (`preview`), a panel czyta `preview ?? scene`. Wpisana liczba od razu zmienia mapę, bez Entera.
+- Całe wpisywanie w jednym polu to jeden krok cofania: każda kolejna zmiana cofa poprzednią z tego pola i robi nową. Panel pamięta scenę po swojej ostatniej zmianie, więc nie cofnie cudzego kroku, gdy w międzyczasie obiekt przeciągnięto na mapie. Esc cofa wpisywanie, Enter i Esc wychodzą z pola, żeby działały skróty edytora.
+- Błędy (store `editObjects` i `moveGroupTo` zwracają klucz albo null): obiekt poza mapą, kolizja, skala spoza 0,1–10. Obiekt zostaje przy ostatniej poprawnej wartości, a pod polem jest komunikat. Krok strzałką, kółkiem albo przyciskami pola, którego obiekt nie przyjął, nie zostaje w polu. Wpisywany tekst zostaje, bo „1” może być początkiem „150”.
+- Strzałki mają granice pola: skala 0,1–10 co 0,1, rozmiar w px z tych samych granic skali co 1 px. Na granicy pod polem jest „Dozwolony zakres: min–max”.
+- „Usuń” na dole panelu robi to samo co Delete i Backspace (`deleteSelected`).
+
 ## Testy
 
 jsdom nie rysuje na `<canvas>`, więc `src/test/setup.ts` podmienia `getContext` na zaślepkę, która przyjmuje każde wywołanie. Testy sprawdzają węzły Konvy (pozycja, obrót, kolejność warstw), nie piksele. Stage bierzemy z `Konva.stages.at(-1)`. jsdom nie ma też `ResizeObserver`, więc `setup.ts` daje zaślepkę, która nic nie mierzy. Klikanie, prostokąt, przeciąganie obiektów i z palety testujemy przez `createEvent.pointerDown` itd. z ręcznie ustawionymi `clientX`/`clientY`, bo jsdom ich nie przekazuje, a `setup.ts` daje zaślepkę `setPointerCapture`. Uchwytów Transformera nie da się złapać myszą w jsdom: test zmienia prostokąt sam i wysyła zdarzenia `transform` i `transformend`.
