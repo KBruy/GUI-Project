@@ -2,7 +2,6 @@ import { useParams } from 'react-router'
 import { useT } from '@/i18n/language'
 import { AssetPalette } from '@/features/map-editor/components/AssetPalette'
 import { CursorPosition } from '@/features/map-editor/components/CursorPosition'
-import { DeleteButton } from '@/features/map-editor/components/DeleteButton'
 import { GridToggles } from '@/features/map-editor/components/GridToggles'
 import { MapCanvas } from '@/features/map-editor/components/MapCanvas'
 import { NewMapButton } from '@/features/map-editor/components/NewMapButton'
@@ -27,7 +26,6 @@ export default function MapEditorPage() {
           {/* Pod /map/<id> projekt się wczytuje, więc okno „Nowa mapa” nie otwiera się samo. */}
           <NewMapButton autoOpen={!id} />
           <SaveButton />
-          <DeleteButton />
           <GridToggles />
           <ZoomControls />
           <CursorPosition />

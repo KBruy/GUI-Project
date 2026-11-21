@@ -1,7 +1,7 @@
 // Panel „Właściwości” (F-36): co jest zaznaczone na mapie. Jeden obiekt: grafika, warstwa,
 // położenie (środek, jak w etykiecie przy przeciąganiu), rozmiar w px sceny, skala i obrót.
 // Kilka obiektów: ich liczba, położenie grupy (środek prostokąta wokół nich; zmiana przesuwa
-// całą grupę) oraz wspólny obrót i skala (puste pole = różne wartości).
+// całą grupę) oraz wspólny obrót i skala (puste pole = różne wartości). Na dole „Usuń”.
 // Wartości zmieniają się na bieżąco także w trakcie przeciągania i uchwytów (preview w store).
 // Wpisana liczba od razu zmienia mapę, bez Entera. Całe wpisywanie w jednym polu to jeden krok
 // cofania, a Esc cofa je w całości. Enter i Esc wychodzą z pola, żeby od razu działały skróty
@@ -11,6 +11,7 @@ import { useRef, useState, type ComponentProps, type KeyboardEvent } from 'react
 import { dictionary, type TranslationKey } from '@/i18n/dictionary'
 import { useT } from '@/i18n/language'
 import { Stack } from '@/shared/components/layout/Layout'
+import { Button } from '@/shared/components/ui/Button/Button'
 import { Input } from '@/shared/components/ui/Input/Input'
 import type { Scene, SceneObject, Transform } from '../engine/engine'
 import { groupCenter, MAX_SCALE, MIN_SCALE, useEditorStore } from '../store/editorStore'
@@ -131,6 +132,7 @@ export function PropertiesPanel() {
   const assets = useEditorStore((s) => s.assets)
   const editObjects = useEditorStore((s) => s.editObjects)
   const moveGroupTo = useEditorStore((s) => s.moveGroupTo)
+  const deleteSelected = useEditorStore((s) => s.deleteSelected)
   const undo = useEditorStore((s) => s.undo)
   const redo = useEditorStore((s) => s.redo)
   // Scena po ostatniej zmianie z pola. Gdy zmieniło ją potem coś innego (np. przeciąganie
@@ -177,6 +179,13 @@ export function PropertiesPanel() {
     />
   )
 
+  // „Usuń” to samo co Delete i Backspace: jeden krok cofania, zaznaczenie znika samo.
+  const deleteButton = (
+    <Button size="sm" variant="danger" onClick={deleteSelected}>
+      {t('editor.delete')}
+    </Button>
+  )
+
   if (selectedIds.length > 1) {
     const selected = scene.layers
       .flatMap((l) => l.objects)
@@ -198,6 +207,7 @@ export function PropertiesPanel() {
           {field('properties.scaleY', scaleY, (value) => ({ scaleY: value }), SCALE_LIMITS)}
           {field('properties.rotation', rotation, (value) => ({ rotation: value }))}
         </div>
+        {deleteButton}
       </Stack>
     )
   }
@@ -232,6 +242,7 @@ export function PropertiesPanel() {
         {field('properties.scaleY', object.scaleY, (scaleY) => ({ scaleY }), SCALE_LIMITS)}
         {field('properties.rotation', object.rotation, (rotation) => ({ rotation }))}
       </div>
+      {deleteButton}
     </Stack>
   )
 }

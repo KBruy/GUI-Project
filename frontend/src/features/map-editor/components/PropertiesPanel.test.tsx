@@ -1,8 +1,9 @@
-import { act, fireEvent, render, screen } from '@testing-library/react'
+import { act, fireEvent, render, renderHook, screen } from '@testing-library/react'
 import { expect, it } from 'vitest'
 import { LanguageProvider } from '@/i18n/LanguageProvider'
 import { addObject, createMapScene, MAP_SIZES } from '../engine/engine'
 import { useEditorStore } from '../store/editorStore'
+import { useEditorShortcuts } from '../useEditorShortcuts'
 import { PropertiesPanel } from './PropertiesPanel'
 
 const TREE = { id: 'map_tree_oak_01', width: 64, height: 32 }
@@ -123,4 +124,21 @@ it('shows values from the canvas preview while dragging', () => {
   expect(screen.getByLabelText('X')).toHaveValue(120)
   act(() => useEditorStore.getState().setPreview(null))
   expect(screen.getByLabelText('X')).toHaveValue(100)
+})
+
+it('deletes the selected objects with the button or Delete, in one undo step', () => {
+  const ids = setup()
+  renderHook(() => useEditorShortcuts())
+  act(() => useEditorStore.getState().select([ids[0]]))
+  fireEvent.click(screen.getByRole('button', { name: 'Usuń' }))
+  expect(objects()).toHaveLength(1)
+
+  act(() => useEditorStore.getState().select([ids[1]]))
+  act(() => {
+    window.dispatchEvent(new KeyboardEvent('keydown', { key: 'Delete' }))
+  })
+  expect(objects()).toHaveLength(0)
+
+  act(() => useEditorStore.getState().undo())
+  expect(objects()).toHaveLength(1)
 })
