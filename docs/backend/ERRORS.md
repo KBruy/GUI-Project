@@ -82,3 +82,5 @@ gdy `fetch` nie dostanie żadnej odpowiedzi. Klucz z backendu, którego nie ma w
 1. Wpis kod → klucz w `MESSAGE_KEYS` (`backend/src/errors.py`).
 2. Tłumaczenia `pl` i `en` dla nowego klucza w `frontend/src/i18n/dictionary.ts` (bez tego frontend pokaże ogólny `errors.serverError`).
 3. Wiersz w jednej z tabel powyżej.
+
+Nowa reguła sceny krok po kroku (sprawdzenie, test, przykład): [ARCHITECTURE.md](ARCHITECTURE.md#nowa-reguła-walidacji).
