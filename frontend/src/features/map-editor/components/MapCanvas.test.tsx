@@ -86,7 +86,7 @@ afterEach(() => {
   vi.unstubAllGlobals()
   vi.useRealTimers()
   vi.restoreAllMocks()
-  useEditorStore.getState().setPlacingAsset(null)
+  useEditorStore.setState({ placingAsset: null, brush: null, tool: 'select' })
 })
 
 describe('MapCanvas', () => {
@@ -163,6 +163,77 @@ describe('MapCanvas', () => {
 
     expect(objects()).toHaveLength(0)
     expect(useEditorStore.getState().placingAsset).toBeNull()
+  })
+
+  it('paints the brush asset along the stroke in one undo step, Escape drops the stroke and selects', () => {
+    const { container } = render(<MapCanvas />)
+    const canvas = container.firstElementChild!
+    act(() => useEditorStore.setState({ brush: STONE, tool: 'brush' }))
+
+    // Co 32 px ekranu (16 px sceny): kamienie 32×32 stają co drugie pole, bez nachodzenia.
+    pointer(canvas, 'pointerDown', 164, 114)
+    for (const x of [196, 228, 260, 292]) pointer(window, 'pointerMove', x, 114)
+    pointer(window, 'pointerUp', 292, 114)
+    expect(objects().map((o) => o.x)).toEqual([48, 80, 112])
+    // Malowanie nie zaznacza.
+    expect(useEditorStore.getState().selectedIds).toEqual([])
+
+    act(() => useEditorStore.getState().undo())
+    expect(objects()).toHaveLength(0)
+
+    pointer(canvas, 'pointerDown', 164, 114)
+    act(() => {
+      window.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape' }))
+    })
+    pointer(window, 'pointerUp', 164, 114)
+    expect(objects()).toHaveLength(0)
+    expect(useEditorStore.getState().tool).toBe('select')
+  })
+
+  it('fills the dragged rectangle with the brush asset in one undo step', () => {
+    const { container } = render(<MapCanvas />)
+    const canvas = container.firstElementChild!
+    act(() => useEditorStore.setState({ brush: STONE, tool: 'rect' }))
+
+    // 3 kolumny × 2 rzędy pól 32×32 (64 px ekranu na pole).
+    pointer(canvas, 'pointerDown', 164, 114)
+    pointer(window, 'pointerMove', 292, 178)
+    pointer(window, 'pointerUp', 292, 178)
+    expect(objects()).toHaveLength(6)
+    expect(new Set(objects().map((o) => o.x))).toEqual(new Set([48, 80, 112]))
+
+    act(() => useEditorStore.getState().undo())
+    expect(objects()).toHaveLength(0)
+  })
+
+  it('fills every free cell of the map with one click, in one undo step', () => {
+    const { container } = render(<MapCanvas />)
+    act(() => useEditorStore.getState().addAsset(STONE, { x: 16, y: 16 }))
+    act(() => useEditorStore.setState({ brush: STONE, tool: 'fill' }))
+
+    click(container.firstElementChild!, 164, 114)
+    // Mapa 640×480 to 20×15 pól 32×32, jedno było już zajęte.
+    expect(objects()).toHaveLength(300)
+
+    act(() => useEditorStore.getState().undo())
+    expect(objects()).toHaveLength(1)
+  })
+
+  it('erases the objects under the stroke in one undo step', () => {
+    const { container } = render(<MapCanvas />)
+    const canvas = container.firstElementChild!
+    for (const x of [48, 80, 112])
+      act(() => useEditorStore.getState().addAsset(STONE, { x, y: 48 }))
+    act(() => useEditorStore.setState({ tool: 'eraser' }))
+
+    // Kamienie ze środkami x 48, 80, 112 (y 48). Ekran = 100 + 2·x, 50 + 2·y.
+    pointer(canvas, 'pointerDown', 196, 146)
+    pointer(window, 'pointerMove', 260, 146)
+    pointer(window, 'pointerUp', 260, 146)
+    expect(objects().map((o) => o.x)).toEqual([112])
+
+    act(() => useEditorStore.getState().undo())
+    expect(objects()).toHaveLength(3)
   })
 
   it('does not drop on top of another object', () => {

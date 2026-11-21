@@ -48,7 +48,7 @@ beforeEach(() => {
 
 afterEach(() => {
   vi.unstubAllGlobals()
-  useEditorStore.getState().setPlacingAsset(null)
+  useEditorStore.setState({ placingAsset: null, brush: null, tool: 'select' })
 })
 
 // jsdom nie przekazuje współrzędnych ani przycisku do zdarzeń wskaźnika, więc dopisujemy je ręcznie.
@@ -63,15 +63,17 @@ function pointer(target: Element | Window, type: 'pointerDown' | 'pointerMove', 
 }
 
 describe('AssetPalette', () => {
-  it('shows the assets of the first category and adds one to the map on click', async () => {
+  it('shows the assets of the first category and picks one for the brush on click', async () => {
     mockFetch(() => Promise.resolve(new Response(JSON.stringify([GRASS, STONE]))))
     renderPalette()
-
-    fireEvent.click(await screen.findByRole('button', { name: 'Trawa' }))
-
+    const tile = await screen.findByRole('button', { name: 'Trawa' })
     expect(screen.queryByRole('button', { name: 'Kamień' })).not.toBeInTheDocument()
-    expect(objects()).toHaveLength(1)
-    expect(objects()[0].assetId).toBe(GRASS.id)
+
+    // Przy zaznaczaniu kliknięcie kafelka od razu włącza pędzel. Samo kliknięcie niczego nie dodaje.
+    fireEvent.click(tile)
+    expect(useEditorStore.getState()).toMatchObject({ brush: GRASS, tool: 'brush' })
+    expect(tile).toHaveAttribute('aria-pressed', 'true')
+    expect(objects()).toHaveLength(0)
   })
 
   it('starts dragging a tile after a few pixels and then ignores the click', async () => {
@@ -86,9 +88,9 @@ describe('AssetPalette', () => {
     pointer(window, 'pointerMove', 20)
     expect(useEditorStore.getState().placingAsset).toEqual(GRASS)
 
-    // Puszczenie nad samym kafelkiem nie dodaje obiektu na środku.
+    // Puszczenie nad samym kafelkiem nie wybiera go jako pędzla.
     fireEvent.click(tile)
-    expect(objects()).toHaveLength(0)
+    expect(useEditorStore.getState().brush).toBeNull()
   })
 
   it('switches category with the tabs', async () => {
@@ -111,16 +113,5 @@ describe('AssetPalette', () => {
     fireEvent.click(screen.getByRole('button', { name: 'Spróbuj ponownie' }))
 
     expect(await screen.findByRole('button', { name: 'Trawa' })).toBeInTheDocument()
-  })
-
-  it('adds the next click next to the previous object', async () => {
-    mockFetch(() => Promise.resolve(new Response(JSON.stringify([GRASS]))))
-    renderPalette()
-    const tile = await screen.findByRole('button', { name: 'Trawa' })
-
-    fireEvent.click(tile)
-    fireEvent.click(tile)
-
-    expect(objects()).toHaveLength(2)
   })
 })

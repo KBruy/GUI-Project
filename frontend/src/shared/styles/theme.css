@@ -8,7 +8,7 @@
   --space-6: 32px;  /* 2xl */
 
   /* === Font families === */
-  --font-heading: 'Press Start 2P', monospace; /* pixel headings */
+  --font-heading: 'Heading Ogonki', 'Press Start 2P', monospace; /* pixel headings */
   --font-body: 'VT323', monospace;             /* pixel body text */
 
   /* === Font sizes === */
