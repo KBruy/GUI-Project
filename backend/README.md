@@ -2,9 +2,17 @@
 
 REST API WorldSmith (FastAPI): walidacja scen, projekty, import/eksport, serwowanie PNG assetów.
 
-- `src/` – aplikacja FastAPI (Franek)
-- `src/db/` – warstwa bazy danych (Cyprian)
+- `src/` – aplikacja FastAPI
+- `src/db/` – warstwa bazy danych
 - `tests/` – testy (pytest)
+
+## Dokumentacja
+
+- [API](../docs/backend/API.md) – endpointy, przykłady zapytań i odpowiedzi, format sceny
+- [Błędy](../docs/backend/ERRORS.md) – kody błędów i klucze tłumaczeń dla frontendu
+- [Architektura](../docs/backend/ARCHITECTURE.md) – budowa backendu, poziomy walidacji,
+  [dopisanie nowej reguły walidacji](../docs/backend/ARCHITECTURE.md#nowa-reguła-walidacji)
+- [Baza danych](src/db/README.md) – tabele, migracje, seed
 
 ## Uruchomienie (Python 3.12, Docker Desktop)
 
@@ -22,6 +30,8 @@ Serwer zapisuje projekty i czyta assety z PostgreSQL, więc przed startem musi d
    pip install -r requirements-dev.txt
    copy .env.example .env        # macOS / Linux: cp .env.example .env
    ```
+   W każdym nowym terminalu przed kolejnymi krokami trzeba aktywować `.venv` (druga linia).
+   `pip install -r requirements-dev.txt` powtórzyć po każdym `git pull` ze zmianą `requirements*.txt`.
 3. Tabele i assety (z folderu `backend/`; po każdym `git pull` ze zmianą migracji lub `assets/manifest.json`):
    ```
    alembic upgrade head
@@ -55,3 +65,14 @@ CI (`.github/workflows/backend.yml`) uruchamia `pytest` przy każdym PR zmieniaj
 | `DATABASE_URL` | `postgresql+psycopg://worldsmith:worldsmith@localhost:5432/worldsmith` | adres bazy; zmienić tylko przy innym porcie lub haśle (`src/db/README.md`) |
 
 Plik `.env` jest wczytywany tylko przy uruchomieniu Uvicorna z flagą `--env-file .env`; bez niej obowiązują wartości domyślne (lub zmienne ustawione w systemie).
+
+## Częste problemy
+
+| Objaw | Przyczyna i rozwiązanie |
+|---|---|
+| assety i projekty zwracają `500 SERVER_ERROR` | baza nie działa: `docker compose up -d` (z głównego folderu repozytorium), potem `docker compose ps` |
+| baza działa, a połączenie i tak się nie udaje | port 5432 zajmuje PostgreSQL zainstalowany w systemie: zatrzymać tę usługę albo zmienić port bazy (`src/db/README.md`) |
+| `relation "..." does not exist` w logach serwera | brak tabel: `alembic upgrade head` |
+| pusta lista assetów | brak assetów w bazie: `python -m src.db.seed` |
+| przeglądarka blokuje zapytania (błąd CORS w konsoli) | frontend działa pod innym adresem niż `CLIENT_ORIGIN` (Vite przy zajętym porcie 5173 wybiera 5174); dopisać ten adres w `.env` i uruchomić serwer ponownie |
+| `ModuleNotFoundError` przy starcie | nieaktywne `.venv` albo nieaktualne zależności: aktywować `.venv` i `pip install -r requirements-dev.txt` |
