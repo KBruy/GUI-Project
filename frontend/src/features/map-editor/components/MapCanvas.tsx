@@ -7,7 +7,7 @@ import { SelectionTransformer } from '@/shared/canvas/SelectionTransformer'
 import { useElementSize } from '@/shared/hooks/useElementSize'
 import { assetUrl } from '@/shared/lib/assets'
 import type { Point, Scene, SceneObject } from '../engine/engine'
-import { MAX_SCALE, MIN_SCALE, useEditorStore } from '../store/editorStore'
+import { groupBox, MAX_SCALE, MIN_SCALE, useEditorStore } from '../store/editorStore'
 import { useEditorShortcuts } from '../useEditorShortcuts'
 import { useEraser } from '../useEraser'
 import { usePalettePlacing } from '../usePalettePlacing'
@@ -160,8 +160,28 @@ export function MapCanvas() {
   }, [shownScene, selectedIds, drag, ghost, transform.preview])
   // Etykieta przy kursorze: środek chwyconego obiektu (albo podglądu), tak jak x, y w panelu właściwości.
   // Po ruchu strzałkami etykieta stoi przez chwilę przy prawym dolnym rogu przesuniętego obiektu.
-  const nudged = !drag && !ghost && nudgedId ? selected.find((o) => o.id === nudgedId) : undefined
-  const anchor = drag ? selected.find((o) => o.id === drag.anchorId) : (ghost?.object ?? nudged)
+  // Przy kilku zaznaczonych etykieta i kropka pokazują środek całej grupy, tak jak X, Y w panelu.
+  const group = useMemo(() => {
+    const box = !ghost && selected.length > 1 && shownScene && groupBox(shownScene, selectedIds)
+    if (!box) return undefined
+    // Udaje obiekt w miejscu prostokąta grupy, żeby etykieta i kropka liczyły się jak dla obiektu.
+    const { x, y, width, height } = box
+    return {
+      ...selected[0],
+      x: x + width / 2,
+      y: y + height / 2,
+      width,
+      height,
+      scaleX: 1,
+      scaleY: 1,
+      rotation: 0,
+    }
+  }, [ghost, selected, shownScene, selectedIds])
+  const nudged =
+    !drag && !ghost && nudgedId ? (group ?? selected.find((o) => o.id === nudgedId)) : undefined
+  const anchor = drag
+    ? (group ?? selected.find((o) => o.id === drag.anchorId))
+    : (ghost?.object ?? nudged)
   const pointer = drag?.pointer ?? ghost?.pointer
   const nudgedRect = nudged && screenRect(nudged, zoom, offset)
   const labelAt =
@@ -191,6 +211,11 @@ export function MapCanvas() {
       state.scene && x >= 0 && y >= 0 && x < state.scene.width && y < state.scene.height
     setCursorPoint(inside ? { x, y } : null)
   }
+
+  // Panel właściwości pokazuje położenie, obrót i skalę na bieżąco, także w trakcie przeciągania.
+  const setPreview = useEditorStore((s) => s.setPreview)
+  const preview = drag || transform.preview ? shownScene : null
+  useEffect(() => setPreview(preview), [preview, setPreview])
 
   // Store potrzebuje rozmiaru canvasu do zoomu w środku i „Dopasuj do ekranu”.
   useEffect(() => {

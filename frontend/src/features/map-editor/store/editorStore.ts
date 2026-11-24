@@ -102,6 +102,10 @@ interface EditorState {
   // Punkt mapy pod kursorem (całe piksele sceny) dla paska narzędzi. Null, gdy kursor jest poza mapą.
   cursorPoint: Point | null
   setCursorPoint: (point: Point | null) => void
+  // Scena narysowana na canvasie w trakcie przeciągania, obracania albo skalowania (jeszcze
+  // niezapisana). Panel właściwości pokazuje z niej wartości na bieżąco. Null: nic się nie dzieje.
+  preview: Scene | null
+  setPreview: (preview: Scene | null) => void
   // Przesuwa zaznaczone obiekty o wektor w punktach sceny, jednym krokiem cofania.
   // Wektor jest przycinany tak, żeby cała grupa została w granicach mapy.
   moveSelected: (delta: Point) => PlaceResult
@@ -115,6 +119,15 @@ interface EditorState {
   planTransform: (id: string, transform: Transform) => { transform: Transform; result: PlaceResult }
   // Zapisuje obrót i skalę jednego obiektu jednym krokiem cofania (te same zaokrąglenia).
   transformObject: (id: string, transform: Transform) => PlaceResult
+  // Zmiana z panelu właściwości: te same wartości dla wszystkich obiektów ids (każdy obraca się
+  // i skaluje wokół własnego środka), jednym krokiem cofania. Zaokrąglenia jak przy uchwytach.
+  // Wszystko albo nic: skala w granicach MIN_SCALE–MAX_SCALE, każdy obiekt w całości na mapie
+  // i bez kolizji. Zwraca klucz błędu albo null, gdy się udało.
+  editObjects: (ids: string[], changes: Partial<Transform>) => TranslationKey | null
+  // Zmiana X albo Y grupy z panelu: przesuwa obiekty ids tak, żeby środek ich wspólnego
+  // prostokąta (groupCenter) stanął w podanym punkcie, jednym krokiem cofania.
+  // Jak editObjects: poza mapę albo na inny obiekt nic się nie zmienia i wraca klucz błędu.
+  moveGroupTo: (ids: string[], target: Partial<Point>) => TranslationKey | null
 }
 
 // Ile pierścieni pól wokół środka widoku sprawdzamy przy szukaniu wolnego miejsca.
@@ -150,6 +163,30 @@ function objectBox(object: SceneObject) {
     right: object.x + halfW,
     bottom: object.y + halfH,
   }
+}
+
+// Prostokąt otaczający obiekty ids (od lewego górnego rogu) albo null, gdy żadnego nie ma.
+export function groupBox(scene: Scene, ids: string[]): Rect | null {
+  const boxes = scene.layers
+    .flatMap((layer) => layer.objects)
+    .filter((object) => ids.includes(object.id))
+    .map(objectBox)
+  if (boxes.length === 0) return null
+  const x = Math.min(...boxes.map((b) => b.x))
+  const y = Math.min(...boxes.map((b) => b.y))
+  return {
+    x,
+    y,
+    width: Math.max(...boxes.map((b) => b.right)) - x,
+    height: Math.max(...boxes.map((b) => b.bottom)) - y,
+  }
+}
+
+// Środek prostokąta otaczającego obiekty ids: położenie grupy w panelu właściwości
+// i w etykiecie przy przeciąganiu kilku obiektów.
+export function groupCenter(scene: Scene, ids: string[]): Point | null {
+  const box = groupBox(scene, ids)
+  return box && { x: box.x + box.width / 2, y: box.y + box.height / 2 }
 }
 
 // Dosuwa do mapy obiekty, które z niej wystają. Backend sprawdza tylko środek obiektu,
@@ -259,6 +296,7 @@ export const useEditorStore = create<EditorState>()((set, get) => ({
   placingAsset: null,
   brush: null,
   cursorPoint: null,
+  preview: null,
   projectId: null,
   savedScene: null,
   saving: false,
@@ -420,6 +458,7 @@ export const useEditorStore = create<EditorState>()((set, get) => ({
     return get().execute(addObjects(activeLayerId, asset, centers))
   },
   setPlacingAsset: (placingAsset) => set({ placingAsset }),
+  setPreview: (preview) => set({ preview }),
   setBrush: (brush) => set({ brush }),
 
   setCursorPoint(point) {
@@ -495,5 +534,56 @@ export const useEditorStore = create<EditorState>()((set, get) => ({
     // execute sam sprawdza kolizję i przy niej niczego nie zmienia.
     const { transform: next } = get().planTransform(id, transform)
     return get().execute(transformObjects([id], next))
+  },
+
+  editObjects(ids, changes) {
+    const { scene } = get()
+    if (!scene) return null
+    // Skala spoza granic backendu to błąd, a nie ciche przycięcie (np. wpisane -3).
+    const scales = [changes.scaleX, changes.scaleY].filter((v) => v !== undefined)
+    if (scales.some((v) => v < MIN_SCALE || v > MAX_SCALE)) return 'errors.scaleOutOfRange'
+    const commands: Command[] = []
+    for (const object of scene.layers.flatMap((layer) => layer.objects)) {
+      if (!ids.includes(object.id)) continue
+      const { x, y, rotation, scaleX, scaleY } = object
+      const transform = normalizeTransform(object, { x, y, rotation, scaleX, scaleY, ...changes })
+      const box = objectBox({ ...object, ...transform })
+      // Zapas na zaokrąglenia sinusa przy obrocie.
+      const outside =
+        box.x < -0.01 ||
+        box.y < -0.01 ||
+        box.right > scene.width + 0.01 ||
+        box.bottom > scene.height + 0.01
+      if (outside) return 'errors.objectOutOfBounds'
+      commands.push(transformObjects([object.id], transform))
+    }
+    // Obiekty po kolei, więc każdy sprawdza kolizje także z już zmienionymi sąsiadami.
+    const all: Command = (start) => {
+      let next = start
+      for (const command of commands) {
+        const result = command(next)
+        if ('collidesWith' in result) return result
+        next = result.scene
+      }
+      return { scene: next }
+    }
+    // execute przy kolizji niczego nie zmienia.
+    return get().execute(all).ok ? null : 'errors.collision'
+  },
+
+  moveGroupTo(ids, target) {
+    const { scene } = get()
+    const center = scene && groupCenter(scene, ids)
+    if (!scene || !center) return null
+    // Do pół piksela, żeby środki obiektów zostały na pół pikselu jak po normalizeTransform.
+    const delta = {
+      x: Math.round(((target.x ?? center.x) - center.x) * 2) / 2,
+      y: Math.round(((target.y ?? center.y) - center.y) * 2) / 2,
+    }
+    // Zerowy wektor też zapisujemy: panel na żywo zastępuje nim poprzedni krok (powrót do środka).
+    // clampMove przycina wektor do mapy, więc inny wektor znaczy, że grupa by z niej wyszła.
+    const allowed = clampMove(scene, ids, delta)
+    if (allowed.x !== delta.x || allowed.y !== delta.y) return 'errors.objectOutOfBounds'
+    return get().execute(moveObjects(ids, delta)).ok ? null : 'errors.collision'
   },
 }))
