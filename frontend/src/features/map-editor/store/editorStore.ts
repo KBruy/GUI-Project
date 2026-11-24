@@ -4,6 +4,7 @@
 // undo i redo komponenty, które jej używają, renderują się od nowa.
 import { create } from 'zustand'
 import type { TranslationKey } from '@/i18n/dictionary'
+import { toast } from '@/shared/components/ui/Toast/toast'
 import { ApiError, api } from '@/shared/lib/apiClient'
 import type { Asset } from '@/shared/lib/assets'
 import {
@@ -11,11 +12,13 @@ import {
   addObjects,
   combineCommands,
   createEditor,
+  EngineError,
   moveObjects,
   removeObjects,
   transformObjects,
   type Command,
   type Editor,
+  type EngineErrorCode,
   type PlaceResult,
   type Point,
   type Rect,
@@ -129,6 +132,29 @@ interface EditorState {
   // prostokąta (groupCenter) stanął w podanym punkcie, jednym krokiem cofania.
   // Jak editObjects: poza mapę albo na inny obiekt nic się nie zmienia i wraca klucz błędu.
   moveGroupTo: (ids: string[], target: Partial<Point>) => TranslationKey | null
+}
+
+// Tłumaczenia błędów silnika. Silnik rzuca EngineError, gdy polecenie łamie regułę inną niż
+// kolizja (np. obiekt na zablokowanej warstwie). Kolizja nie jest błędem, tylko wynikiem { ok: false }.
+const ENGINE_ERRORS: Record<EngineErrorCode, TranslationKey> = {
+  LAYER_LOCKED: 'errors.layerLocked',
+  LAST_LAYER: 'errors.lastLayer',
+  LAYER_NOT_FOUND: 'errors.layerNotFound',
+  OBJECT_NOT_FOUND: 'errors.objectNotFound',
+  LAYER_LIMIT: 'errors.layerLimit',
+  INVALID_SCENE_SIZE: 'errors.invalidSceneSize',
+}
+
+// Wywołuje silnik i zamienia EngineError na „nie udało się”, żeby błąd nie wywrócił edytora.
+// Scena zostaje bez zmian. notify: pokaż toast (przy zapisie zmiany, nie przy podglądzie).
+function tryEngine(run: () => PlaceResult, notify: boolean): PlaceResult {
+  try {
+    return run()
+  } catch (err) {
+    if (!(err instanceof EngineError)) throw err
+    if (notify) toast.error(ENGINE_ERRORS[err.code])
+    return { ok: false, collidesWith: [] }
+  }
 }
 
 // Ile pierścieni pól wokół środka widoku sprawdzamy przy szukaniu wolnego miejsca.
@@ -317,8 +343,9 @@ export const useEditorStore = create<EditorState>()((set, get) => ({
       savedScene: editor.getScene(),
       projectId,
       selectedIds: [],
-      // Nowe obiekty trafiają domyślnie na najwyższą warstwę.
-      activeLayerId: scene.layers.at(-1)?.id ?? null,
+      // Nowe obiekty trafiają domyślnie na najwyższą niezablokowaną warstwę. Gdy wszystkie są
+      // zablokowane, bierzemy najwyższą, a silnik przy dodaniu zgłosi LAYER_LOCKED.
+      activeLayerId: (scene.layers.findLast((l) => !l.locked) ?? scene.layers.at(-1))?.id ?? null,
     })
     get().fitToScreen()
   },
@@ -326,7 +353,7 @@ export const useEditorStore = create<EditorState>()((set, get) => ({
   execute(command) {
     const { editor } = get()
     if (!editor) throw new Error('No scene loaded')
-    return editor.execute(command)
+    return tryEngine(() => editor.execute(command), true)
   },
   undo: () => get().editor?.undo(),
   redo: () => get().editor?.redo(),
@@ -451,7 +478,7 @@ export const useEditorStore = create<EditorState>()((set, get) => ({
     if (!scene || !editor || !activeLayerId) throw new Error('No scene loaded')
     const center = placeAsset(at, asset, scene, gridSnap)
     const command = addObjects(activeLayerId, asset, [...painted, center])
-    return { at: center, result: editor.canExecute(command) }
+    return { at: center, result: tryEngine(() => editor.canExecute(command), false) }
   },
   addPainted(asset, centers) {
     const { activeLayerId } = get()
@@ -520,7 +547,8 @@ export const useEditorStore = create<EditorState>()((set, get) => ({
       }
     }
     move = clampMove(scene, selectedIds, move)
-    return { delta: move, result: editor.canExecute(moveObjects(selectedIds, move)) }
+    const command = moveObjects(selectedIds, move)
+    return { delta: move, result: tryEngine(() => editor.canExecute(command), false) }
   },
 
   planTransform(id, transform) {
@@ -528,7 +556,7 @@ export const useEditorStore = create<EditorState>()((set, get) => ({
     const object = scene?.layers.flatMap((layer) => layer.objects).find((o) => o.id === id)
     if (!editor || !object) return { transform, result: { ok: true } }
     const next = normalizeTransform(object, transform)
-    return { transform: next, result: editor.canPlace(id, next) }
+    return { transform: next, result: tryEngine(() => editor.canPlace(id, next), false) }
   },
 
   transformObject(id, transform) {

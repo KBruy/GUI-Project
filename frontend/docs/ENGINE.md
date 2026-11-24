@@ -31,6 +31,10 @@ combineCommands([a, b])                               // kilka poleceń jako jed
 
 Polecenie to obiekt `{ apply, undo }`, a nie funkcja. Kolizje silnik liczy dokładnie (SAT na obróconych obiektach), a stykanie się krawędziami nie jest kolizją.
 
+## Błędy silnika
+
+Kolizja to zwykły wynik `{ ok: false, collidesWith }`. Inne złamane reguły (np. obiekt na zablokowanej warstwie) silnik zgłasza wyjątkiem `EngineError` z kodem. Store łapie go w `tryEngine`: przy `execute` pokazuje toast z kluczem z `ENGINE_ERRORS` (np. `errors.layerLocked`), przy podglądzie tylko zwraca porażkę. Scena zostaje bez zmian. Aktywna warstwa po wczytaniu to najwyższa niezablokowana.
+
 ## Czego silnik nie robi, a robi frontend
 
 - Granice mapy: obiekt w całości na mapie (`placeAsset`, `clampMove` w store). Backend sprawdza tylko środek.

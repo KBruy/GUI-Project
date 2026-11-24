@@ -28,4 +28,5 @@ export type {
   SceneObject,
   SceneType,
   SceneSize,
+  EngineErrorCode,
 } from '@worldsmith/engine'

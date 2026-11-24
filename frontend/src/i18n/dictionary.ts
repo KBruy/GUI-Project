@@ -119,6 +119,13 @@ const dictionary = {
   'errors.rotationOutOfRange': { pl: 'Obrót poza zakresem', en: 'Rotation out of range' },
   'errors.objectOutOfBounds': { pl: 'Obiekt wychodzi poza mapę', en: 'Object is outside the map' },
   'errors.collision': { pl: 'Obiekty nachodzą na siebie', en: 'Objects overlap' },
+  'errors.layerLocked': { pl: 'Warstwa jest zablokowana', en: 'Layer is locked' },
+  'errors.lastLayer': {
+    pl: 'Nie można usunąć ostatniej warstwy',
+    en: 'Cannot remove the last layer',
+  },
+  'errors.layerNotFound': { pl: 'Nie znaleziono warstwy', en: 'Layer not found' },
+  'errors.objectNotFound': { pl: 'Nie znaleziono obiektu', en: 'Object not found' },
   'notFound.title': { pl: '404', en: '404' },
   'notFound.text': { pl: 'Nie ma takiej strony.', en: 'This page does not exist.' },
   'notFound.back': { pl: 'Wróć na stronę główną', en: 'Back to the home page' },
