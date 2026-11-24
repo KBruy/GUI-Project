@@ -27,6 +27,8 @@ const dictionary = {
   'editor.save': { pl: 'Zapisz', en: 'Save' },
   'editor.unsaved': { pl: 'Niezapisane zmiany', en: 'Unsaved changes' },
   'editor.delete': { pl: 'Usuń', en: 'Delete' },
+  'editor.undo': { pl: 'Cofnij', en: 'Undo' },
+  'editor.redo': { pl: 'Ponów', en: 'Redo' },
   'editor.tools': { pl: 'Narzędzia', en: 'Tools' },
   'tools.select': { pl: 'Zaznaczanie (V)', en: 'Select (V)' },
   'tools.brush': { pl: 'Pędzel (B)', en: 'Brush (B)' },

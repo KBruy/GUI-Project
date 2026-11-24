@@ -35,6 +35,9 @@ export type Tool = 'select' | 'brush' | 'rect' | 'fill' | 'eraser'
 interface EditorState {
   editor: Editor | null
   scene: Scene | null
+  // Czy w historii silnika jest co cofnąć i ponowić (przyciski w pasku narzędzi).
+  canUndo: boolean
+  canRedo: boolean
   selectedIds: string[]
   tool: Tool
   activeLayerId: string | null
@@ -309,6 +312,8 @@ let unsubscribe: (() => void) | null = null
 export const useEditorStore = create<EditorState>()((set, get) => ({
   editor: null,
   scene: null,
+  canUndo: false,
+  canRedo: false,
   selectedIds: [],
   tool: 'select',
   activeLayerId: null,
@@ -335,11 +340,18 @@ export const useEditorStore = create<EditorState>()((set, get) => ({
     unsubscribe = editor.subscribe((next) => {
       // Po cofnięciu dodania obiekt znika ze sceny, więc nie może zostać zaznaczony.
       const ids = new Set(next.layers.flatMap((layer) => layer.objects.map((o) => o.id)))
-      set({ scene: next, selectedIds: get().selectedIds.filter((id) => ids.has(id)) })
+      set({
+        scene: next,
+        selectedIds: get().selectedIds.filter((id) => ids.has(id)),
+        canUndo: editor.canUndo(),
+        canRedo: editor.canRedo(),
+      })
     })
     set({
       editor,
       scene: editor.getScene(),
+      canUndo: false,
+      canRedo: false,
       savedScene: editor.getScene(),
       projectId,
       selectedIds: [],

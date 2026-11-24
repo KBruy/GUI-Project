@@ -8,6 +8,7 @@ import { NewMapButton } from '@/features/map-editor/components/NewMapButton'
 import { PropertiesPanel } from '@/features/map-editor/components/PropertiesPanel'
 import { SaveButton } from '@/features/map-editor/components/SaveButton'
 import { ToolPanel } from '@/features/map-editor/components/ToolPanel'
+import { UndoRedoButtons } from '@/features/map-editor/components/UndoRedoButtons'
 import { ZoomControls } from '@/features/map-editor/components/ZoomControls'
 import { useProjectUrl } from '@/features/map-editor/useProjectUrl'
 import { EditorLayout, Panel, Sidebar, Toolbar } from '@/shared/components/layout/Layout'
@@ -26,6 +27,7 @@ export default function MapEditorPage() {
           {/* Pod /map/<id> projekt się wczytuje, więc okno „Nowa mapa” nie otwiera się samo. */}
           <NewMapButton autoOpen={!id} />
           <SaveButton />
+          <UndoRedoButtons />
           <GridToggles />
           <ZoomControls />
           <CursorPosition />
