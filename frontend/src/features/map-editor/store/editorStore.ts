@@ -9,6 +9,7 @@ import type { Asset } from '@/shared/lib/assets'
 import {
   addObject,
   addObjects,
+  combineCommands,
   createEditor,
   moveObjects,
   removeObjects,
@@ -558,17 +559,8 @@ export const useEditorStore = create<EditorState>()((set, get) => ({
       commands.push(transformObjects([object.id], transform))
     }
     // Obiekty po kolei, więc każdy sprawdza kolizje także z już zmienionymi sąsiadami.
-    const all: Command = (start) => {
-      let next = start
-      for (const command of commands) {
-        const result = command(next)
-        if ('collidesWith' in result) return result
-        next = result.scene
-      }
-      return { scene: next }
-    }
     // execute przy kolizji niczego nie zmienia.
-    return get().execute(all).ok ? null : 'errors.collision'
+    return get().execute(combineCommands(commands)).ok ? null : 'errors.collision'
   },
 
   moveGroupTo(ids, target) {
