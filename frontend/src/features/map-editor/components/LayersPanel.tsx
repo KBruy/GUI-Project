@@ -1,11 +1,14 @@
 // Panel „Warstwy” (F-35): lista od najwyższej warstwy, kliknięcie w nazwę wybiera aktywną
-// (na nią trafiają nowe obiekty). Każda akcja to jeden krok cofania (akcje warstw w editorStore).
+// (na nią trafiają nowe obiekty), a dwuklik zmienia nazwę. Każda akcja to jeden krok cofania
+// (akcje warstw w editorStore).
+import { useState } from 'react'
 import { useT } from '@/i18n/language'
 import { Button } from '@/shared/components/ui/Button/Button'
 import { IconButton } from '@/shared/components/ui/IconButton/IconButton'
 import { Tooltip } from '@/shared/components/ui/Tooltip/Tooltip'
 import { MAX_LAYERS } from '../engine/engine'
 import { useEditorStore } from '../store/editorStore'
+import { DeleteLayerButton } from './DeleteLayerButton'
 import styles from './LayersPanel.module.css'
 
 export function LayersPanel() {
@@ -21,9 +24,19 @@ export function LayersPanel() {
   const setHighlight = useEditorStore((s) => s.setHighlightActiveLayer)
   const hoveredLayerId = useEditorStore((s) => s.hoveredLayerId)
   const setHoveredLayer = useEditorStore((s) => s.setHoveredLayer)
+  // Id warstwy, której nazwę właśnie zmieniamy, albo null.
+  const [renamingId, setRenamingId] = useState<string | null>(null)
 
   if (!layers) return null
   const full = layers.length >= MAX_LAYERS
+
+  // Enter albo wyjście z pola zapisuje nazwę. Pustej i niezmienionej nie zapisujemy,
+  // żeby nie robić pustego kroku cofania.
+  function finishRename(layerId: string, oldName: string, value: string) {
+    setRenamingId(null)
+    const name = value.trim()
+    if (name && name !== oldName) updateLayer(layerId, { name })
+  }
 
   const addButton = (
     <Button
@@ -62,14 +75,36 @@ export function LayersPanel() {
                 onMouseEnter={() => setHoveredLayer(layer.id)}
                 onMouseLeave={() => setHoveredLayer(null)}
               >
-                <button
-                  type="button"
-                  className={styles.name}
-                  aria-current={active}
-                  onClick={() => setActiveLayer(layer.id)}
-                >
-                  {layer.name}
-                </button>
+                {renamingId === layer.id ? (
+                  <input
+                    className={styles.rename}
+                    aria-label={t('layers.name')}
+                    defaultValue={layer.name}
+                    maxLength={40}
+                    autoFocus
+                    onFocus={(event) => event.target.select()}
+                    onBlur={(event) => finishRename(layer.id, layer.name, event.target.value)}
+                    onKeyDown={(event) => {
+                      if (event.key === 'Enter') event.currentTarget.blur()
+                      // Esc: przywracamy starą nazwę, więc wyjście z pola niczego nie zapisze.
+                      if (event.key === 'Escape') {
+                        event.currentTarget.value = layer.name
+                        event.currentTarget.blur()
+                      }
+                    }}
+                  />
+                ) : (
+                  <button
+                    type="button"
+                    className={styles.name}
+                    aria-current={active}
+                    title={t('layers.rename')}
+                    onClick={() => setActiveLayer(layer.id)}
+                    onDoubleClick={() => setRenamingId(layer.id)}
+                  >
+                    {layer.name}
+                  </button>
+                )}
                 {/* Liczba obiektów na warstwie (przy zaznaczeniu: zaznaczone/wszystkie),
                     pełny opis w dymku przeglądarki. */}
                 <span
@@ -118,6 +153,7 @@ export function LayersPanel() {
       </ul>
       <div className={styles.actions}>
         {full ? <Tooltip text={t('errors.layerLimit')}>{addButton}</Tooltip> : addButton}
+        <DeleteLayerButton />
         {/* Przygasza pozostałe warstwy: widać, z czym obiekt może kolidować. */}
         <Button size="sm" pressed={highlight} onClick={() => setHighlight(!highlight)}>
           {t('layers.highlight')}

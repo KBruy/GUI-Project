@@ -84,3 +84,14 @@
   flex-wrap: wrap;
   gap: var(--space-2);
 }
+
+/* Pole zmiany nazwy w miejscu nazwy, tej samej wielkości co przycisk. */
+.rename {
+  flex: 1;
+  min-width: 0;
+  padding: var(--space-1) var(--space-2);
+  border: var(--pixel-border);
+  background: var(--color-bg);
+  color: var(--color-text);
+  font: inherit;
+}

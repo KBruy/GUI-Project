@@ -1,7 +1,7 @@
 import { act, fireEvent, render, screen, within } from '@testing-library/react'
 import { expect, it } from 'vitest'
 import { LanguageProvider } from '@/i18n/LanguageProvider'
-import { createMapScene, MAP_SIZES } from '../engine/engine'
+import { addObject, createMapScene, MAP_SIZES } from '../engine/engine'
 import { useEditorStore } from '../store/editorStore'
 import { LayersPanel } from './LayersPanel'
 
@@ -29,4 +29,32 @@ it('adds a layer on top, hides it and moves it down', () => {
 
   fireEvent.click(within(rows()[0]).getByRole('button', { name: 'Przesuń niżej' }))
   expect(names()).toEqual(['Warstwa 1', 'Warstwa 2'])
+})
+
+it('renames a layer on double-click and asks before deleting a layer with objects', () => {
+  act(() => {
+    useEditorStore.getState().loadScene(createMapScene('Test', MAP_SIZES[0], 'Warstwa 1'))
+    useEditorStore.getState().addLayer('Drzewa')
+    const store = useEditorStore.getState()
+    store.execute(
+      addObject(store.activeLayerId!, { id: 'tree', width: 32, height: 32 }, { x: 50, y: 50 })
+    )
+  })
+  render(
+    <LanguageProvider>
+      <LayersPanel />
+    </LanguageProvider>
+  )
+
+  fireEvent.doubleClick(screen.getByRole('button', { name: 'Drzewa' }))
+  const input = screen.getByRole('textbox', { name: 'Nazwa warstwy' })
+  fireEvent.change(input, { target: { value: 'Las' } })
+  fireEvent.keyDown(input, { key: 'Enter' })
+  expect(screen.getByRole('button', { name: 'Las' })).toBeInTheDocument()
+
+  // Warstwa ma obiekt, więc usunięcie czeka na potwierdzenie w oknie.
+  fireEvent.click(screen.getByRole('button', { name: 'Usuń warstwę' }))
+  expect(useEditorStore.getState().scene?.layers).toHaveLength(2)
+  fireEvent.click(within(screen.getByRole('dialog')).getByRole('button', { name: 'Usuń warstwę' }))
+  expect(useEditorStore.getState().scene?.layers.map((l) => l.name)).toEqual(['Warstwa 1'])
 })
