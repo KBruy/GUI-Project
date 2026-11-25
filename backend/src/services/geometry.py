@@ -29,6 +29,28 @@ def corners(scene_object: SceneObject) -> list[tuple[float, float]]:
     return result
 
 
+def bounding_box(points: list[tuple[float, float]]) -> tuple[float, float, float, float]:
+    """Zwraca najmniejszy nieobrócony prostokąt (min_x, min_y, max_x, max_y), w którym mieszczą się punkty."""
+    xs = [x for x, _ in points]
+    ys = [y for _, y in points]
+    return min(xs), min(ys), max(xs), max(ys)
+
+
+def boxes_overlap(a: tuple[float, float, float, float], b: tuple[float, float, float, float]) -> bool:
+    """Sprawdza, czy dwa prostokąty z bounding_box na siebie nachodzą; stykanie się krawędziami to nie kolizja.
+
+    To szybki odsiew przed dokładnym testem SAT: gdy prostokąty otaczające się nie nakładają, obiekty też nie.
+    """
+    a_min_x, a_min_y, a_max_x, a_max_y = a
+    b_min_x, b_min_y, b_max_x, b_max_y = b
+    return (
+        a_min_x < b_max_x - EPSILON
+        and b_min_x < a_max_x - EPSILON
+        and a_min_y < b_max_y - EPSILON
+        and b_min_y < a_max_y - EPSILON
+    )
+
+
 def overlaps(a: list[tuple[float, float]], b: list[tuple[float, float]]) -> bool:
     """Sprawdza testem SAT, czy dwa obrócone prostokąty (narożniki z corners) na siebie nachodzą.
 

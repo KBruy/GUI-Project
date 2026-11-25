@@ -18,6 +18,7 @@ from src.config import (
 from src.errors import Issue
 from src.schemas.asset import Asset
 from src.schemas.scene import Scene, SceneObject
+from src.services.geometry import bounding_box, boxes_overlap, corners, overlaps
 
 
 def check_scene(scene: Scene, assets: Mapping[str, Asset]) -> list[Issue]:
@@ -29,6 +30,7 @@ def check_scene(scene: Scene, assets: Mapping[str, Asset]) -> list[Issue]:
     issues += check_scene_fields(scene)
     issues += check_unique_ids(scene)
     issues += check_objects(scene, assets)
+    issues += check_collisions(scene)
     return issues
 
 
@@ -103,6 +105,29 @@ def check_object_placement(scene_object: SceneObject, scene: Scene) -> list[str]
     if not (in_range(scene_object.x, 0, scene.width) and in_range(scene_object.y, 0, scene.height)):
         codes.append("OBJECT_OUT_OF_BOUNDS")
     return codes
+
+
+def check_collisions(scene: Scene) -> list[Issue]:
+    """Sprawdza, czy obiekty na tej samej warstwie na siebie nie nachodzą; na różnych warstwach mogą.
+
+    Każdy obiekt jest porównywany z wcześniejszymi na liście, więc para kolidujących obiektów daje jeden problem:
+    przy tym, który jest dalej na liście (tak samo jak w silniku).
+    """
+    issues: list[Issue] = []
+    for layer in scene.layers:
+        # Narożniki i prostokąty otaczające obiektów tej warstwy, które już sprawdzono.
+        earlier = []
+        for scene_object in layer.objects:
+            object_corners = corners(scene_object)
+            box = bounding_box(object_corners)
+            for other_corners, other_box in earlier:
+                # Najpierw szybki odsiew prostokątami otaczającymi, dokładny SAT tylko dla par, które mogą nachodzić.
+                if boxes_overlap(box, other_box) and overlaps(object_corners, other_corners):
+                    issues.append(Issue.of("COLLISION", layerId=layer.id, objectId=scene_object.id))
+                    # Jeden problem na obiekt wystarczy, nawet gdy nachodzi na kilka wcześniejszych.
+                    break
+            earlier.append((object_corners, box))
+    return issues
 
 
 def in_range(value: float, low: float, high: float) -> bool:
