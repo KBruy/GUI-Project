@@ -47,9 +47,12 @@ def duplicate_id(**where: str) -> dict:
     return {"code": "DUPLICATE_ID", "messageKey": "errors.duplicateId", **where}
 
 
-def copy_object(scene_data: dict, object_id: str) -> dict:
-    """Zwraca kopię pierwszego obiektu sceny z podanym id."""
-    return {**scene_data["layers"][0]["objects"][0], "id": object_id}
+def copy_object(scene_data: dict, object_id: str, x: float) -> dict:
+    """Zwraca kopię pierwszego obiektu sceny z podanym id i środkiem w x (y bez zmian).
+
+    Kopie stoją w różnych miejscach, żeby nie kolidowały, gdy test sprawdza inną regułę.
+    """
+    return {**scene_data["layers"][0]["objects"][0], "id": object_id, "x": x}
 
 
 def empty_layers(count: int) -> list[dict]:
@@ -132,21 +135,21 @@ def test_layers_with_same_id_are_rejected(scene_data):
 
 
 def test_objects_with_same_id_on_one_layer_are_rejected(scene_data):
-    scene_data["layers"][0]["objects"].append(copy_object(scene_data, "o1"))
+    scene_data["layers"][0]["objects"].append(copy_object(scene_data, "o1", 300))
 
     assert issue_dicts(scene_data) == [duplicate_id(layerId="l1", objectId="o1")]
 
 
 def test_objects_with_same_id_on_different_layers_are_rejected(scene_data):
     second_layer = empty_layers(1)[0]
-    second_layer["objects"].append(copy_object(scene_data, "o1"))
+    second_layer["objects"].append(copy_object(scene_data, "o1", 300))
     scene_data["layers"].append(second_layer)
 
     assert issue_dicts(scene_data) == [duplicate_id(layerId="l0", objectId="o1")]
 
 
 def test_object_with_layer_id_is_rejected(scene_data):
-    scene_data["layers"][0]["objects"].append(copy_object(scene_data, "l1"))
+    scene_data["layers"][0]["objects"].append(copy_object(scene_data, "l1", 300))
 
     assert issue_dicts(scene_data) == [duplicate_id(layerId="l1", objectId="l1")]
 
@@ -160,7 +163,7 @@ def test_layer_with_object_id_is_rejected(scene_data):
 
 
 def test_each_repeated_id_is_reported(scene_data):
-    scene_data["layers"][0]["objects"] += [copy_object(scene_data, "o1"), copy_object(scene_data, "o1")]
+    scene_data["layers"][0]["objects"] += [copy_object(scene_data, "o1", 300), copy_object(scene_data, "o1", 500)]
 
     assert issue_codes(scene_data) == ["DUPLICATE_ID", "DUPLICATE_ID"]
 
@@ -271,11 +274,44 @@ def test_object_center_outside_scene_is_rejected(scene_data, x, y):
     assert issue_codes(scene_data) == ["OBJECT_OUT_OF_BOUNDS"]
 
 
+def collision(object_id: str) -> dict:
+    """Zwraca oczekiwany problem COLLISION dla obiektu z pierwszej warstwy sceny z conftest.py."""
+    return {"code": "COLLISION", "messageKey": "errors.collision", "layerId": "l1", "objectId": object_id}
+
+
+def test_overlapping_objects_on_one_layer_give_one_issue_at_the_later_object(scene_data):
+    # Obiekt o1 z conftest.py ma środek w x = 100 i szerokość 64.
+    scene_data["layers"][0]["objects"].append(copy_object(scene_data, "o2", 110))
+
+    assert issue_dicts(scene_data) == [collision("o2")]
+
+
+def test_objects_touching_edges_do_not_collide(scene_data):
+    scene_data["layers"][0]["objects"].append(copy_object(scene_data, "o2", 164))
+
+    assert issue_codes(scene_data) == []
+
+
+def test_objects_on_different_layers_may_overlap(scene_data):
+    second_layer = empty_layers(1)[0]
+    second_layer["objects"].append(copy_object(scene_data, "o2", 100))
+    scene_data["layers"].append(second_layer)
+
+    assert issue_codes(scene_data) == []
+
+
+def test_each_object_overlapping_an_earlier_one_is_reported(scene_data):
+    scene_data["layers"][0]["objects"] += [copy_object(scene_data, "o2", 110), copy_object(scene_data, "o3", 120)]
+
+    assert issue_dicts(scene_data) == [collision("o2"), collision("o3")]
+
+
 def test_all_issues_are_reported_at_once(scene_data):
-    missing_asset = {**copy_object(scene_data, "o1"), "assetId": "map_tree_missing"}
-    wrong_asset = {**copy_object(scene_data, "o2"), "assetId": "character_shirt_red_01"}
-    wrong_placement = {**copy_object(scene_data, "o3"), "scaleX": 0, "rotation": 400, "x": 2000}
-    repeated_id = copy_object(scene_data, "o1")
+    missing_asset = {**copy_object(scene_data, "o1", 300), "assetId": "map_tree_missing"}
+    # Środek 10 px od missing_asset, więc oba obiekty na siebie nachodzą.
+    wrong_asset = {**copy_object(scene_data, "o2", 310), "assetId": "character_shirt_red_01"}
+    wrong_placement = {**copy_object(scene_data, "o3", 2000), "scaleX": 0, "rotation": 400}
+    repeated_id = copy_object(scene_data, "o1", 300)
 
     scene_data["schemaVersion"] = 2
     scene_data["name"] = "   "
@@ -285,7 +321,7 @@ def test_all_issues_are_reported_at_once(scene_data):
     scene_data["layers"][1]["id"] = "l0"
     scene_data["layers"][2]["objects"] = [repeated_id]
 
-    # Kolejność: najpierw cała scena, potem powtórzone id, na końcu obiekty po kolei.
+    # Kolejność: najpierw cała scena, potem powtórzone id, obiekty po kolei, na końcu kolizje.
     assert issue_dicts(scene_data) == [
         {"code": "UNSUPPORTED_SCHEMA_VERSION", "messageKey": "errors.unsupportedSchemaVersion"},
         {"code": "NAME_REQUIRED", "messageKey": "errors.nameRequired"},
@@ -299,4 +335,5 @@ def test_all_issues_are_reported_at_once(scene_data):
         {"code": "SCALE_OUT_OF_RANGE", "messageKey": "errors.scaleOutOfRange", "layerId": "l0", "objectId": "o3"},
         {"code": "ROTATION_OUT_OF_RANGE", "messageKey": "errors.rotationOutOfRange", "layerId": "l0", "objectId": "o3"},
         {"code": "OBJECT_OUT_OF_BOUNDS", "messageKey": "errors.objectOutOfBounds", "layerId": "l0", "objectId": "o3"},
+        {"code": "COLLISION", "messageKey": "errors.collision", "layerId": "l0", "objectId": "o2"},
     ]

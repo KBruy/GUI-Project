@@ -121,6 +121,19 @@ def test_import_scene_breaking_rules_returns_422(client, scene_data):
     assert client.get("/api/projects").json() == []
 
 
+def test_import_scene_with_colliding_objects_returns_422(client, scene_data):
+    # Kopia obiektu o1 przesunięta o 10 px nachodzi na niego na tej samej warstwie.
+    scene_data["layers"][0]["objects"].append({**scene_data["layers"][0]["objects"][0], "id": "o2", "x": 110})
+
+    response = import_file(client, json.dumps(scene_data).encode("utf-8"))
+
+    assert response.status_code == 422
+    assert response.json()["error"]["details"]["issues"] == [
+        {"code": "COLLISION", "messageKey": "errors.collision", "layerId": "l1", "objectId": "o2"}
+    ]
+    assert client.get("/api/projects").json() == []
+
+
 def test_import_without_file_field_returns_422(client):
     response = client.post("/api/projects/import", data={"other": "x"})
 
@@ -131,9 +144,18 @@ def test_import_without_file_field_returns_422(client):
 
 
 def test_large_saved_project_can_be_exported_and_imported_back(client, scene_data):
-    # Ok. 18 tys. obiektów daje scenę ponad 2 MB, czyli bliżej limitu niż prawdziwe projekty.
-    template = scene_data["layers"][0]["objects"][0]
-    scene_data["layers"][0]["objects"] = [{**template, "id": f"o{number}"} for number in range(18_000)]
+    # Ok. 18 tys. obiektów (10 warstw po 1800) daje scenę ponad 2 MB, czyli bliżej limitu niż prawdziwe projekty.
+    # Skala 0,1 zmniejsza obiekt do 6,4 × 9,6 px, a siatka co 20 × 30 px sprawia, że obiekty nie kolidują.
+    template = {**scene_data["layers"][0]["objects"][0], "scaleX": 0.1, "scaleY": 0.1}
+    first_layer = scene_data["layers"][0]
+    scene_data["layers"] = []
+    for layer in range(10):
+        # 60 kolumn i 30 wierszy siatki; id obiektu zawiera numer warstwy, bo id muszą być unikalne w całej scenie.
+        objects = [
+            {**template, "id": f"o{layer}_{number}", "x": 10 + 20 * (number % 60), "y": 10 + 30 * (number // 60)}
+            for number in range(1800)
+        ]
+        scene_data["layers"].append({**first_layer, "id": f"l{layer}", "objects": objects})
     saved = client.post("/api/projects", json=scene_data).json()
 
     exported = client.get(f"/api/projects/{saved['id']}/export")

@@ -32,6 +32,9 @@ MIN_SCALE = 0.1
 MAX_SCALE = 10
 MIN_ROTATION = 0
 MAX_ROTATION = 360
+# Tolerancja w pikselach przy sprawdzaniu kolizji, taka sama jak w silniku (engine/src/math/epsilon.ts).
+# Obiekty, które tylko stykają się krawędziami albo nachodzą o mniej niż EPSILON przez zaokrąglenia, nie kolidują.
+EPSILON = 1e-6
 
 # Największe dozwolone ciało zapytania (3 MB); większe odrzuca src/body_limit.py.
 MAX_BODY_BYTES = 3 * 1024 * 1024

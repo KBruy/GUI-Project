@@ -28,7 +28,6 @@ MESSAGE_KEYS: dict[str, str] = {
     "SCALE_OUT_OF_RANGE": "errors.scaleOutOfRange",
     "ROTATION_OUT_OF_RANGE": "errors.rotationOutOfRange",
     "OBJECT_OUT_OF_BOUNDS": "errors.objectOutOfBounds",
-    # Zarezerwowany: kolizje sprawdza silnik, backend dopiero po prototypie (B-10).
     "COLLISION": "errors.collision",
 }
 

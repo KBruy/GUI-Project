@@ -1,7 +1,7 @@
 # Architektura backendu
 
 Backend (Python 3.12, FastAPI) przechowuje projekty map i postaci, sprawdza poprawność scen i udostępnia bibliotekę assetów.
-Edycję sceny i kolizje liczy silnik w przeglądarce; backend dostaje gotową scenę w całości, sprawdza ją i zapisuje bez zmian
+Edycję sceny liczy silnik w przeglądarce; backend dostaje gotową scenę w całości, sprawdza ją (także kolizje) i zapisuje bez zmian
 (nadaje tylko `id` i daty). Uruchomienie: `backend/README.md`, endpointy: [API.md](API.md), błędy: [ERRORS.md](ERRORS.md).
 
 ```mermaid
@@ -26,7 +26,8 @@ src/
   db_repos.py        repozytoria w bazie: zamieniają modele bazy na modele kontraktu
   api/               endpointy (cienkie: odczyt zapytania → serwis → odpowiedź)
   schemas/           modele Pydantic kontraktu: Scene, Layer, SceneObject, Asset, ProjectSummary
-  services/          logika: validation.py (reguły sceny), projects.py (id, daty, zapis), import_export.py
+  services/          logika: validation.py (reguły sceny), geometry.py (narożniki i test SAT dla kolizji),
+                     projects.py (id, daty, zapis), import_export.py
   dev/               repozytoria w pamięci (testy i praca bez bazy)
   db/                warstwa bazy: modele tabel, zapytania, seed (opis w src/db/README.md)
 migrations/          migracje Alembic (schemat tabel)
@@ -65,7 +66,8 @@ i zgłasza je jako `INVALID_FILE` (`400` albo `413`).
 `check_scene(scene, assets)` to czysta funkcja: dostaje gotową scenę i słownik `id → Asset`, zwraca listę problemów,
 nie korzysta z bazy ani z HTTP. Dzięki temu każdą regułę testuje się bez serwera.
 
-Silnik (`engine/src/validation/`) sprawdza w przeglądarce te same reguły, a dodatkowo kolizje. Backend nie ufa jednak
+Silnik (`engine/src/validation/`) sprawdza w przeglądarce te same reguły, także kolizje; backend liczy je tymi samymi
+wzorami (`services/geometry.py`, odpowiednik `engine/src/geometry/`). Backend nie ufa jednak
 frontendowi: plik importu albo zapytanie spoza edytora też musi przejść reguły.
 
 ## Repozytoria i baza
@@ -98,7 +100,7 @@ cd backend
 pytest
 ```
 
-- Reguły sceny (`test_validation.py`): `check_scene` na samych modelach, bez serwera.
+- Reguły sceny (`test_validation.py`) i geometria kolizji (`test_geometry.py`): na samych modelach, bez serwera.
 - Endpointy (`test_projects.py`, `test_io.py`, `test_assets.py`, ...): `TestClient` na aplikacji z repozytoriami w pamięci,
   każdy test ze świeżą aplikacją.
 - Baza (`test_db.py`, `test_db_repos.py`, `test_*_repository.py`, `test_migrations.py`, `test_seed.py`): osobne bazy
