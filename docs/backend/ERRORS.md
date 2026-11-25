@@ -54,7 +54,7 @@ Inne błędy 4xx zgłaszane przez FastAPI (ciało, którego nie da się odczyta�
 ## Kody problemów (`details.issues[].code`)
 
 Reguły sceny sprawdza `check_scene` w `backend/src/services/validation.py`, a ich limity są stałymi w `backend/src/config.py`.
-Backend zwraca wszystkie problemy naraz w kolejności: pola całej sceny → powtórzone `id` → obiekty po kolei.
+Backend zwraca wszystkie problemy naraz w kolejności: pola całej sceny → powtórzone `id` → obiekty po kolei → kolizje.
 
 | Kod | Klucz | `layerId` / `objectId` | Reguła |
 |---|---|---|---|
@@ -70,7 +70,7 @@ Backend zwraca wszystkie problemy naraz w kolejności: pola całej sceny → pow
 | `SCALE_OUT_OF_RANGE` | `errors.scaleOutOfRange` | oba | `scaleX` lub `scaleY` poza zakresem 0,1–10 (granice dozwolone); jeden problem, nawet gdy obie skale są złe |
 | `ROTATION_OUT_OF_RANGE` | `errors.rotationOutOfRange` | oba | `rotation` poza zakresem 0–360 (granice dozwolone) |
 | `OBJECT_OUT_OF_BOUNDS` | `errors.objectOutOfBounds` | oba | środek obiektu (`x`, `y`) leży poza sceną; krawędź jest dozwolona, a obiekt może częściowo wystawać |
-| `COLLISION` | `errors.collision` | — | zarezerwowany: kolizje na tej samej warstwie sprawdza silnik w przeglądarce, backend jeszcze ich nie zgłasza |
+| `COLLISION` | `errors.collision` | oba | obiekt nachodzi na wcześniejszy obiekt tej samej warstwy (po obrocie i skalowaniu, test SAT w `services/geometry.py`); zgłaszany jest obiekt dalszy na liście, jeden problem na obiekt; stykanie się krawędziami jest dozwolone, a obiekty na różnych warstwach mogą się nakładać |
 
 ## Klucz tylko we frontendzie
 

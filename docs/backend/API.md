@@ -11,7 +11,7 @@ Interaktywna dokumentacja (można z niej wysyłać zapytania) działa pod http:/
 - CORS: zapytania z przeglądarki są dozwolone tylko z adresów w `CLIENT_ORIGIN` (domyślnie `http://localhost:5173`).
 - Ciało zapytania może mieć najwyżej 3 MB, większe → `413 INVALID_FILE`.
 - Backend nie zmienia sceny: zapisuje ją w całości i zwraca taką, jaką dostał, zmieniając tylko `id`, `createdAt` i `updatedAt`.
-  Kolizji nie sprawdza (robi to silnik w przeglądarce).
+  Kolizje na tej samej warstwie sprawdza tymi samymi wzorami co silnik, więc scena zbudowana w edytorze je przechodzi.
 - Liczby wracają jako liczby zmiennoprzecinkowe (`"x": 320.0` zamiast `320`); dla JavaScriptu to ta sama wartość.
 
 ## Endpointy
