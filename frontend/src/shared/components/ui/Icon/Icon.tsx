@@ -6,13 +6,14 @@ import {
   Home, Search, Settings, Menu,
   Grid, List, Trash, Edit, Copy,
   Download, Upload, ExternalLink, ChainLink,
+  Lock, LockOpen,
 } from '@pxlkit/ui'
 import {
   CheckCircle, XCircle, InfoCircle,
   WarningTriangle, ErrorOctagon,
   Bell, ShieldCheck, Bug,
 } from '@pxlkit/feedback'
-import { Cursor, RectFill } from './customIcons'
+import { ArrowDown, ArrowUp, Cursor, Eye, EyeClosed, RectFill } from './customIcons'
 import styles from './Icon.module.css'
 
 // Dozwolone ikony. Żeby dodać nową: zaimportuj powyżej (albo narysuj w customIcons.ts) i dopisz tutaj.
@@ -21,6 +22,8 @@ const icons = {
   Cursor, Pencil, RectFill, Eraser, PaintBucket, Eyedropper,
   // Akcje
   Undo, Redo, Close, Check, Trash, Edit, Copy, Download, Upload,
+  // Panel warstw
+  Eye, EyeClosed, Lock, LockOpen, ArrowUp, ArrowDown,
   // Nawigacja
   Home, Search, Settings, Menu, Grid, List, ExternalLink, ChainLink,
   // Statusy i powiadomienia

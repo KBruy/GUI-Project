@@ -1,0 +1,57 @@
+.panel {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: var(--space-2);
+}
+
+.list {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+  width: 100%;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+/* Znacznik z lewej zamiast samego koloru tła, żeby aktywna była widoczna też w motywie kontrastowym. */
+.row {
+  display: flex;
+  align-items: center;
+  border-left: var(--border-width) solid transparent;
+}
+
+.active {
+  border-left-color: var(--color-primary);
+  background: var(--color-surface-raised);
+}
+
+.name {
+  flex: 1;
+  min-width: 0;
+  padding: var(--space-1) var(--space-2);
+  overflow: hidden;
+  border: none;
+  background: none;
+  color: var(--color-text);
+  font: inherit;
+  text-align: left;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  cursor: pointer;
+}
+
+.active .name {
+  font-weight: bold;
+}
+
+/* Ukryta warstwa: przygaszona nazwa (ikona oka i tak się zmienia). */
+.hidden .name {
+  color: var(--color-text-muted);
+}
+
+/* Strzałka bez ruchu (warstwa na górze, na dole albo zablokowana): ukryta, ale zostawia miejsce. */
+.arrow:disabled {
+  visibility: hidden;
+}

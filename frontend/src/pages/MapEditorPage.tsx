@@ -3,6 +3,7 @@ import { useT } from '@/i18n/language'
 import { AssetPalette } from '@/features/map-editor/components/AssetPalette'
 import { CursorPosition } from '@/features/map-editor/components/CursorPosition'
 import { GridToggles } from '@/features/map-editor/components/GridToggles'
+import { LayersPanel } from '@/features/map-editor/components/LayersPanel'
 import { MapCanvas } from '@/features/map-editor/components/MapCanvas'
 import { NewMapButton } from '@/features/map-editor/components/NewMapButton'
 import { PropertiesPanel } from '@/features/map-editor/components/PropertiesPanel'
@@ -13,7 +14,7 @@ import { ZoomControls } from '@/features/map-editor/components/ZoomControls'
 import { useProjectUrl } from '@/features/map-editor/useProjectUrl'
 import { EditorLayout, Panel, Sidebar, Toolbar } from '@/shared/components/layout/Layout'
 
-// Edytor map (F-29). Panel warstw (F-35) jest jeszcze pusty.
+// Edytor map (F-29).
 export default function MapEditorPage() {
   const { t } = useT()
   const { id } = useParams()
@@ -43,9 +44,12 @@ export default function MapEditorPage() {
           </Panel>
         </Sidebar>
       }
+      // Prawy panel jest szerszy od lewego, bo wiersz warstwy ma obok nazwy cztery przyciski.
       right={
-        <Sidebar side="right" width={280}>
-          <Panel title={t('editor.layers')} />
+        <Sidebar side="right" width={320}>
+          <Panel title={t('editor.layers')}>
+            <LayersPanel />
+          </Panel>
           <Panel title={t('editor.properties')}>
             <PropertiesPanel />
           </Panel>
