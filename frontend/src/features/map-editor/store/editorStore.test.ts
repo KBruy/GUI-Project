@@ -36,6 +36,17 @@ describe('editor store', () => {
     expect(store().activeLayerId).toBe('top')
   })
 
+  it('skips a locked top layer and does not crash on engine errors', () => {
+    const scene = makeScene()
+    scene.layers[1].locked = true
+    store().loadScene(scene)
+
+    expect(store().activeLayerId).toBe('ground')
+    // Dodanie na zablokowaną warstwę: silnik rzuca LAYER_LOCKED, store zwraca porażkę.
+    expect(store().execute(addObject('top', TREE, { x: 100, y: 100 })).ok).toBe(false)
+    expect(store().scene?.layers[1].objects).toHaveLength(0)
+  })
+
   it('updates the scene in the store after executing a command', () => {
     const result = store().execute(addObject('top', TREE, { x: 100, y: 100 }))
 

@@ -10,6 +10,6 @@ Architektura, pliki główne, integracje. Aktualizowane na bieżąco.
 - [`ROUTING.md`](ROUTING.md) – trasy, AppLayout z nawigacją, jak dodać podstronę
 - [`CANVAS.md`](CANVAS.md) – rysowanie sceny w Konvie: `SceneRenderer`, `useAssetImage`, testy canvasu
 - [`API.md`](API.md) – zapytania do backendu przez `apiClient` i obsługa błędów `ApiError`, zapis i wczytywanie mapy
-- [`ENGINE.md`](ENGINE.md) – jak frontend używa silnika (na razie zaślepki): import, API, uproszczenia
+- [`ENGINE.md`](ENGINE.md) – jak frontend używa silnika Kuby: import, API, co zostaje po stronie frontendu
 - [`I18N.md`](I18N.md) – jak dodać klucz tłumaczenia i używać `useT()`
 - [`plan/TASKS.md`](plan/TASKS.md) – plan tasków frontendu (F-01 … F-50)

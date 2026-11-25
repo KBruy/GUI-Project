@@ -4,9 +4,9 @@ Frontend nie zmienia sceny sam. Każdą zmianę robi silnik, a frontend tylko o 
 
 ## Skąd importować
 
-Zawsze z `@/features/map-editor/engine/engine`. Nigdy wprost z `mockEditor.ts` ani z `@worldsmith/engine`.
+Zawsze z `@/features/map-editor/engine/engine`, nigdy wprost z `@worldsmith/engine`.
 
-Na razie `engine.ts` podaje dalej zaślepkę (`mockEditor.ts`). Gdy Kuba skończy `createEditor`, zmieniamy jeden import w `engine.ts` i reszta aplikacji działa bez zmian. Typy sceny (`Scene`, `Layer`, `SceneObject`) już teraz pochodzą z `@worldsmith/engine`.
+`engine.ts` podaje dalej prawdziwy silnik Kuby (`engine/` w repo). Zaślepka `mockEditor.ts` była tu do czasu `createEditor` i została usunięta. Gdy API silnika się zmieni, poprawiamy tylko `engine.ts`.
 
 ## API
 
@@ -24,16 +24,21 @@ editor.canExecute(moveObjects(ids, delta))            // wynik dowolnego polecen
 editor.undo()
 editor.redo()
 editor.snapToGrid({ x, y })                           // najbliższy punkt siatki
-editor.objectsInRect({ x, y, width, height })         // id obiektów z widocznych warstw
+editor.objectsInRect({ x, y, width, height })         // id obiektów z widocznych i niezablokowanych warstw
+editor.canUndo() / editor.canRedo()                   // czy jest co cofnąć / ponowić
+combineCommands([a, b])                               // kilka poleceń jako jeden krok cofania
 ```
 
-`moveObjects` i `canExecute` dopisaliśmy przy przeciąganiu (F-33), nie ma ich w rozdz. 6.3. `transformObjects` ustawia wszystkim obiektom te same wartości, więc nie przesunie grupy, a `canPlace` sprawdza jeden obiekt i uznałby kolizję z innym obiektem z tej samej grupy. Do uzgodnienia z Kubą, żeby prawdziwy silnik miał to samo.
+Polecenie to obiekt `{ apply, undo }`, a nie funkcja. Kolizje silnik liczy dokładnie (SAT na obróconych obiektach), a stykanie się krawędziami nie jest kolizją.
 
-## Uproszczenia zaślepki
+## Błędy silnika
 
-- Kolizja to prostokąty otaczające obiekty. Przy obrocie prostokąt otacza obrócone narożniki, więc jest trochę za duży (prawdziwy silnik liczy SAT, PR #122). Stykanie się krawędziami nie jest kolizją.
-- Nie sprawdza reguł z rozdz. 5.5 (granice sceny, zakres skali, zablokowane warstwy).
-- Cofnij/ponów pamięta kopie całej sceny.
+Kolizja to zwykły wynik `{ ok: false, collidesWith }`. Inne złamane reguły (np. obiekt na zablokowanej warstwie) silnik zgłasza wyjątkiem `EngineError` z kodem. Store łapie go w `tryEngine`: przy `execute` pokazuje toast z kluczem z `ENGINE_ERRORS` (np. `errors.layerLocked`), przy podglądzie tylko zwraca porażkę. Scena zostaje bez zmian. Aktywna warstwa po wczytaniu to najwyższa niezablokowana.
+
+## Czego silnik nie robi, a robi frontend
+
+- Granice mapy: obiekt w całości na mapie (`placeAsset`, `clampMove` w store). Backend sprawdza tylko środek.
+- Zaokrąglenia do pełnych pikseli i zakres skali 0,1–10 (`normalizeTransform`).
 
 ## Store edytora
 
