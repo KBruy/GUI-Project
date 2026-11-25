@@ -5,6 +5,7 @@ Wzory są takie same jak w silniku (engine/src/geometry/), żeby backend i edyto
 
 import math
 
+from src.config import EPSILON
 from src.schemas.scene import SceneObject
 
 
@@ -26,3 +27,29 @@ def corners(scene_object: SceneObject) -> list[tuple[float, float]]:
         # Wzór na obrót punktu wokół środka. Y rośnie w dół, więc dodatni kąt obraca zgodnie z ruchem wskazówek zegara.
         result.append((scene_object.x + dx * cos - dy * sin, scene_object.y + dx * sin + dy * cos))
     return result
+
+
+def overlaps(a: list[tuple[float, float]], b: list[tuple[float, float]]) -> bool:
+    """Sprawdza testem SAT, czy dwa obrócone prostokąty (narożniki z corners) na siebie nachodzą.
+
+    Prostokąty nie nachodzą, jeśli istnieje oś, na której ich rzuty („cienie”) się nie nakładają.
+    """
+    # Dla prostokątów wystarczą 4 osie: kierunki dwóch sąsiednich boków każdego z nich.
+    edges = [(a[0], a[1]), (a[1], a[2]), (b[0], b[1]), (b[1], b[2])]
+    for start, end in edges:
+        dx = end[0] - start[0]
+        dy = end[1] - start[1]
+        length = math.hypot(dx, dy)
+        # Bok o długości 0 (obiekt o zerowym rozmiarze) nie wyznacza kierunku; dzielenie przez 0 byłoby błędem.
+        if length < EPSILON:
+            continue
+        axis_x = dx / length
+        axis_y = dy / length
+        # Rzut narożników na oś: iloczyn skalarny mówi, jak daleko punkt leży wzdłuż osi.
+        a_values = [x * axis_x + y * axis_y for x, y in a]
+        b_values = [x * axis_x + y * axis_y for x, y in b]
+        # Przerwa między rzutami: ta oś rozdziela prostokąty, więc nie nachodzą na siebie.
+        if max(a_values) <= min(b_values) + EPSILON or max(b_values) <= min(a_values) + EPSILON:
+            return False
+    # Rzuty nakładają się na każdej osi, więc prostokąty na siebie nachodzą.
+    return True

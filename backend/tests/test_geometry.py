@@ -1,9 +1,9 @@
-"""Testy geometrii obiektów (narożniki po skalowaniu i obrocie); działają bez serwera."""
+"""Testy geometrii obiektów (narożniki po skalowaniu i obrocie, test SAT); działają bez serwera."""
 
 import math
 
 from src.schemas.scene import SceneObject
-from src.services.geometry import corners
+from src.services.geometry import corners, overlaps
 
 
 def make_object(**changes) -> SceneObject:
@@ -51,3 +51,41 @@ def test_corners_rotated_45_degrees():
     d = 32 * math.sqrt(2)
 
     assert rounded(corners(scene_object)) == rounded([(100, 100 - d), (100 + d, 100), (100, 100 + d), (100 - d, 100)])
+
+
+def test_overlapping_objects_overlap():
+    first = corners(make_object(x=100))
+    second = corners(make_object(x=110))
+
+    assert overlaps(first, second)
+
+
+def test_touching_edges_do_not_overlap():
+    # Obiekty mają szerokość 64, więc przy środkach odległych o 64 stykają się tylko krawędzią.
+    first = corners(make_object(x=100))
+    second = corners(make_object(x=164))
+
+    assert not overlaps(first, second)
+
+
+def test_rotated_objects_do_not_overlap_although_their_bounding_boxes_do():
+    # Dwa romby (kwadraty obrócone o 45°) ustawione po skosie: prostokąty otaczające nachodzą, same romby nie.
+    first = corners(make_object(width=64, height=64, rotation=45))
+    second = corners(make_object(x=164, y=164, width=64, height=64, rotation=45))
+
+    assert not overlaps(first, second)
+
+
+def test_rotated_objects_overlap():
+    first = corners(make_object(width=64, height=64, rotation=45))
+    second = corners(make_object(x=140, width=64, height=64, rotation=45))
+
+    assert overlaps(first, second)
+
+
+def test_zero_width_object_inside_another_overlaps():
+    # Bok o długości 0 jest pomijany, a pozostałe osie nadal wykrywają nakładanie.
+    first = corners(make_object())
+    second = corners(make_object(width=0))
+
+    assert overlaps(first, second)
