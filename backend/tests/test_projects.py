@@ -144,6 +144,19 @@ def test_create_project_rejects_scene_breaking_rules(client, scene_data):
     assert client.get("/api/projects").json() == []
 
 
+def test_create_project_rejects_colliding_objects(client, scene_data):
+    # Kopia obiektu o1 przesunięta o 10 px nachodzi na niego na tej samej warstwie.
+    scene_data["layers"][0]["objects"].append({**scene_data["layers"][0]["objects"][0], "id": "o2", "x": 110})
+
+    response = client.post("/api/projects", json=scene_data)
+
+    assert response.status_code == 422
+    assert response.json()["error"]["details"]["issues"] == [
+        {"code": "COLLISION", "messageKey": "errors.collision", "layerId": "l1", "objectId": "o2"}
+    ]
+    assert client.get("/api/projects").json() == []
+
+
 def test_create_project_rejects_scene_with_missing_field(client, scene_data):
     del scene_data["name"]
 
@@ -204,4 +217,15 @@ def test_update_project_rejects_scene_breaking_rules(client, scene_data):
 
     assert response.status_code == 422
     assert [issue["code"] for issue in response.json()["error"]["details"]["issues"]] == ["NAME_REQUIRED"]
+    assert client.get(f"/api/projects/{saved['id']}").json() == saved
+
+
+def test_update_project_rejects_colliding_objects(client, scene_data):
+    saved = post_project(client, scene_data)
+    scene_data["layers"][0]["objects"].append({**scene_data["layers"][0]["objects"][0], "id": "o2", "x": 110})
+
+    response = client.put(f"/api/projects/{saved['id']}", json=scene_data)
+
+    assert response.status_code == 422
+    assert [issue["code"] for issue in response.json()["error"]["details"]["issues"]] == ["COLLISION"]
     assert client.get(f"/api/projects/{saved['id']}").json() == saved

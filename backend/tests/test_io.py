@@ -121,6 +121,19 @@ def test_import_scene_breaking_rules_returns_422(client, scene_data):
     assert client.get("/api/projects").json() == []
 
 
+def test_import_scene_with_colliding_objects_returns_422(client, scene_data):
+    # Kopia obiektu o1 przesunięta o 10 px nachodzi na niego na tej samej warstwie.
+    scene_data["layers"][0]["objects"].append({**scene_data["layers"][0]["objects"][0], "id": "o2", "x": 110})
+
+    response = import_file(client, json.dumps(scene_data).encode("utf-8"))
+
+    assert response.status_code == 422
+    assert response.json()["error"]["details"]["issues"] == [
+        {"code": "COLLISION", "messageKey": "errors.collision", "layerId": "l1", "objectId": "o2"}
+    ]
+    assert client.get("/api/projects").json() == []
+
+
 def test_import_without_file_field_returns_422(client):
     response = client.post("/api/projects/import", data={"other": "x"})
 
