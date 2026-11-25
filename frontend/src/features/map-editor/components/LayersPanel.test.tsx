@@ -13,10 +13,12 @@ it('adds a layer on top, hides it and moves it down', () => {
     </LanguageProvider>
   )
   const rows = () => screen.getAllByRole('listitem')
+  // Nazwy warstw w kolejności z panelu (bez liczby obiektów).
+  const names = () => rows().map((row) => within(row).getAllByRole('button')[0].textContent)
 
   fireEvent.click(screen.getByRole('button', { name: 'Dodaj warstwę' }))
   // Nowa warstwa jest na górze listy i od razu aktywna.
-  expect(rows().map((row) => row.textContent)).toEqual(['Warstwa 2', 'Warstwa 1'])
+  expect(names()).toEqual(['Warstwa 2', 'Warstwa 1'])
   expect(within(rows()[0]).getByRole('button', { name: 'Warstwa 2' })).toHaveAttribute(
     'aria-current',
     'true'
@@ -26,5 +28,5 @@ it('adds a layer on top, hides it and moves it down', () => {
   expect(useEditorStore.getState().scene?.layers[1].visible).toBe(false)
 
   fireEvent.click(within(rows()[0]).getByRole('button', { name: 'Przesuń niżej' }))
-  expect(rows().map((row) => row.textContent)).toEqual(['Warstwa 1', 'Warstwa 2'])
+  expect(names()).toEqual(['Warstwa 1', 'Warstwa 2'])
 })

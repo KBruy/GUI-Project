@@ -27,6 +27,17 @@
   background: var(--color-surface-raised);
 }
 
+/* Warstwa z zaznaczonymi obiektami (może być kilka): tło jak przy aktywnej, ale bez znacznika,
+   a licznik zaznaczonych w kolorze akcentu. */
+.hasSelection {
+  background: var(--color-surface-raised);
+}
+
+.hasSelection .count {
+  color: var(--color-primary);
+  font-weight: bold;
+}
+
 .name {
   flex: 1;
   min-width: 0;
@@ -42,6 +53,12 @@
   cursor: pointer;
 }
 
+/* Warstwa wskazana myszą: w panelu albo przez obiekt pod kursorem na mapie. */
+.hovered {
+  outline: 1px dashed var(--color-primary);
+  outline-offset: -1px;
+}
+
 .active .name {
   font-weight: bold;
 }
@@ -54,4 +71,16 @@
 /* Strzałka bez ruchu (warstwa na górze, na dole albo zablokowana): ukryta, ale zostawia miejsce. */
 .arrow:disabled {
   visibility: hidden;
+}
+
+.count {
+  padding: 0 var(--space-1);
+  color: var(--color-text-muted);
+  font-size: var(--font-size-sm);
+}
+
+.actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
 }

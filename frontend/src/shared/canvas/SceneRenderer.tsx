@@ -10,6 +10,8 @@ import { useAssetImage } from './useAssetImage'
 // Canvas nie czyta zmiennych CSS, więc kolory są wpisane na stałe (czerwień z palety).
 const PLACEHOLDER_FILL = 'rgba(255, 31, 75, 0.25)'
 const PLACEHOLDER_STROKE = '#ff1f4b'
+// Krycie warstw innych niż wyróżniona.
+const DIMMED_OPACITY = 0.35
 
 interface SceneRendererProps {
   scene: Scene
@@ -21,6 +23,8 @@ interface SceneRendererProps {
   // Widok: punkt sceny (x, y) jest na ekranie w (offset.x + x * zoom, offset.y + y * zoom).
   zoom?: number
   offset?: { x: number; y: number }
+  // Wyróżniona warstwa: pozostałe rysują się przygaszone. Bez niej wszystkie normalnie.
+  highlightLayerId?: string | null
   children?: ReactNode
 }
 
@@ -31,6 +35,7 @@ export function SceneRenderer({
   getAssetUrl,
   zoom = 1,
   offset = { x: 0, y: 0 },
+  highlightLayerId = null,
   children,
 }: SceneRendererProps) {
   return (
@@ -44,7 +49,12 @@ export function SceneRenderer({
         .filter((layer) => layer.visible)
         .map((layer) => (
           // Bez wygładzania: pixel art po powiększeniu zostaje ostry.
-          <Layer key={layer.id} id={layer.id} imageSmoothingEnabled={false}>
+          <Layer
+            key={layer.id}
+            id={layer.id}
+            imageSmoothingEnabled={false}
+            opacity={highlightLayerId && layer.id !== highlightLayerId ? DIMMED_OPACITY : 1}
+          >
             {layer.objects.map((object) => (
               <SceneObjectNode
                 key={object.id}

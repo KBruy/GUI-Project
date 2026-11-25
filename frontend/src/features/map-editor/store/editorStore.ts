@@ -46,6 +46,16 @@ interface EditorState {
   selectedIds: string[]
   tool: Tool
   activeLayerId: string | null
+  // Przełącznik z panelu warstw: pozostałe warstwy przygaszone, żeby było widać, z czym obiekt
+  // może kolidować (kolizje są tylko w obrębie jednej warstwy).
+  highlightActiveLayer: boolean
+  // Warstwa pod myszą: najechana w panelu warstw albo warstwa obiektu pod kursorem na mapie.
+  // Panel podświetla jej wiersz, a canvas obrysowuje jej obiekty. Null: mysz nie wskazuje warstwy.
+  hoveredLayerId: string | null
+  setHoveredLayer: (layerId: string | null) => void
+  // Id najwyższej widocznej warstwy, której obiekt leży pod punktem sceny. Liczy też warstwy
+  // zablokowane (inaczej niż objectAt), bo podgląd ma pokazać, gdzie leży każdy widoczny obiekt.
+  layerAt: (point: Point) => string | null
   zoom: number
   // Przesunięcie widoku w pikselach ekranu.
   offset: Point
@@ -78,8 +88,11 @@ interface EditorState {
   execute: (command: Command) => PlaceResult
   undo: () => void
   redo: () => void
+  // Gdy wszystkie zaznaczone obiekty leżą na jednej warstwie, ta warstwa staje się aktywna
+  // (tak samo przy chwyceniu obiektu, kliknięciu i zaznaczaniu prostokątem).
   select: (ids: string[]) => void
   // Kliknięcie w punkt sceny: zaznacza najwyższy obiekt pod nim, a w puste miejsce czyści zaznaczenie.
+  // Warstwa trafionego obiektu staje się aktywna, żeby panel warstw pokazywał, gdzie on jest.
   // toggle (Shift): dodaje obiekt do zaznaczenia albo go z niego zdejmuje, pustego miejsca nie liczy.
   // Zwraca id trafionego obiektu albo null, gdy kliknięto w puste miejsce.
   selectAt: (point: Point, toggle: boolean) => string | null
@@ -92,6 +105,7 @@ interface EditorState {
   // Panel warstw (F-35). Każda akcja to jeden krok cofania, błąd silnika (np. LAST_LAYER) daje toast.
   // Nowa warstwa staje na wierzchu i od razu jest aktywna.
   addLayer: (name: string) => void
+  setHighlightActiveLayer: (highlight: boolean) => void
   removeLayer: (layerId: string) => void
   // Pozycja jak w silniku: 0 to najniższa warstwa.
   moveLayer: (layerId: string, toIndex: number) => void
@@ -326,6 +340,25 @@ function defaultLayerId(scene: Scene): string | null {
   return (scene.layers.findLast((l) => !l.locked) ?? scene.layers.at(-1))?.id ?? null
 }
 
+// Czy punkt sceny leży w obiekcie, z obrotem i skalą: obracamy punkt odwrotnie wokół środka
+// obiektu i sprawdzamy zwykły prostokąt.
+function containsPoint(object: SceneObject, point: Point): boolean {
+  const angle = (-object.rotation * Math.PI) / 180
+  const dx = point.x - object.x
+  const dy = point.y - object.y
+  const x = dx * Math.cos(angle) - dy * Math.sin(angle)
+  const y = dx * Math.sin(angle) + dy * Math.cos(angle)
+  return (
+    Math.abs(x) <= (object.width * object.scaleX) / 2 &&
+    Math.abs(y) <= (object.height * object.scaleY) / 2
+  )
+}
+
+// Id warstwy, na której leży obiekt, albo null.
+function layerIdOf(scene: Scene | null, objectId: string): string | null {
+  return scene?.layers.find((layer) => layer.objects.some((o) => o.id === objectId))?.id ?? null
+}
+
 // Wypisuje store z poprzedniego silnika przy wczytaniu nowej sceny.
 let unsubscribe: (() => void) | null = null
 
@@ -337,6 +370,8 @@ export const useEditorStore = create<EditorState>()((set, get) => ({
   selectedIds: [],
   tool: 'select',
   activeLayerId: null,
+  highlightActiveLayer: false,
+  hoveredLayerId: null,
   zoom: 1,
   offset: { x: 0, y: 0 },
   viewport: { width: 0, height: 0 },
@@ -367,6 +402,10 @@ export const useEditorStore = create<EditorState>()((set, get) => ({
         scene: next,
         selectedIds: get().selectedIds.filter((id) => ids.has(id)),
         activeLayerId: activeExists ? activeLayerId : defaultLayerId(next),
+        // Usunięta warstwa nie dostanie już zdarzenia zjechania myszą z jej wiersza.
+        hoveredLayerId: next.layers.some((l) => l.id === get().hoveredLayerId)
+          ? get().hoveredLayerId
+          : null,
         canUndo: editor.canUndo(),
         canRedo: editor.canRedo(),
       })
@@ -392,10 +431,15 @@ export const useEditorStore = create<EditorState>()((set, get) => ({
   undo: () => get().editor?.undo(),
   redo: () => get().editor?.redo(),
 
-  select: (ids) => set({ selectedIds: ids }),
+  select(ids) {
+    set({ selectedIds: ids })
+    const layers = new Set(ids.map((id) => layerIdOf(get().scene, id)))
+    if (layers.size === 1) set({ activeLayerId: [...layers][0] })
+  },
   selectAt(point, toggle) {
     const { selectedIds } = get()
     const hit = get().objectAt(point)
+    if (hit) set({ activeLayerId: layerIdOf(get().scene, hit) })
     if (!toggle) {
       set({ selectedIds: hit ? [hit] : [] })
     } else if (hit) {
@@ -419,13 +463,25 @@ export const useEditorStore = create<EditorState>()((set, get) => ({
     const { editor, selectedIds } = get()
     if (!editor) return
     const ids = editor.objectsInRect(rect)
-    set({ selectedIds: add ? [...new Set([...selectedIds, ...ids])] : ids })
+    get().select(add ? [...new Set([...selectedIds, ...ids])] : ids)
   },
   setTool: (tool) => set({ tool }),
   setActiveLayer: (layerId) => set({ activeLayerId: layerId }),
   addLayer(name) {
     if (!get().execute(addLayer(name)).ok) return
     set({ activeLayerId: get().scene?.layers.at(-1)?.id ?? null })
+  },
+  setHighlightActiveLayer: (highlightActiveLayer) => set({ highlightActiveLayer }),
+  setHoveredLayer(layerId) {
+    // Ruch myszy w obrębie tej samej warstwy niczego nie zmienia, więc nie odświeżamy panelu.
+    if (get().hoveredLayerId !== layerId) set({ hoveredLayerId: layerId })
+  },
+  layerAt(point) {
+    const layers = get().scene?.layers ?? []
+    const top = layers.findLast(
+      (layer) => layer.visible && layer.objects.some((o) => containsPoint(o, point))
+    )
+    return top?.id ?? null
   },
   removeLayer: (layerId) => void get().execute(removeLayer(layerId)),
   moveLayer: (layerId, toIndex) => void get().execute(moveLayer(layerId, toIndex)),

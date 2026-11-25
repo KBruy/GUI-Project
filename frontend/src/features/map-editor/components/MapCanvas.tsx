@@ -1,5 +1,5 @@
 // Canvas edytora map: rysuje scenę ze store'u i wypełnia całe miejsce, które dostanie od rodzica.
-import { useEffect, useMemo, type PointerEvent } from 'react'
+import { useEffect, useMemo, useState, type PointerEvent } from 'react'
 import { GridLayer } from '@/shared/canvas/GridLayer'
 import { SceneRenderer } from '@/shared/canvas/SceneRenderer'
 import { SelectionLayer } from '@/shared/canvas/SelectionLayer'
@@ -95,6 +95,7 @@ function labelStyle(at: Point, width: number, height: number, gap = LABEL_OFFSET
 export function MapCanvas() {
   const scene = useEditorStore((s) => s.scene)
   const gridVisible = useEditorStore((s) => s.gridVisible)
+  const highlightActiveLayer = useEditorStore((s) => s.highlightActiveLayer)
   const zoom = useEditorStore((s) => s.zoom)
   const gridSnap = useEditorStore((s) => s.gridSnap)
   const offset = useEditorStore((s) => s.offset)
@@ -103,6 +104,10 @@ export function MapCanvas() {
   const activeLayerId = useEditorStore((s) => s.activeLayerId)
   const selectedIds = useEditorStore((s) => s.selectedIds)
   const setCursorPoint = useEditorStore((s) => s.setCursorPoint)
+  const hoveredLayerId = useEditorStore((s) => s.hoveredLayerId)
+  const setHoveredLayer = useEditorStore((s) => s.setHoveredLayer)
+  // Warstwa obiektu pod kursorem na mapie. Null, gdy warstwę wskazuje panel albo nic.
+  const [pointedLayerId, setPointedLayerId] = useState<string | null>(null)
   // assetId → adres PNG. Obiekt, którego assetu nie ma w bibliotece, rysuje się jako czerwony prostokąt.
   const urls = useMemo(() => new Map(assets.map((a) => [a.id, assetUrl(a.file)])), [assets])
   const { ref, width, height } = useElementSize<HTMLDivElement>()
@@ -158,6 +163,12 @@ export function MapCanvas() {
       collisions: objects.filter((o) => collidesWith.includes(o.id)),
     }
   }, [shownScene, selectedIds, drag, ghost, transform.preview])
+  // Podgląd warstwy wskazanej w panelu: przerywany obrys wszystkich jej obiektów.
+  // Gdy warstwę wskazuje obiekt pod kursorem, obrysu nie ma, żeby mapa nie migała przy ruchu myszy.
+  const outlined = useMemo(
+    () => (!pointedLayerId && scene?.layers.find((l) => l.id === hoveredLayerId)?.objects) || [],
+    [scene, hoveredLayerId, pointedLayerId]
+  )
   // Etykieta przy kursorze: środek chwyconego obiektu (albo podglądu), tak jak x, y w panelu właściwości.
   // Po ruchu strzałkami etykieta stoi przez chwilę przy prawym dolnym rogu przesuniętego obiektu.
   // Przy kilku zaznaczonych etykieta i kropka pokazują środek całej grupy, tak jak X, Y w panelu.
@@ -200,7 +211,8 @@ export function MapCanvas() {
     scene &&
     near(pointer, screenRect(anchor, zoom, offset), (scene.gridSize / 2) * zoom)
 
-  // Punkt mapy pod kursorem dla paska narzędzi (CursorPosition). Poza mapą: null.
+  // Punkt mapy pod kursorem dla paska narzędzi (CursorPosition) i warstwa obiektu pod nim
+  // (panel warstw obrysowuje wtedy jej wiersz). Poza mapą: null.
   function trackCursor(event: PointerEvent<HTMLDivElement>) {
     const state = useEditorStore.getState()
     const rect = event.currentTarget.getBoundingClientRect()
@@ -210,6 +222,19 @@ export function MapCanvas() {
     const inside =
       state.scene && x >= 0 && y >= 0 && x < state.scene.width && y < state.scene.height
     setCursorPoint(inside ? { x, y } : null)
+    // Z wciśniętym przyciskiem (przeciąganie obiektu, zaznaczanie prostokątem) warstwa się nie zmienia,
+    // więc chwycony obiekt zostaje przy swojej warstwie, choć przejeżdża nad innymi.
+    if (event.buttons !== 0 && !painting) return
+    // Przy pędzlu, gumce itd. podglądu warstw nie ma.
+    const layerId = inside && !painting ? state.layerAt(p) : null
+    setPointedLayerId(layerId)
+    setHoveredLayer(layerId)
+  }
+
+  function leaveCanvas() {
+    setCursorPoint(null)
+    setPointedLayerId(null)
+    setHoveredLayer(null)
   }
 
   // Panel właściwości pokazuje położenie, obrót i skalę na bieżąco, także w trakcie przeciągania.
@@ -243,7 +268,7 @@ export function MapCanvas() {
         selection.handlers.onPointerMove(e)
         trackCursor(e)
       }}
-      onPointerLeave={() => setCursorPoint(null)}
+      onPointerLeave={leaveCanvas}
       onPointerUp={() => {
         view.handlers.onPointerUp()
         selection.handlers.onPointerUp()
@@ -262,6 +287,7 @@ export function MapCanvas() {
           zoom={zoom}
           offset={offset}
           getAssetUrl={(id) => urls.get(id)}
+          highlightLayerId={highlightActiveLayer ? activeLayerId : null}
         >
           {gridVisible && (
             <GridLayer
@@ -279,6 +305,7 @@ export function MapCanvas() {
             // Kropka w środku obiektu, którego współrzędne pokazuje etykieta.
             center={labelAt ? anchor : null}
             zoom={zoom}
+            outlined={outlined}
           />
           {handled && (
             <SelectionTransformer

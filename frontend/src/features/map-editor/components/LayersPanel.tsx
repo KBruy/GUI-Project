@@ -12,10 +12,15 @@ export function LayersPanel() {
   const { t } = useT()
   const layers = useEditorStore((s) => s.scene?.layers)
   const activeLayerId = useEditorStore((s) => s.activeLayerId)
+  const selectedIds = useEditorStore((s) => s.selectedIds)
   const setActiveLayer = useEditorStore((s) => s.setActiveLayer)
   const addLayer = useEditorStore((s) => s.addLayer)
   const moveLayer = useEditorStore((s) => s.moveLayer)
   const updateLayer = useEditorStore((s) => s.updateLayer)
+  const highlight = useEditorStore((s) => s.highlightActiveLayer)
+  const setHighlight = useEditorStore((s) => s.setHighlightActiveLayer)
+  const hoveredLayerId = useEditorStore((s) => s.hoveredLayerId)
+  const setHoveredLayer = useEditorStore((s) => s.setHoveredLayer)
 
   if (!layers) return null
   const full = layers.length >= MAX_LAYERS
@@ -39,12 +44,23 @@ export function LayersPanel() {
           .reverse()
           .map(({ layer, index }) => {
             const active = layer.id === activeLayerId
+            // Zaznaczone obiekty z tej warstwy: wiersz jest podświetlony, a licznik pokazuje „2/5”.
+            const selected = layer.objects.filter((o) => selectedIds.includes(o.id)).length
             return (
               <li
                 key={layer.id}
-                className={[styles.row, active && styles.active, !layer.visible && styles.hidden]
+                className={[
+                  styles.row,
+                  active && styles.active,
+                  selected > 0 && styles.hasSelection,
+                  layer.id === hoveredLayerId && styles.hovered,
+                  !layer.visible && styles.hidden,
+                ]
                   .filter(Boolean)
                   .join(' ')}
+                // Najechanie na wiersz obrysowuje obiekty warstwy na mapie.
+                onMouseEnter={() => setHoveredLayer(layer.id)}
+                onMouseLeave={() => setHoveredLayer(null)}
               >
                 <button
                   type="button"
@@ -54,6 +70,14 @@ export function LayersPanel() {
                 >
                   {layer.name}
                 </button>
+                {/* Liczba obiektów na warstwie (przy zaznaczeniu: zaznaczone/wszystkie),
+                    pełny opis w dymku przeglądarki. */}
+                <span
+                  className={styles.count}
+                  title={t(selected > 0 ? 'layers.selectedObjects' : 'layers.objects')}
+                >
+                  {selected > 0 ? `${selected}/${layer.objects.length}` : layer.objects.length}
+                </span>
                 <IconButton
                   size="sm"
                   variant="ghost"
@@ -92,7 +116,13 @@ export function LayersPanel() {
             )
           })}
       </ul>
-      {full ? <Tooltip text={t('errors.layerLimit')}>{addButton}</Tooltip> : addButton}
+      <div className={styles.actions}>
+        {full ? <Tooltip text={t('errors.layerLimit')}>{addButton}</Tooltip> : addButton}
+        {/* Przygasza pozostałe warstwy: widać, z czym obiekt może kolidować. */}
+        <Button size="sm" pressed={highlight} onClick={() => setHighlight(!highlight)}>
+          {t('layers.highlight')}
+        </Button>
+      </div>
     </div>
   )
 }

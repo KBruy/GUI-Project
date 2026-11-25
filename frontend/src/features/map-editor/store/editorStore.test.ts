@@ -88,6 +88,24 @@ describe('editor store', () => {
       expect(store().selectedIds).toEqual([top])
     })
 
+    it('makes the layer of the clicked object active', () => {
+      // Górna warstwa ukryta: kliknięcie trafia w drzewo na dolnej.
+      store().updateLayer('top', { visible: false })
+      store().selectAt({ x: 100, y: 100 }, false)
+      expect(store().activeLayerId).toBe('ground')
+
+      // Chwycenie obiektu zaznacza go przez select: jego warstwa też staje się aktywna.
+      store().select([ids()[2]])
+      expect(store().activeLayerId).toBe('top')
+    })
+
+    it('finds the layer under a point also on a locked layer', () => {
+      store().updateLayer('top', { locked: true })
+
+      expect(store().layerAt({ x: 100, y: 100 })).toBe('top')
+      expect(store().layerAt({ x: 500, y: 400 })).toBeNull()
+    })
+
     it('clears the selection on a click in an empty spot', () => {
       store().select(ids())
       store().selectAt({ x: 500, y: 400 }, false)
