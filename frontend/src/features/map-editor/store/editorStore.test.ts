@@ -54,6 +54,24 @@ describe('editor store', () => {
     expect(store().scene?.layers[1].objects).toHaveLength(1)
   })
 
+  it('adds, moves and removes layers as undoable steps and keeps a valid active layer', () => {
+    store().addLayer('Nowa')
+    const added = store().activeLayerId!
+    expect(store().scene?.layers.map((l) => l.id)).toEqual(['ground', 'top', added])
+
+    store().moveLayer(added, 0)
+    expect(store().scene?.layers[0].id).toBe(added)
+
+    // Usunięta aktywna warstwa: aktywna staje się najwyższa z pozostałych.
+    store().removeLayer(added)
+    expect(store().activeLayerId).toBe('top')
+
+    store().undo()
+    store().undo()
+    store().undo()
+    expect(store().scene?.layers.map((l) => l.id)).toEqual(['ground', 'top'])
+  })
+
   describe('selection', () => {
     // Drzewo 64×64 na dolnej warstwie, nad nim drugie na górnej i trzecie obok.
     beforeEach(() => {

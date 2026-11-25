@@ -8,17 +8,22 @@ import { toast } from '@/shared/components/ui/Toast/toast'
 import { ApiError, api } from '@/shared/lib/apiClient'
 import type { Asset } from '@/shared/lib/assets'
 import {
+  addLayer,
   addObject,
   addObjects,
   combineCommands,
   createEditor,
   EngineError,
+  moveLayer,
   moveObjects,
+  removeLayer,
   removeObjects,
   transformObjects,
+  updateLayer,
   type Command,
   type Editor,
   type EngineErrorCode,
+  type LayerChanges,
   type PlaceResult,
   type Point,
   type Rect,
@@ -84,6 +89,14 @@ interface EditorState {
   selectInRect: (rect: Rect, add: boolean) => void
   setTool: (tool: Tool) => void
   setActiveLayer: (layerId: string) => void
+  // Panel warstw (F-35). Każda akcja to jeden krok cofania, błąd silnika (np. LAST_LAYER) daje toast.
+  // Nowa warstwa staje na wierzchu i od razu jest aktywna.
+  addLayer: (name: string) => void
+  removeLayer: (layerId: string) => void
+  // Pozycja jak w silniku: 0 to najniższa warstwa.
+  moveLayer: (layerId: string, toIndex: number) => void
+  // Nazwa, widoczność albo blokada.
+  updateLayer: (layerId: string, changes: LayerChanges) => void
   setViewport: (viewport: Size) => void
   // Zoom w punkcie ekranu (np. pod kursorem). Bez punktu: środek canvasu.
   zoomTo: (zoom: number, anchor?: Point) => void
@@ -306,6 +319,13 @@ function normalizeTransform(object: SceneObject, transform: Transform): Transfor
 // jako zmiana, bo to już inny obiekt.
 export const hasUnsavedChanges = (state: EditorState) => state.scene !== state.savedScene
 
+// Warstwa, na którą trafiają nowe obiekty po wczytaniu sceny albo po zniknięciu aktywnej:
+// najwyższa niezablokowana. Gdy wszystkie są zablokowane, bierzemy najwyższą,
+// a silnik przy dodaniu zgłosi LAYER_LOCKED.
+function defaultLayerId(scene: Scene): string | null {
+  return (scene.layers.findLast((l) => !l.locked) ?? scene.layers.at(-1))?.id ?? null
+}
+
 // Wypisuje store z poprzedniego silnika przy wczytaniu nowej sceny.
 let unsubscribe: (() => void) | null = null
 
@@ -340,9 +360,13 @@ export const useEditorStore = create<EditorState>()((set, get) => ({
     unsubscribe = editor.subscribe((next) => {
       // Po cofnięciu dodania obiekt znika ze sceny, więc nie może zostać zaznaczony.
       const ids = new Set(next.layers.flatMap((layer) => layer.objects.map((o) => o.id)))
+      // Aktywna warstwa mogła zniknąć (usunięcie albo cofnięcie jej dodania).
+      const { activeLayerId } = get()
+      const activeExists = next.layers.some((layer) => layer.id === activeLayerId)
       set({
         scene: next,
         selectedIds: get().selectedIds.filter((id) => ids.has(id)),
+        activeLayerId: activeExists ? activeLayerId : defaultLayerId(next),
         canUndo: editor.canUndo(),
         canRedo: editor.canRedo(),
       })
@@ -355,9 +379,7 @@ export const useEditorStore = create<EditorState>()((set, get) => ({
       savedScene: editor.getScene(),
       projectId,
       selectedIds: [],
-      // Nowe obiekty trafiają domyślnie na najwyższą niezablokowaną warstwę. Gdy wszystkie są
-      // zablokowane, bierzemy najwyższą, a silnik przy dodaniu zgłosi LAYER_LOCKED.
-      activeLayerId: (scene.layers.findLast((l) => !l.locked) ?? scene.layers.at(-1))?.id ?? null,
+      activeLayerId: defaultLayerId(scene),
     })
     get().fitToScreen()
   },
@@ -401,6 +423,13 @@ export const useEditorStore = create<EditorState>()((set, get) => ({
   },
   setTool: (tool) => set({ tool }),
   setActiveLayer: (layerId) => set({ activeLayerId: layerId }),
+  addLayer(name) {
+    if (!get().execute(addLayer(name)).ok) return
+    set({ activeLayerId: get().scene?.layers.at(-1)?.id ?? null })
+  },
+  removeLayer: (layerId) => void get().execute(removeLayer(layerId)),
+  moveLayer: (layerId, toIndex) => void get().execute(moveLayer(layerId, toIndex)),
+  updateLayer: (layerId, changes) => void get().execute(updateLayer(layerId, changes)),
   setViewport(viewport) {
     const { viewport: old, scene, zoom, offset } = get()
     set({ viewport })
