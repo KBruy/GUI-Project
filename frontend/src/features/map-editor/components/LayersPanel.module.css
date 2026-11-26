@@ -22,6 +22,24 @@
   border-left: var(--border-width) solid transparent;
 }
 
+/* Wiersz da się złapać i przeciągnąć (zablokowany nie ma draggable). */
+.row[draggable='true'] {
+  cursor: grab;
+}
+
+.dragged {
+  opacity: 0.5;
+}
+
+/* Linia w miejscu, gdzie wyląduje przeciągana warstwa. */
+.dropAbove {
+  box-shadow: inset 0 var(--border-width) 0 var(--color-primary);
+}
+
+.dropBelow {
+  box-shadow: inset 0 calc(-1 * var(--border-width)) 0 var(--color-primary);
+}
+
 .active {
   border-left-color: var(--color-primary);
   background: var(--color-surface-raised);

@@ -135,6 +135,7 @@ Gdy zaznaczony jest dokładnie jeden obiekt na widocznej warstwie, a nic nie jes
 
 - Lista od najwyższej warstwy. Klik w nazwę ustawia aktywną warstwę (na nią trafiają nowe obiekty): czerwony znacznik z lewej i tło. Gdy aktywna zniknie (usunięcie, cofnięcie dodania), aktywna staje się najwyższa niezablokowana (`defaultLayerId`).
 - W wierszu: liczba obiektów, oko (ukryj/pokaż), kłódka (blokada) i strzałki wyżej/niżej. Strzałka bez ruchu (góra, dół, warstwa zablokowana) jest niewidoczna, ale trzyma miejsce.
+- Kolejność można też zmienić przeciągając wiersz (natywne drag & drop HTML). Górna albo dolna połowa wiersza decyduje, czy warstwa trafi nad, czy pod niego, a czerwona linia pokazuje miejsce. Zablokowanej warstwy i wiersza w trakcie zmiany nazwy nie da się złapać.
 - Wiersz warstwy z zaznaczonymi obiektami ma tło, a licznik pokazuje „zaznaczone/wszystkie” na czerwono. Może być kilka takich wierszy.
 - Dwuklik w nazwę: pole tekstowe. Enter albo wyjście z pola zapisuje, Esc anuluje. Pusta i niezmieniona nazwa nie robi kroku cofania.
 - „Dodaj warstwę” stawia warstwę „Warstwa N” na wierzchu i robi ją aktywną. Przy `MAX_LAYERS` (10) przycisk jest wyłączony z dymkiem `errors.layerLimit`.

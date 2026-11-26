@@ -26,9 +26,29 @@ export function LayersPanel() {
   const setHoveredLayer = useEditorStore((s) => s.setHoveredLayer)
   // Id warstwy, której nazwę właśnie zmieniamy, albo null.
   const [renamingId, setRenamingId] = useState<string | null>(null)
+  // Przeciąganie wiersza: indeks przeciąganej warstwy w scenie i miejsce upuszczenia
+  // (wiersz, nad albo pod którym pokazujemy linię). Null: nic nie przeciągamy.
+  const [dragFrom, setDragFrom] = useState<number | null>(null)
+  const [dropAt, setDropAt] = useState<{ index: number; above: boolean } | null>(null)
 
   if (!layers) return null
   const full = layers.length >= MAX_LAYERS
+
+  function endDrag() {
+    setDragFrom(null)
+    setDropAt(null)
+  }
+
+  // Upuszczenie nad wierszem warstwy `index` (above: nad nią w panelu, czyli wyżej w scenie).
+  // Pozycja dla moveLayer liczy się po wyjęciu warstwy z listy, stąd -1 przy ruchu w górę.
+  function drop() {
+    if (dragFrom !== null && dropAt) {
+      const slot = dropAt.above ? dropAt.index + 1 : dropAt.index
+      const to = slot > dragFrom ? slot - 1 : slot
+      if (to !== dragFrom) moveLayer(layers![dragFrom].id, to)
+    }
+    endDrag()
+  }
 
   // Enter albo wyjście z pola zapisuje nazwę. Pustej i niezmienionej nie zapisujemy,
   // żeby nie robić pustego kroku cofania.
@@ -68,12 +88,35 @@ export function LayersPanel() {
                   selected > 0 && styles.hasSelection,
                   layer.id === hoveredLayerId && styles.hovered,
                   !layer.visible && styles.hidden,
+                  dragFrom === index && styles.dragged,
+                  dropAt?.index === index && (dropAt.above ? styles.dropAbove : styles.dropBelow),
                 ]
                   .filter(Boolean)
                   .join(' ')}
                 // Najechanie na wiersz obrysowuje obiekty warstwy na mapie.
                 onMouseEnter={() => setHoveredLayer(layer.id)}
                 onMouseLeave={() => setHoveredLayer(null)}
+                // Przeciąganie wiersza zmienia kolejność warstw, tak jak strzałki. Zablokowanej
+                // warstwy silnik nie przesuwa, więc nie da się jej złapać.
+                draggable={!layer.locked && renamingId !== layer.id}
+                onDragStart={(event) => {
+                  // Firefox nie zaczyna przeciągania bez danych.
+                  event.dataTransfer.setData('text/plain', layer.id)
+                  event.dataTransfer.effectAllowed = 'move'
+                  setDragFrom(index)
+                }}
+                onDragOver={(event) => {
+                  if (dragFrom === null) return
+                  event.preventDefault()
+                  const rect = event.currentTarget.getBoundingClientRect()
+                  const above = event.clientY < rect.top + rect.height / 2
+                  if (dropAt?.index !== index || dropAt.above !== above) setDropAt({ index, above })
+                }}
+                onDrop={(event) => {
+                  event.preventDefault()
+                  drop()
+                }}
+                onDragEnd={endDrag}
               >
                 {renamingId === layer.id ? (
                   <input

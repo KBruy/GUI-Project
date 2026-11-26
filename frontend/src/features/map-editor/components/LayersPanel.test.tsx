@@ -1,11 +1,11 @@
-import { act, fireEvent, render, screen, within } from '@testing-library/react'
+import { act, createEvent, fireEvent, render, screen, within } from '@testing-library/react'
 import { expect, it } from 'vitest'
 import { LanguageProvider } from '@/i18n/LanguageProvider'
 import { addObject, createMapScene, MAP_SIZES } from '../engine/engine'
 import { useEditorStore } from '../store/editorStore'
 import { LayersPanel } from './LayersPanel'
 
-it('adds a layer on top, hides it and moves it down', () => {
+it('adds a layer on top, hides it and reorders it with arrows and dragging', () => {
   act(() => useEditorStore.getState().loadScene(createMapScene('Test', MAP_SIZES[0], 'Warstwa 1')))
   render(
     <LanguageProvider>
@@ -29,6 +29,16 @@ it('adds a layer on top, hides it and moves it down', () => {
 
   fireEvent.click(within(rows()[0]).getByRole('button', { name: 'Przesuń niżej' }))
   expect(names()).toEqual(['Warstwa 1', 'Warstwa 2'])
+
+  // Przeciągnięcie dolnego wiersza nad górny przywraca kolejność.
+  const dataTransfer = { setData: () => {}, effectAllowed: '' }
+  fireEvent.dragStart(rows()[1], { dataTransfer })
+  // jsdom nie zna DragEvent, więc clientY ustawiamy ręcznie (nad środkiem wiersza)
+  const over = createEvent.dragOver(rows()[0], { dataTransfer })
+  Object.defineProperty(over, 'clientY', { value: -1 })
+  fireEvent(rows()[0], over)
+  fireEvent.drop(rows()[0], { dataTransfer })
+  expect(names()).toEqual(['Warstwa 2', 'Warstwa 1'])
 })
 
 it('renames a layer on double-click and asks before deleting a layer with objects', () => {
