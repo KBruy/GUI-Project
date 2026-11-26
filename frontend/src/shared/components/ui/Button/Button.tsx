@@ -1,3 +1,4 @@
+import { useEffect, useRef } from 'react'
 import type { ComponentProps } from 'react'
 import { Icon } from '../Icon/Icon'
 import type { IconName } from '../Icon/Icon'
@@ -10,7 +11,7 @@ export type ButtonSize = 'sm' | 'md' | 'lg'
 const ICON_SIZE: Record<ButtonSize, 16 | 32> = { sm: 16, md: 16, lg: 32 }
 
 // aria-pressed jest obsługiwane przez prop pressed — Omit zapobiega kolizji z ...props.
-export interface ButtonProps extends Omit<ComponentProps<'button'>, 'aria-pressed'> {
+export interface ButtonProps extends Omit<ComponentProps<'button'>, 'aria-pressed' | 'ref'> {
   variant?: ButtonVariant
   size?: ButtonSize
   icon?: IconName
@@ -30,11 +31,23 @@ export function Button({
   type = 'button',
   className,
   children,
+  disabled,
   ...props
 }: ButtonProps) {
+  const ref = useRef<HTMLButtonElement>(null)
+
+  // Firefox nie wysyła zdarzeń klawiatury, gdy fokus zostaje na przycisku, który właśnie się
+  // wyłączył (np. strzałka warstwy na samej górze albo „Cofnij” po ostatnim cofnięciu).
+  // Wtedy przestają działać skróty edytora, więc zdejmujemy z niego fokus.
+  useEffect(() => {
+    if (disabled && ref.current === document.activeElement) ref.current?.blur()
+  }, [disabled])
+
   return (
     <button
+      ref={ref}
       type={type}
+      disabled={disabled}
       className={[
         styles.button,
         styles[variant],
