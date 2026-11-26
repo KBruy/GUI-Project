@@ -1,8 +1,9 @@
 // Sterowanie widokiem canvasu myszą i klawiaturą (F-28):
 // - kółko myszy: zoom w miejscu kursora,
-// - + i −: zoom w środku canvasu,
+// - + i − (klawisze z `config/hotkeys.ts`): zoom w środku canvasu,
 // - spacja z przeciąganiem albo środkowy przycisk myszy: przesuwanie widoku.
 import { useEffect, useRef, useState, type PointerEvent, type RefObject } from 'react'
+import { HOTKEYS, isHotkey } from '@/config/hotkeys'
 import { useEditorStore } from './store/editorStore'
 
 // Jeden krok zoomu (kółko albo klawisz) to 25%.
@@ -44,21 +45,20 @@ export function useViewControls(ref: RefObject<HTMLElement | null>) {
   useEffect(() => {
     function onKeyDown(event: KeyboardEvent) {
       if (isTyping(event.target)) return
-      // Ctrl/Cmd z + i − to zoom przeglądarki: nie zmieniamy przy nim jeszcze zoomu canvasu.
-      if (event.ctrlKey || event.metaKey) return
       const zoom = useEditorStore.getState().zoom
-      if (event.code === 'Space') {
+      if (isHotkey(event, 'pan')) {
         // Bez tego spacja przewija stronę albo „klika” przycisk z fokusem.
         event.preventDefault()
         setSpaceDown(true)
-      } else if (event.key === '+' || event.key === '=') {
+      } else if (isHotkey(event, 'zoomIn')) {
         zoomTo(zoom * ZOOM_STEP)
-      } else if (event.key === '-') {
+      } else if (isHotkey(event, 'zoomOut')) {
         zoomTo(zoom / ZOOM_STEP)
       }
     }
     function onKeyUp(event: KeyboardEvent) {
-      if (event.code === 'Space') setSpaceDown(false)
+      // Bez sprawdzania modyfikatorów: spacja puszczona z wciśniętym Shiftem też kończy przesuwanie.
+      if (HOTKEYS.pan.some((combo) => combo.key === event.key.toLowerCase())) setSpaceDown(false)
     }
     // Po Alt+Tab z wciśniętą spacją keyup nie dochodzi do okna, więc spacja „zawisłaby”.
     function onBlur() {

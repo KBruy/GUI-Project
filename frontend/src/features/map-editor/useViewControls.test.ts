@@ -44,7 +44,7 @@ describe('useViewControls', () => {
   it('releases the space when the window loses focus', () => {
     const { result } = setup()
 
-    fireEvent.keyDown(window, { code: 'Space' })
+    fireEvent.keyDown(window, { key: ' ', code: 'Space' })
     expect(result.current.cursor).toBe('grab')
 
     act(() => {

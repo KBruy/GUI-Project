@@ -1,30 +1,29 @@
-// Skróty klawiszowe edytora map (F-33):
+// Skróty klawiszowe edytora map (F-33, F-37). Klawisze są w `config/hotkeys.ts`:
 // - strzałki: przesuwają zaznaczone obiekty o 1 px, a przy włączonym przyciąganiu do następnej
 //   linii siatki. Shift+strzałka zawsze przesuwa o jedno pole siatki (32 px),
-// - Ctrl+Z (na Macu Cmd+Z): cofnij, Ctrl+Shift+Z albo Ctrl+Y: ponów,
-// - Ctrl+S (Cmd+S): zapisz mapę (F-38),
-// - Delete albo Backspace: usuń zaznaczone obiekty,
-// - V, B, R, G, E: narzędzia z panelu „Narzędzia”, Esc: powrót do zaznaczania.
+// - cofnij, ponów, zapisz (F-38), usuń zaznaczone,
+// - narzędzia z panelu „Narzędzia”, Esc: powrót do zaznaczania.
 // Zwraca id obiektu przesuniętego strzałkami: canvas pokazuje przy nim przez chwilę jego (x, y).
 import { useEffect, useRef, useState } from 'react'
+import { hotkeyIndex, isHotkey, type HotkeyAction } from '@/config/hotkeys'
 import { toast } from '@/shared/components/ui/Toast/toast'
 import { saveProject } from './saveProject'
 import { useEditorStore, type Tool } from './store/editorStore'
 import { isTyping } from './useViewControls'
 
-const ARROWS: Record<string, { x: number; y: number }> = {
-  ArrowLeft: { x: -1, y: 0 },
-  ArrowRight: { x: 1, y: 0 },
-  ArrowUp: { x: 0, y: -1 },
-  ArrowDown: { x: 0, y: 1 },
-}
-// Skróty narzędzi z panelu „Narzędzia”.
-const TOOL_KEYS: Record<string, Tool> = {
-  v: 'select',
-  b: 'brush',
-  r: 'rect',
-  g: 'fill',
-  e: 'eraser',
+// Kierunki w kolejności kombinacji `nudge` i `nudgeFar` z hotkeys.ts.
+const DIRECTIONS = [
+  { x: -1, y: 0 },
+  { x: 1, y: 0 },
+  { x: 0, y: -1 },
+  { x: 0, y: 1 },
+]
+const TOOL_HOTKEYS: Record<Tool, HotkeyAction> = {
+  select: 'toolSelect',
+  brush: 'toolBrush',
+  rect: 'toolRect',
+  fill: 'toolFill',
+  eraser: 'toolEraser',
 }
 // Jak długo po ostatniej strzałce widać etykietę ze współrzędnymi.
 const NUDGE_LABEL_MS = 1500
@@ -44,8 +43,8 @@ export function useEditorShortcuts(): string | null {
 
   useEffect(() => {
     function onKeyDown(event: KeyboardEvent) {
-      // Ctrl+S zawsze blokujemy, bo inaczej przeglądarka zapisuje całą stronę jako plik HTML.
-      if ((event.ctrlKey || event.metaKey) && event.key.toLowerCase() === 's') {
+      // Zapis zawsze blokujemy, bo inaczej przeglądarka zapisuje całą stronę jako plik HTML.
+      if (isHotkey(event, 'save')) {
         event.preventDefault()
         // Przytrzymane klawisze powtarzają zdarzenie, a zapis wystarczy jeden.
         if (!event.repeat && !document.querySelector('dialog[open]')) void saveProject()
@@ -53,43 +52,49 @@ export function useEditorShortcuts(): string | null {
       }
       // Skróty nie działają w polach formularza ani przy otwartym oknie (np. „Nowa mapa”).
       if (isTyping(event.target) || document.querySelector('dialog[open]')) return
-      const { scene, selectedIds, gridSnap, moveSelected, deleteSelected, undo, redo } =
+      const { scene, selectedIds, gridSnap, moveSelected, deleteSelected, undo, redo, setTool } =
         useEditorStore.getState()
       if (!scene) return
 
-      const key = event.key.toLowerCase()
-      if (event.ctrlKey || event.metaKey) {
-        if (key === 'z' && !event.shiftKey) undo()
-        else if ((key === 'z' && event.shiftKey) || key === 'y') redo()
-        else return
+      if (isHotkey(event, 'undo')) {
         event.preventDefault()
+        undo()
+        return
+      }
+      if (isHotkey(event, 'redo')) {
+        event.preventDefault()
+        redo()
         return
       }
 
       // Esc w trakcie malowania przerywa też pociągnięcie (pędzel i gumka mają własne nasłuchy).
-      if (event.key === 'Escape') {
-        useEditorStore.getState().setTool('select')
+      if (isHotkey(event, 'cancel')) {
+        setTool('select')
         return
       }
 
-      if (!event.altKey && TOOL_KEYS[key]) {
-        useEditorStore.getState().setTool(TOOL_KEYS[key])
+      const tool = (Object.keys(TOOL_HOTKEYS) as Tool[]).find((t) =>
+        isHotkey(event, TOOL_HOTKEYS[t])
+      )
+      if (tool) {
+        setTool(tool)
         return
       }
 
-      // Backspace, bo na Macu nie ma osobnego klawisza Delete.
-      if (event.key === 'Delete' || event.key === 'Backspace') {
+      if (isHotkey(event, 'delete')) {
         event.preventDefault()
         deleteSelected()
         return
       }
 
-      const direction = ARROWS[event.key]
+      const farIndex = hotkeyIndex(event, 'nudgeFar')
+      const far = farIndex !== -1
+      const direction = DIRECTIONS[far ? farIndex : hotkeyIndex(event, 'nudge')]
       if (!direction || selectedIds.length === 0) return
       // Bez tego strzałki przewijają stronę.
       event.preventDefault()
       let delta: { x: number; y: number }
-      if (gridSnap && !event.shiftKey) {
+      if (gridSnap && !far) {
         // Lewy górny róg pierwszego zaznaczonego obiektu trafia na siatkę, tak jak przy dodawaniu z palety.
         const first = scene.layers
           .flatMap((layer) => layer.objects)
@@ -101,7 +106,7 @@ export function useEditorShortcuts(): string | null {
           y: toNextGridLine(top, direction.y, scene.gridSize),
         }
       } else {
-        const step = event.shiftKey ? scene.gridSize : 1
+        const step = far ? scene.gridSize : 1
         delta = { x: direction.x * step, y: direction.y * step }
       }
       const result = moveSelected(delta)
