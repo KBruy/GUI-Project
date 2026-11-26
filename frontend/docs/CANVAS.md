@@ -18,6 +18,7 @@ Scenę rysujemy biblioteką Konva przez `react-konva`. Kod wspólny dla edytora 
 - Tylko rysuje, niczego nie zmienia w scenie. Zmiany idą przez store i silnik (`ENGINE.md`).
 - Kolejność: tło (`scene.background.color`) → warstwy sceny od indeksu 0 (najniższa) → `children`.
 - Ukryte warstwy (`visible: false`) są pomijane.
+- `highlightLayerId` (opcjonalny): pozostałe warstwy rysują się przygaszone (krycie 0,35). Edytor podaje aktywną warstwę, gdy włączone jest „Wyróżnij aktywną”.
 - Obiekt stoi **środkiem** w `(x, y)`. Konva liczy od lewego górnego rogu, więc ustawiamy `offset` o połowę rozmiaru. Dzięki temu obrót i skala działają wokół środka.
 - Każdy węzeł Konvy ma `id` równe id obiektu (`stage.findOne('#<id>')`), a warstwa ma id warstwy sceny.
 - Warstwy mają `imageSmoothingEnabled={false}`, więc pixel art po powiększeniu zostaje ostry.
@@ -88,10 +89,11 @@ Zastępcze grafiki (figury z literą) i `assets/manifest.json` są w katalogu `a
 
 Zaznaczenie to `selectedIds` w store (F-32), więc widzą je wszystkie panele. Po cofnięciu dodania obiekt sam wypada z zaznaczenia.
 
-- Store: `selectAt(punkt, toggle)` zaznacza najwyższy obiekt pod punktem sceny i zwraca jego id (albo `null`), `selectInRect(prostokąt, add)` zaznacza wszystko, czego prostokąt dotyka, a `select(ids)` ustawia zaznaczenie wprost. Obiekty z ukrytych warstw pomija silnik (`objectsInRect`).
+- Store: `selectAt(punkt, toggle)` zaznacza najwyższy obiekt pod punktem sceny i zwraca jego id (albo `null`), `selectInRect(prostokąt, add)` zaznacza wszystko, czego prostokąt dotyka, a `select(ids)` ustawia zaznaczenie wprost. Obiekty z ukrytych i zablokowanych warstw pomija silnik (`objectsInRect`).
+- Gdy wszystkie zaznaczone obiekty leżą na jednej warstwie, ta warstwa staje się aktywna (klik, chwycenie, prostokąt). Kliknięty obiekt przełącza aktywną warstwę na swoją.
 - Mysz i klawiatura: `features/map-editor/useSelectionControls.ts`. Klik w obiekt zaznacza tylko jego, klik w puste miejsce czyści zaznaczenie. Shift+klik dokłada obiekt albo go zdejmuje. Przeciągnięcie po pustym miejscu (od 3 px) rysuje prostokąt, z Shiftem dokłada do zaznaczenia. Esc czyści zaznaczenie.
 - `MapCanvas` woła najpierw `useViewControls`, potem pędzel z `usePalettePlacing`, na końcu `useSelectionControls`. Gdy kliknięcie zaczyna przesuwanie widoku (spacja, środkowy przycisk) albo stawia obiekt pędzlem, ten krok woła `preventDefault`, a kolejne je pomijają.
-- Rysowanie: `shared/canvas/SelectionLayer.tsx` jako children `SceneRenderer`. Ramka ma położenie, obrót i skalę obiektu, czerwona linia leży na ciemnym obrysie. Ta sama warstwa rysuje prostokąt zaznaczania. Nie łapie kliknięć.
+- Rysowanie: `shared/canvas/SelectionLayer.tsx` jako children `SceneRenderer`. Ramka ma położenie, obrót i skalę obiektu, czerwona linia leży na ciemnym obrysie. Ta sama warstwa rysuje prostokąt zaznaczania i przerywane obrysy z propa `outlined` (podgląd warstwy z panelu warstw). Nie łapie kliknięć.
 
 ## Przesuwanie obiektów
 
@@ -126,6 +128,19 @@ Gdy zaznaczony jest dokładnie jeden obiekt na widocznej warstwie, a nic nie jes
 - Store: `planTransform` (podgląd) i `transformObject` (zapis jednym krokiem cofania). Oba zaokrąglają tak samo: `x`, `y` do 0,5 px, obrót do całych stopni w zakresie 0–359, skala do całych pikseli rozmiaru i w zakresie 0,1–10 (jak w backendzie).
 - `features/map-editor/useTransformControls.ts` trzyma podgląd i kolizje. W trakcie ramki kolidujących obiektów są bursztynowe, a przy kolizji na końcu obiekt wraca, jest toast i drżenie ramek, tak jak przy przeciąganiu.
 - Kolizje w zaślepce silnika liczą się z prostokąta otaczającego obrócony obiekt, do czasu SAT z #122.
+
+## Panel warstw
+
+`features/map-editor/components/LayersPanel.tsx` w prawym panelu (F-35). Wszystkie zmiany idą przez akcje store'u (`addLayer`, `removeLayer`, `moveLayer`, `updateLayer`), więc każda to jeden krok Ctrl+Z, a błąd silnika (np. `LAST_LAYER`) kończy się toastem.
+
+- Lista od najwyższej warstwy. Klik w nazwę ustawia aktywną warstwę (na nią trafiają nowe obiekty): czerwony znacznik z lewej i tło. Gdy aktywna zniknie (usunięcie, cofnięcie dodania), aktywna staje się najwyższa niezablokowana (`defaultLayerId`).
+- W wierszu: liczba obiektów, oko (ukryj/pokaż), kłódka (blokada) i strzałki wyżej/niżej. Strzałka bez ruchu (góra, dół, warstwa zablokowana) jest niewidoczna, ale trzyma miejsce.
+- Wiersz warstwy z zaznaczonymi obiektami ma tło, a licznik pokazuje „zaznaczone/wszystkie” na czerwono. Może być kilka takich wierszy.
+- Dwuklik w nazwę: pole tekstowe. Enter albo wyjście z pola zapisuje, Esc anuluje. Pusta i niezmieniona nazwa nie robi kroku cofania.
+- „Dodaj warstwę” stawia warstwę „Warstwa N” na wierzchu i robi ją aktywną. Przy `MAX_LAYERS` (10) przycisk jest wyłączony z dymkiem `errors.layerLimit`.
+- Kosz (`DeleteLayerButton.tsx`) usuwa aktywną warstwę. Gdy ma obiekty, najpierw pyta w `Modal`. Wyłączony przy ostatniej i zablokowanej warstwie.
+- „Wyróżnij aktywną” (`highlightActiveLayer` w store) przygasza pozostałe warstwy na canvasie. Kolizje są tylko w obrębie jednej warstwy, więc pełnym kolorem widać to, z czym obiekt może kolidować.
+- Podgląd po najechaniu (`hoveredLayerId` w store): najechanie na wiersz obrysowuje obiekty warstwy na mapie (`outlined` w `SelectionLayer`), a najechanie na obiekt na mapie obrysowuje wiersz jego warstwy. Obiekt pod kursorem wskazuje `layerAt` w store, które liczy też warstwy zablokowane (w przeciwieństwie do `objectAt`). Podgląd działa tylko przy zaznaczaniu. Z wciśniętym przyciskiem myszy się nie zmienia, więc przy przeciąganiu zostaje przy warstwie chwyconego obiektu.
 
 ## Panel właściwości
 
